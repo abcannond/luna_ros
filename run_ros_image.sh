@@ -22,6 +22,8 @@ docker run -it \
   --volume "$HOST_WS":/ros2_ws:rw \
   $EXTRA_DEV \
   --network host \
+  --privileged \
+  -v /dev:/dev \
   --entrypoint /bin/bash \
   "$IMAGE_NAME"
 

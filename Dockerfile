@@ -1,9 +1,7 @@
 FROM ros:jazzy-perception-noble
-
 SHELL ["/bin/bash", "-c"]
 
-# Install required ROS and system packages
-RUN apt-get update && apt-get upgrade -y && \
+RUN apt-get update && \
     apt-get install -y \
     ros-jazzy-ros-gz \
     ros-jazzy-ros2-control \
@@ -22,7 +20,17 @@ RUN apt-get update && apt-get upgrade -y && \
     libxcb-xtest0 \
     mesa-utils \
     dos2unix \
+    ros-jazzy-realsense2-camera \
+    ros-jazzy-rtabmap-ros \
+    ros-jazzy-rtabmap-launch \
+    ros-jazzy-rtabmap-slam \
+    ros-jazzy-rtabmap-rviz-plugins \
+    ros-jazzy-tf2-tools \
+    \
+    ros-jazzy-navigation2 \
+    ros-jazzy-nav2-bringup \
     && rm -rf /var/lib/apt/lists/*
+
 
 # Set working directory
 WORKDIR /ros2_ws

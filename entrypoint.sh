@@ -1,20 +1,19 @@
 #!/bin/bash
 set -e
 
-# Allow X11 connections for GUI
-xhost +local:docker
-
-# Source ROS 2
-source /opt/ros/jazzy/setup.bash
-
-# Only source workspace if it exists (bind mount will make it available)
-if [ -f /ros2_ws/install/setup.bash ]; then
-    source /ros2_ws/install/setup.bash
+# Source ROS 2 Jazzy
+if [ -f "/opt/ros/jazzy/setup.bash" ]; then
+  source /opt/ros/jazzy/setup.bash
 fi
 
-# If no command is passed, open bash
-if [ $# -eq 0 ]; then
-    exec bash
-else
-    exec "$@"
+# Source the workspace overlay if it exists
+if [ -f "/ros2_ws/install/setup.bash" ]; then
+  source /ros2_ws/install/setup.bash
 fi
+
+# Go to the workspace by default (nice QoL)
+cd /ros2_ws
+
+# Hand off to whatever was passed (default is "bash")
+exec "$@"
+
