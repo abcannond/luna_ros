@@ -1,6 +1,7 @@
 FROM ros:jazzy-perception-noble
 SHELL ["/bin/bash", "-c"]
 
+# TEST
 # Install required ROS and GUI dependencies
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y \
