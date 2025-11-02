@@ -1,0 +1,55 @@
+---
+
+controller_manager:
+  ros__parameters:
+    update_rate: 30
+    use_sim_time: true
+
+    luna_cont:
+      type: luna_control/LunaController
+
+    joint_broad:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+luna_cont:
+  ros__parameters:
+
+    publish_rate: 30.0
+
+    base_frame_id: base_link
+
+    left_back_wheel_names: ['rear_left_drive_joint']
+    left_front_wheel_names: ['front_left_drive_joint']
+    right_back_wheel_names: ['rear_right_drive_joint']
+    right_front_wheel_names: ['front_right_drive_joint']
+    left_back_pod_names: ['rear_left_steer_joint']
+    left_front_pod_names: ['front_left_steer_joint']
+    right_back_pod_names: ['rear_right_steer_joint']
+    right_front_pod_names: ['front_right_steer_joint']
+
+    wheel_track: 0.531
+    wheel_base: 0.508 # double check
+    wheel_radius: 0.1
+
+    allowed_steer_pod_driving_angle: 0.78539816339
+
+    linear.x.has_velocity_limits: true
+    linear.x.has_acceleration_limits: true
+    linear.x.max_velocity: 2.0
+    linear.x.min_velocity: -2.0
+    linear.x.max_acceleration: 10.0
+    linear.x.min_acceleration: -10.0
+
+    linear.y.has_velocity_limits: true
+    linear.y.has_acceleration_limits: true
+    linear.y.max_velocity: 2.0
+    linear.y.min_velocity: -2.0
+    linear.y.max_acceleration: 10.0
+    linear.y.min_acceleration: -10.0
+
+    angular.z.has_velocity_limits: true
+    angular.z.has_acceleration_limits: true
+    angular.z.max_velocity: 2.0
+    angular.z.min_velocity: -2.0
+    angular.z.max_acceleration: 10.0
+    angular.z.min_acceleration: -10.0
