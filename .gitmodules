@@ -1,6 +1,3 @@
-[submodule "ros2_ws/src/luna_control"]
-	path = ros2_ws/src/luna_control
-	url = git@github.com:thesamrooney/luna_control.git
 [submodule "ros2_ws/src/twist_stamper"]
 	path = ros2_ws/src/twist_stamper
 	url = git@github.com:joshnewans/twist_stamper.git
