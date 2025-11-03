@@ -6,6 +6,9 @@ from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
+from launch.substitutions import LaunchConfiguration
+from launch.actions import SetEnvironmentVariable
+
 from launch_ros.actions import Node
 
 def generate_launch_description():
@@ -38,19 +41,58 @@ def generate_launch_description():
         "gz_sim.launch.py"
     ))
 
+    # gz_world_file = os.path.join(
+    #     get_package_share_directory(package_name),
+    #     "worlds",
+    #     "arena_b.world"
+    # )
+
     gz_world_file = os.path.join(
         get_package_share_directory(package_name),
         "worlds",
-        "arena_b.world"
+        "high_resolution",
+        "ucf",
+        "ucf_arena.world"
     )
+
+
+    # gz_sim = IncludeLaunchDescription(
+    #     gz_sim_source,
+    #     launch_arguments={
+    #         'gz_args': ["-r ", gz_world_file],
+    #         'on_exit_shutdown': 'True'
+    #     }.items(),
+    # )
+
+
+
+    model_path = os.path.join(
+        get_package_share_directory(package_name),
+        "models"
+    )
+
+    set_model_path = SetEnvironmentVariable(
+        name='GZ_SIM_RESOURCE_PATH',
+        value=[model_path, ":", os.environ.get('GZ_SIM_RESOURCE_PATH', '')]
+    )
+
+
+    # gz_sim = IncludeLaunchDescription(
+    #     gz_sim_source,
+    #     launch_arguments={
+    #         'gz_args': f"-r -v 4 {gz_world_file}",
+    #         'on_exit_shutdown': 'true'
+    #     }.items(),
+    # )
 
     gz_sim = IncludeLaunchDescription(
         gz_sim_source,
         launch_arguments={
-            'gz_args': ["-r ", gz_world_file],
-            'on_exit_shutdown': 'True'
+            'gz_args': ['-r', '-v', '4', gz_world_file],
+            'on_exit_shutdown': 'true'
         }.items(),
     )
+
 
     # DEFINE NODES
 
@@ -99,10 +141,11 @@ def generate_launch_description():
 
     return LaunchDescription([
         rsp,
-        twist_stamper,
+        set_model_path,
         gz_sim,
         gz_create_robot,
         gz_param_bridge,
+        twist_stamper,
         gz_image_bridge,
         controller_spawner,
     ])
