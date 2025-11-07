@@ -13,6 +13,7 @@ docker build -t luna_ros:latest .   (build docker container, period is necesarry
 
 
 to access docker container: 
+in a new terminal: 
 
 docker ps
 - (from docker ps - find Container ID (i.e. 4cf7939857c5)
