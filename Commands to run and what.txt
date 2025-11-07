@@ -1,0 +1,51 @@
+Commands to run and what they do: 
+
+git clone git@github.com:abcannond/luna_ros.git
+
+cd luna_ros
+
+git submodule update --init --recursive
+
+
+docker build -t luna_ros:latest .   (build docker container, period is necesarry)
+
+./run_ros_image.sh run_luna_sim:latest
+
+
+to access docker container: 
+
+docker ps
+- (from docker ps - find Container ID (i.e. 4cf7939857c5)
+
+Run this for terminal access: 
+docker exec -it <CONTAINER ID> /bin/bash
+
+source /ros2_ws/install/setup.bash
+
+This Runs a twist keyboard with the correct topic: 
+- (note to self: Fix the topic permanently later). 
+
+ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/luna_cont/cmd_vel_unstamped
+
+
+Other entrypoint.sh file stuff: 
+# #!/bin/bash
+# set -e
+
+# # setup ros2 environment
+# source "/opt/ros/$ROS_DISTRO/setup.bash" --
+# source "/ros2_ws/install/setup.bash" --
+
+# # Enable verbose logging for Gazebo (optional, for debugging)
+# export GZ_SIM_VERBOSE=1
+
+# # Check OpenGL support
+# if glxinfo | grep -q "OpenGL version"; then
+#   echo "OpenGL support detected."
+# else
+#   echo "Warning: OpenGL support not detected. Gazebo GUI may fail."
+# fi
+
+# exec "$@"
+
+
