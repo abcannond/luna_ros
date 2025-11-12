@@ -1,0 +1,8 @@
+source;share/lunabot_2425/hook/cmake_prefix_path.ps1
+source;share/lunabot_2425/hook/cmake_prefix_path.dsv
+source;share/lunabot_2425/hook/cmake_prefix_path.sh
+source;share/lunabot_2425/local_setup.bash
+source;share/lunabot_2425/local_setup.dsv
+source;share/lunabot_2425/local_setup.ps1
+source;share/lunabot_2425/local_setup.sh
+source;share/lunabot_2425/local_setup.zsh

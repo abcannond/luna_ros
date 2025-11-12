@@ -1,0 +1,71 @@
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found ament_cmake: 2.5.4 (/opt/ros/jazzy/share/ament_cmake/cmake)
+-- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+-- Override CMake install command with custom implementation using symlinks instead of copying resources
+-- Found controller_interface: 4.38.0 (/opt/ros/jazzy/share/controller_interface/cmake)
+-- Found rosidl_generator_c: 4.6.6 (/opt/ros/jazzy/share/rosidl_generator_c/cmake)
+-- Found rosidl_generator_cpp: 4.6.6 (/opt/ros/jazzy/share/rosidl_generator_cpp/cmake)
+-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+-- Found TinyXML2 via Config file: /usr/lib/x86_64-linux-gnu/cmake/tinyxml2
+-- Found rmw_implementation_cmake: 7.3.2 (/opt/ros/jazzy/share/rmw_implementation_cmake/cmake)
+-- Found rmw_fastrtps_cpp: 8.4.3 (/opt/ros/jazzy/share/rmw_fastrtps_cpp/cmake)
+-- Found TinyXML2 via Config file: /usr/lib/x86_64-linux-gnu/cmake/tinyxml2
+-- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.0.13")  
+-- Found TinyXML2 via Config file: /usr/lib/x86_64-linux-gnu/cmake/tinyxml2
+-- Found FastRTPS: /opt/ros/jazzy/include (Required is at least version "2.13") 
+-- Found TinyXML2 via Config file: /usr/lib/x86_64-linux-gnu/cmake/tinyxml2
+-- Found TinyXML2 via Config file: /usr/lib/x86_64-linux-gnu/cmake/tinyxml2
+-- Using RMW implementation 'rmw_fastrtps_cpp' as default
+-- Found generate_parameter_library: 0.5.0 (/opt/ros/jazzy/share/generate_parameter_library/cmake)
+-- Found parameter_traits: 0.5.0 (/opt/ros/jazzy/share/parameter_traits/cmake)
+-- Found nav_msgs: 5.3.6 (/opt/ros/jazzy/share/nav_msgs/cmake)
+-- Found tf2: 0.36.14 (/opt/ros/jazzy/share/tf2/cmake)
+-- Found tf2_msgs: 0.36.14 (/opt/ros/jazzy/share/tf2_msgs/cmake)
+-- Configuring done (4.2s)
+-- Generating done (0.0s)
+-- Build files have been written to: /ros2_ws/build/luna_control
+[ 16%] [34m[1mRunning `/opt/ros/jazzy/bin/generate_parameter_library_cpp /ros2_ws/build/luna_control/include/luna_control/luna_controller_parameters.hpp /ros2_ws/src/luna_control/src/luna_controller_parameter.yaml `[0m
+[ 33%] [34m[1mCreating deprecated header file /ros2_ws/build/luna_control/include/luna_controller_parameters.hpp[0m
+[ 33%] Built target luna_controller_parameters
+[ 50%] [32mBuilding CXX object CMakeFiles/luna_control.dir/src/odometry.cpp.o[0m
+[ 83%] [32mBuilding CXX object CMakeFiles/luna_control.dir/src/LunaController.cpp.o[0m
+[ 83%] [32mBuilding CXX object CMakeFiles/luna_control.dir/src/speed_limiter.cpp.o[0m
+[100%] [32m[1mLinking CXX shared library libluna_control.so[0m
+[100%] Built target luna_control
+-- Install configuration: ""
+-- Execute custom install script
+-- Symlinking: /ros2_ws/install/luna_control/include/luna_control/luna_controller_parameters.hpp
+-- Symlinking: /ros2_ws/install/luna_control/share/luna_control//luna_plugin.xml
+-- Symlinking: /ros2_ws/install/luna_control/include/luna_control/luna_control/LunaController.hpp
+-- Symlinking: /ros2_ws/install/luna_control/include/luna_control/luna_control/odometry.hpp
+-- Symlinking: /ros2_ws/install/luna_control/include/luna_control/luna_control/speed_limiter.hpp
+-- Symlinking: /ros2_ws/install/luna_control/share/luna_control/environment/library_path.sh
+-- Symlinking: /ros2_ws/install/luna_control/share/luna_control/environment/library_path.dsv
+-- Symlinking: /ros2_ws/install/luna_control/share/ament_index/resource_index/package_run_dependencies/luna_control
+-- Symlinking: /ros2_ws/install/luna_control/share/ament_index/resource_index/parent_prefix_path/luna_control
+-- Symlinking: /ros2_ws/install/luna_control/share/luna_control/environment/ament_prefix_path.sh
+-- Symlinking: /ros2_ws/install/luna_control/share/luna_control/environment/ament_prefix_path.dsv
+-- Symlinking: /ros2_ws/install/luna_control/share/luna_control/environment/path.sh
+-- Symlinking: /ros2_ws/install/luna_control/share/luna_control/environment/path.dsv
+-- Symlinking: /ros2_ws/install/luna_control/share/luna_control/local_setup.bash
+-- Symlinking: /ros2_ws/install/luna_control/share/luna_control/local_setup.sh
+-- Symlinking: /ros2_ws/install/luna_control/share/luna_control/local_setup.zsh
+-- Symlinking: /ros2_ws/install/luna_control/share/luna_control/local_setup.dsv
+-- Symlinking: /ros2_ws/install/luna_control/share/luna_control/package.dsv
+-- Symlinking: /ros2_ws/install/luna_control/share/ament_index/resource_index/packages/luna_control
+-- Symlinking: /ros2_ws/install/luna_control/share/ament_index/resource_index/controller_interface__pluginlib__plugin/luna_control
+-- Symlinking: /ros2_ws/install/luna_control/share/luna_control/cmake/ament_cmake_export_dependencies-extras.cmake
+-- Symlinking: /ros2_ws/install/luna_control/share/luna_control/cmake/ament_cmake_export_targets-extras.cmake
+-- Symlinking: /ros2_ws/install/luna_control/share/luna_control/cmake/luna_controlConfig.cmake
+-- Symlinking: /ros2_ws/install/luna_control/share/luna_control/cmake/luna_controlConfig-version.cmake
+-- Symlinking: /ros2_ws/install/luna_control/share/luna_control/package.xml
+-- Installing: /ros2_ws/install/luna_control/lib/libluna_control.so
+-- Set non-toolchain portion of runtime path of "/ros2_ws/install/luna_control/lib/libluna_control.so" to ""
+-- Installing: /ros2_ws/install/luna_control/share/luna_control/cmake/export_luna_controlExport.cmake
+-- Installing: /ros2_ws/install/luna_control/share/luna_control/cmake/export_luna_controlExport-noconfig.cmake

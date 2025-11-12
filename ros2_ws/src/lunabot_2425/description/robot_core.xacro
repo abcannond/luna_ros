@@ -37,16 +37,16 @@
 
     <link name="chassis">
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0 0 0" rpy=" -1.57079632679489 -3.14159265358979 -1.57079632679489" />
             <geometry>
-                <mesh filename="package://lunabot_2425/stl/chassis.stl" />
+                <mesh filename="package://lunabot_2425/stl/bucket_meter.stl" />
             </geometry>
             <material name="white" />
         </visual>
         <collision>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0 0 0" rpy=" -1.57079632679489 -3.14159265358979 -1.57079632679489" />
             <geometry>
-                <mesh filename="package://lunabot_2425/stl/chassis.stl" />
+                <mesh filename="package://lunabot_2425/stl/bucket_meter.stl" />
             </geometry>
         </collision>
         <inertial>
