@@ -1,0 +1,323 @@
+[0.157s] DEBUG:colcon:Command line arguments: ['/usr/bin/colcon', 'build', '--symlink-install']
+[0.158s] DEBUG:colcon:Parsed command line arguments: Namespace(log_base=None, log_level=None, verb_name='build', build_base='build', install_base='install', merge_install=False, symlink_install=True, test_result_base=None, continue_on_error=False, executor='parallel', parallel_workers=4, event_handlers=None, ignore_user_meta=False, metas=['./colcon.meta'], base_paths=['.'], packages_ignore=None, packages_ignore_regex=None, paths=None, packages_up_to=None, packages_up_to_regex=None, packages_above=None, packages_above_and_dependencies=None, packages_above_depth=None, packages_select_by_dep=None, packages_skip_by_dep=None, packages_skip_up_to=None, packages_select_build_failed=False, packages_skip_build_finished=False, packages_select_test_failures=False, packages_skip_test_passed=False, packages_select=None, packages_skip=None, packages_select_regex=None, packages_skip_regex=None, packages_start=None, packages_end=None, cmake_args=None, cmake_target=None, cmake_target_skip_unavailable=False, cmake_clean_cache=False, cmake_clean_first=False, cmake_force_configure=False, ament_cmake_args=None, catkin_cmake_args=None, catkin_skip_building_tests=False, mixin_files=None, mixin=None, verb_parser=<colcon_mixin.mixin.mixin_argument.MixinArgumentDecorator object at 0x7bcddaceff50>, verb_extension=<colcon_core.verb.build.BuildVerb object at 0x7bcddae17c80>, main=<bound method BuildVerb.main of <colcon_core.verb.build.BuildVerb object at 0x7bcddae17c80>>, mixin_verb=('build',))
+[0.212s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) check parameters
+[0.213s] INFO:colcon.colcon_metadata.package_discovery.colcon_meta:Using configuration from '/root/.colcon/metadata/default/Gazebo.meta'
+[0.214s] INFO:colcon.colcon_metadata.package_discovery.colcon_meta:Using configuration from '/root/.colcon/metadata/default/fastdds.meta'
+[0.214s] INFO:colcon.colcon_metadata.package_discovery.colcon_meta:Using configuration from '/root/.colcon/metadata/default/fastrtps.meta'
+[0.214s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) check parameters
+[0.214s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) check parameters
+[0.214s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) check parameters
+[0.214s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) discover
+[0.214s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) discover
+[0.214s] INFO:colcon.colcon_core.package_discovery:Crawling recursively for packages in '/ros2_ws'
+[0.215s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ignore', 'ignore_ament_install']
+[0.215s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore'
+[0.215s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore_ament_install'
+[0.215s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_pkg']
+[0.215s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_pkg'
+[0.215s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_meta']
+[0.215s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_meta'
+[0.215s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ros']
+[0.215s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ros'
+[0.250s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['cmake', 'python']
+[0.250s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'cmake'
+[0.250s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python'
+[0.250s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['python_setup_py']
+[0.250s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python_setup_py'
+[0.250s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extensions ['ignore', 'ignore_ament_install']
+[0.250s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extension 'ignore'
+[0.250s] Level 1:colcon.colcon_core.package_identification:_identify(build) ignored
+[0.250s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extensions ['ignore', 'ignore_ament_install']
+[0.250s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extension 'ignore'
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(install) ignored
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extensions ['ignore', 'ignore_ament_install']
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extension 'ignore'
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(log) ignored
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['ignore', 'ignore_ament_install']
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ignore'
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ignore_ament_install'
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['colcon_pkg']
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'colcon_pkg'
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['colcon_meta']
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'colcon_meta'
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['ros']
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ros'
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['cmake', 'python']
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'cmake'
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'python'
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['python_setup_py']
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'python_setup_py'
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(src/luna_control) by extensions ['ignore', 'ignore_ament_install']
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(src/luna_control) by extension 'ignore'
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(src/luna_control) by extension 'ignore_ament_install'
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(src/luna_control) by extensions ['colcon_pkg']
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(src/luna_control) by extension 'colcon_pkg'
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(src/luna_control) by extensions ['colcon_meta']
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(src/luna_control) by extension 'colcon_meta'
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(src/luna_control) by extensions ['ros']
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(src/luna_control) by extension 'ros'
+[0.256s] DEBUG:colcon.colcon_core.package_identification:Package 'src/luna_control' with type 'ros.ament_cmake' and name 'luna_control'
+[0.256s] Level 1:colcon.colcon_core.package_identification:_identify(src/lunabot_2425) by extensions ['ignore', 'ignore_ament_install']
+[0.256s] Level 1:colcon.colcon_core.package_identification:_identify(src/lunabot_2425) by extension 'ignore'
+[0.256s] Level 1:colcon.colcon_core.package_identification:_identify(src/lunabot_2425) by extension 'ignore_ament_install'
+[0.256s] Level 1:colcon.colcon_core.package_identification:_identify(src/lunabot_2425) by extensions ['colcon_pkg']
+[0.256s] Level 1:colcon.colcon_core.package_identification:_identify(src/lunabot_2425) by extension 'colcon_pkg'
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(src/lunabot_2425) by extensions ['colcon_meta']
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(src/lunabot_2425) by extension 'colcon_meta'
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(src/lunabot_2425) by extensions ['ros']
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(src/lunabot_2425) by extension 'ros'
+[0.257s] DEBUG:colcon.colcon_core.package_identification:Package 'src/lunabot_2425' with type 'ros.ament_cmake' and name 'lunabot_2425'
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(src/teleop_twist_keyboard) by extensions ['ignore', 'ignore_ament_install']
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(src/teleop_twist_keyboard) by extension 'ignore'
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(src/teleop_twist_keyboard) by extension 'ignore_ament_install'
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(src/teleop_twist_keyboard) by extensions ['colcon_pkg']
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(src/teleop_twist_keyboard) by extension 'colcon_pkg'
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(src/teleop_twist_keyboard) by extensions ['colcon_meta']
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(src/teleop_twist_keyboard) by extension 'colcon_meta'
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(src/teleop_twist_keyboard) by extensions ['ros']
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(src/teleop_twist_keyboard) by extension 'ros'
+[0.258s] DEBUG:colcon.colcon_core.package_identification:Package 'src/teleop_twist_keyboard' with type 'ros.ament_python' and name 'teleop_twist_keyboard'
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(src/twist_stamper) by extensions ['ignore', 'ignore_ament_install']
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(src/twist_stamper) by extension 'ignore'
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(src/twist_stamper) by extension 'ignore_ament_install'
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(src/twist_stamper) by extensions ['colcon_pkg']
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(src/twist_stamper) by extension 'colcon_pkg'
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(src/twist_stamper) by extensions ['colcon_meta']
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(src/twist_stamper) by extension 'colcon_meta'
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(src/twist_stamper) by extensions ['ros']
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(src/twist_stamper) by extension 'ros'
+[0.260s] DEBUG:colcon.colcon_core.package_identification:Package 'src/twist_stamper' with type 'ros.ament_python' and name 'twist_stamper'
+[0.260s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) using defaults
+[0.260s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) discover
+[0.260s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) using defaults
+[0.260s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) discover
+[0.260s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) using defaults
+[0.284s] Level 5:colcon.colcon_core.verb:set package 'luna_control' build argument 'cmake_args' from command line to 'None'
+[0.284s] Level 5:colcon.colcon_core.verb:set package 'luna_control' build argument 'cmake_target' from command line to 'None'
+[0.284s] Level 5:colcon.colcon_core.verb:set package 'luna_control' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.284s] Level 5:colcon.colcon_core.verb:set package 'luna_control' build argument 'cmake_clean_cache' from command line to 'False'
+[0.284s] Level 5:colcon.colcon_core.verb:set package 'luna_control' build argument 'cmake_clean_first' from command line to 'False'
+[0.284s] Level 5:colcon.colcon_core.verb:set package 'luna_control' build argument 'cmake_force_configure' from command line to 'False'
+[0.284s] Level 5:colcon.colcon_core.verb:set package 'luna_control' build argument 'ament_cmake_args' from command line to 'None'
+[0.284s] Level 5:colcon.colcon_core.verb:set package 'luna_control' build argument 'catkin_cmake_args' from command line to 'None'
+[0.284s] Level 5:colcon.colcon_core.verb:set package 'luna_control' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.284s] DEBUG:colcon.colcon_core.verb:Building package 'luna_control' with the following arguments: {'ament_cmake_args': None, 'build_base': '/ros2_ws/build/luna_control', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/ros2_ws/install/luna_control', 'merge_install': False, 'path': '/ros2_ws/src/luna_control', 'symlink_install': True, 'test_result_base': None}
+[0.284s] Level 5:colcon.colcon_core.verb:set package 'lunabot_2425' build argument 'cmake_args' from command line to 'None'
+[0.284s] Level 5:colcon.colcon_core.verb:set package 'lunabot_2425' build argument 'cmake_target' from command line to 'None'
+[0.284s] Level 5:colcon.colcon_core.verb:set package 'lunabot_2425' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.284s] Level 5:colcon.colcon_core.verb:set package 'lunabot_2425' build argument 'cmake_clean_cache' from command line to 'False'
+[0.284s] Level 5:colcon.colcon_core.verb:set package 'lunabot_2425' build argument 'cmake_clean_first' from command line to 'False'
+[0.285s] Level 5:colcon.colcon_core.verb:set package 'lunabot_2425' build argument 'cmake_force_configure' from command line to 'False'
+[0.285s] Level 5:colcon.colcon_core.verb:set package 'lunabot_2425' build argument 'ament_cmake_args' from command line to 'None'
+[0.285s] Level 5:colcon.colcon_core.verb:set package 'lunabot_2425' build argument 'catkin_cmake_args' from command line to 'None'
+[0.285s] Level 5:colcon.colcon_core.verb:set package 'lunabot_2425' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.285s] DEBUG:colcon.colcon_core.verb:Building package 'lunabot_2425' with the following arguments: {'ament_cmake_args': None, 'build_base': '/ros2_ws/build/lunabot_2425', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/ros2_ws/install/lunabot_2425', 'merge_install': False, 'path': '/ros2_ws/src/lunabot_2425', 'symlink_install': True, 'test_result_base': None}
+[0.285s] Level 5:colcon.colcon_core.verb:set package 'teleop_twist_keyboard' build argument 'cmake_args' from command line to 'None'
+[0.285s] Level 5:colcon.colcon_core.verb:set package 'teleop_twist_keyboard' build argument 'cmake_target' from command line to 'None'
+[0.285s] Level 5:colcon.colcon_core.verb:set package 'teleop_twist_keyboard' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.285s] Level 5:colcon.colcon_core.verb:set package 'teleop_twist_keyboard' build argument 'cmake_clean_cache' from command line to 'False'
+[0.285s] Level 5:colcon.colcon_core.verb:set package 'teleop_twist_keyboard' build argument 'cmake_clean_first' from command line to 'False'
+[0.285s] Level 5:colcon.colcon_core.verb:set package 'teleop_twist_keyboard' build argument 'cmake_force_configure' from command line to 'False'
+[0.285s] Level 5:colcon.colcon_core.verb:set package 'teleop_twist_keyboard' build argument 'ament_cmake_args' from command line to 'None'
+[0.285s] Level 5:colcon.colcon_core.verb:set package 'teleop_twist_keyboard' build argument 'catkin_cmake_args' from command line to 'None'
+[0.285s] Level 5:colcon.colcon_core.verb:set package 'teleop_twist_keyboard' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.285s] DEBUG:colcon.colcon_core.verb:Building package 'teleop_twist_keyboard' with the following arguments: {'ament_cmake_args': None, 'build_base': '/ros2_ws/build/teleop_twist_keyboard', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/ros2_ws/install/teleop_twist_keyboard', 'merge_install': False, 'path': '/ros2_ws/src/teleop_twist_keyboard', 'symlink_install': True, 'test_result_base': None}
+[0.285s] Level 5:colcon.colcon_core.verb:set package 'twist_stamper' build argument 'cmake_args' from command line to 'None'
+[0.286s] Level 5:colcon.colcon_core.verb:set package 'twist_stamper' build argument 'cmake_target' from command line to 'None'
+[0.286s] Level 5:colcon.colcon_core.verb:set package 'twist_stamper' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.286s] Level 5:colcon.colcon_core.verb:set package 'twist_stamper' build argument 'cmake_clean_cache' from command line to 'False'
+[0.286s] Level 5:colcon.colcon_core.verb:set package 'twist_stamper' build argument 'cmake_clean_first' from command line to 'False'
+[0.286s] Level 5:colcon.colcon_core.verb:set package 'twist_stamper' build argument 'cmake_force_configure' from command line to 'False'
+[0.286s] Level 5:colcon.colcon_core.verb:set package 'twist_stamper' build argument 'ament_cmake_args' from command line to 'None'
+[0.286s] Level 5:colcon.colcon_core.verb:set package 'twist_stamper' build argument 'catkin_cmake_args' from command line to 'None'
+[0.286s] Level 5:colcon.colcon_core.verb:set package 'twist_stamper' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.286s] DEBUG:colcon.colcon_core.verb:Building package 'twist_stamper' with the following arguments: {'ament_cmake_args': None, 'build_base': '/ros2_ws/build/twist_stamper', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/ros2_ws/install/twist_stamper', 'merge_install': False, 'path': '/ros2_ws/src/twist_stamper', 'symlink_install': True, 'test_result_base': None}
+[0.286s] INFO:colcon.colcon_core.executor:Executing jobs using 'parallel' executor
+[0.287s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete
+[0.287s] INFO:colcon.colcon_ros.task.ament_cmake.build:Building ROS package in '/ros2_ws/src/luna_control' with build type 'ament_cmake'
+[0.287s] INFO:colcon.colcon_cmake.task.cmake.build:Building CMake package in '/ros2_ws/src/luna_control'
+[0.292s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_core.shell.bat': Not used on non-Windows systems
+[0.293s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.293s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.300s] INFO:colcon.colcon_ros.task.ament_cmake.build:Building ROS package in '/ros2_ws/src/lunabot_2425' with build type 'ament_cmake'
+[0.301s] INFO:colcon.colcon_cmake.task.cmake.build:Building CMake package in '/ros2_ws/src/lunabot_2425'
+[0.301s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.301s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.306s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/ros2_ws/src/teleop_twist_keyboard' with build type 'ament_python'
+[0.306s] Level 1:colcon.colcon_core.shell:create_environment_hook('teleop_twist_keyboard', 'ament_prefix_path')
+[0.307s] INFO:colcon.colcon_core.shell:Creating environment hook '/ros2_ws/install/teleop_twist_keyboard/share/teleop_twist_keyboard/hook/ament_prefix_path.ps1'
+[0.308s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/ros2_ws/install/teleop_twist_keyboard/share/teleop_twist_keyboard/hook/ament_prefix_path.dsv'
+[0.309s] INFO:colcon.colcon_core.shell:Creating environment hook '/ros2_ws/install/teleop_twist_keyboard/share/teleop_twist_keyboard/hook/ament_prefix_path.sh'
+[0.310s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.310s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.317s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/ros2_ws/src/twist_stamper' with build type 'ament_python'
+[0.317s] Level 1:colcon.colcon_core.shell:create_environment_hook('twist_stamper', 'ament_prefix_path')
+[0.318s] INFO:colcon.colcon_core.shell:Creating environment hook '/ros2_ws/install/twist_stamper/share/twist_stamper/hook/ament_prefix_path.ps1'
+[0.319s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/ros2_ws/install/twist_stamper/share/twist_stamper/hook/ament_prefix_path.dsv'
+[0.319s] INFO:colcon.colcon_core.shell:Creating environment hook '/ros2_ws/install/twist_stamper/share/twist_stamper/hook/ament_prefix_path.sh'
+[0.320s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.320s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.331s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/ros2_ws/build/luna_control': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake /ros2_ws/src/luna_control -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/ros2_ws/install/luna_control
+[0.336s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/ros2_ws/build/lunabot_2425': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake /ros2_ws/src/lunabot_2425 -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/ros2_ws/install/lunabot_2425
+[0.724s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/ros2_ws/src/teleop_twist_keyboard'
+[0.724s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.724s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[1.142s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/ros2_ws/src/twist_stamper'
+[1.142s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[1.142s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[2.113s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/ros2_ws/build/lunabot_2425' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake /ros2_ws/src/lunabot_2425 -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/ros2_ws/install/lunabot_2425
+[2.117s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/ros2_ws/build/lunabot_2425': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake --build /ros2_ws/build/lunabot_2425 -- -j4 -l4
+[2.306s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/ros2_ws/build/lunabot_2425' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake --build /ros2_ws/build/lunabot_2425 -- -j4 -l4
+[2.349s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/ros2_ws/build/lunabot_2425': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake --install /ros2_ws/build/lunabot_2425
+[2.526s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/ros2_ws/build/teleop_twist_keyboard': PYTHONPATH=/ros2_ws/build/teleop_twist_keyboard/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/ros2_ws/install/teleop_twist_keyboard/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /ros2_ws/build/teleop_twist_keyboard/build --no-deps symlink_data
+[2.599s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/ros2_ws/build/twist_stamper': PYTHONPATH=/ros2_ws/build/twist_stamper/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/ros2_ws/install/twist_stamper/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /ros2_ws/build/twist_stamper/build --no-deps symlink_data
+[3.290s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(lunabot_2425)
+[3.291s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/ros2_ws/build/lunabot_2425' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake --install /ros2_ws/build/lunabot_2425
+[3.296s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/lunabot_2425' for CMake module files
+[3.297s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/lunabot_2425' for CMake config files
+[3.298s] Level 1:colcon.colcon_core.shell:create_environment_hook('lunabot_2425', 'cmake_prefix_path')
+[3.298s] INFO:colcon.colcon_core.shell:Creating environment hook '/ros2_ws/install/lunabot_2425/share/lunabot_2425/hook/cmake_prefix_path.ps1'
+[3.300s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/ros2_ws/install/lunabot_2425/share/lunabot_2425/hook/cmake_prefix_path.dsv'
+[3.301s] INFO:colcon.colcon_core.shell:Creating environment hook '/ros2_ws/install/lunabot_2425/share/lunabot_2425/hook/cmake_prefix_path.sh'
+[3.302s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/lunabot_2425/bin'
+[3.302s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/lunabot_2425/lib/pkgconfig/lunabot_2425.pc'
+[3.303s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/lunabot_2425/lib/python3.12/site-packages'
+[3.304s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/lunabot_2425/bin'
+[3.305s] INFO:colcon.colcon_core.shell:Creating package script '/ros2_ws/install/lunabot_2425/share/lunabot_2425/package.ps1'
+[3.307s] INFO:colcon.colcon_core.shell:Creating package descriptor '/ros2_ws/install/lunabot_2425/share/lunabot_2425/package.dsv'
+[3.308s] INFO:colcon.colcon_core.shell:Creating package script '/ros2_ws/install/lunabot_2425/share/lunabot_2425/package.sh'
+[3.309s] INFO:colcon.colcon_core.shell:Creating package script '/ros2_ws/install/lunabot_2425/share/lunabot_2425/package.bash'
+[3.311s] INFO:colcon.colcon_core.shell:Creating package script '/ros2_ws/install/lunabot_2425/share/lunabot_2425/package.zsh'
+[3.312s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/ros2_ws/install/lunabot_2425/share/colcon-core/packages/lunabot_2425)
+[3.313s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(lunabot_2425)
+[3.313s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/lunabot_2425' for CMake module files
+[3.315s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/lunabot_2425' for CMake config files
+[3.316s] Level 1:colcon.colcon_core.shell:create_environment_hook('lunabot_2425', 'cmake_prefix_path')
+[3.316s] INFO:colcon.colcon_core.shell:Creating environment hook '/ros2_ws/install/lunabot_2425/share/lunabot_2425/hook/cmake_prefix_path.ps1'
+[3.317s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/ros2_ws/install/lunabot_2425/share/lunabot_2425/hook/cmake_prefix_path.dsv'
+[3.318s] INFO:colcon.colcon_core.shell:Creating environment hook '/ros2_ws/install/lunabot_2425/share/lunabot_2425/hook/cmake_prefix_path.sh'
+[3.319s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/lunabot_2425/bin'
+[3.319s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/lunabot_2425/lib/pkgconfig/lunabot_2425.pc'
+[3.320s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/lunabot_2425/lib/python3.12/site-packages'
+[3.321s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/lunabot_2425/bin'
+[3.321s] INFO:colcon.colcon_core.shell:Creating package script '/ros2_ws/install/lunabot_2425/share/lunabot_2425/package.ps1'
+[3.323s] INFO:colcon.colcon_core.shell:Creating package descriptor '/ros2_ws/install/lunabot_2425/share/lunabot_2425/package.dsv'
+[3.324s] INFO:colcon.colcon_core.shell:Creating package script '/ros2_ws/install/lunabot_2425/share/lunabot_2425/package.sh'
+[3.325s] INFO:colcon.colcon_core.shell:Creating package script '/ros2_ws/install/lunabot_2425/share/lunabot_2425/package.bash'
+[3.326s] INFO:colcon.colcon_core.shell:Creating package script '/ros2_ws/install/lunabot_2425/share/lunabot_2425/package.zsh'
+[3.326s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/ros2_ws/install/lunabot_2425/share/colcon-core/packages/lunabot_2425)
+[3.871s] Level 1:colcon.colcon_core.shell:create_environment_hook('twist_stamper', 'pythonpath_develop')
+[3.872s] INFO:colcon.colcon_core.shell:Creating environment hook '/ros2_ws/build/twist_stamper/share/twist_stamper/hook/pythonpath_develop.ps1'
+[3.873s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/ros2_ws/build/twist_stamper' returned '0': PYTHONPATH=/ros2_ws/build/twist_stamper/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/ros2_ws/install/twist_stamper/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /ros2_ws/build/twist_stamper/build --no-deps symlink_data
+[3.874s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/ros2_ws/build/twist_stamper/share/twist_stamper/hook/pythonpath_develop.dsv'
+[3.874s] INFO:colcon.colcon_core.shell:Creating environment hook '/ros2_ws/build/twist_stamper/share/twist_stamper/hook/pythonpath_develop.sh'
+[3.875s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/twist_stamper' for CMake module files
+[3.876s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/twist_stamper' for CMake config files
+[3.877s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/twist_stamper/lib'
+[3.878s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/twist_stamper/bin'
+[3.878s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/twist_stamper/lib/pkgconfig/twist_stamper.pc'
+[3.878s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/twist_stamper/lib/python3.12/site-packages'
+[3.878s] Level 1:colcon.colcon_core.shell:create_environment_hook('twist_stamper', 'pythonpath')
+[3.879s] INFO:colcon.colcon_core.shell:Creating environment hook '/ros2_ws/install/twist_stamper/share/twist_stamper/hook/pythonpath.ps1'
+[3.879s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/ros2_ws/install/twist_stamper/share/twist_stamper/hook/pythonpath.dsv'
+[3.880s] INFO:colcon.colcon_core.shell:Creating environment hook '/ros2_ws/install/twist_stamper/share/twist_stamper/hook/pythonpath.sh'
+[3.880s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/twist_stamper/bin'
+[3.881s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(twist_stamper)
+[3.881s] INFO:colcon.colcon_core.shell:Creating package script '/ros2_ws/install/twist_stamper/share/twist_stamper/package.ps1'
+[3.882s] INFO:colcon.colcon_core.shell:Creating package descriptor '/ros2_ws/install/twist_stamper/share/twist_stamper/package.dsv'
+[3.882s] INFO:colcon.colcon_core.shell:Creating package script '/ros2_ws/install/twist_stamper/share/twist_stamper/package.sh'
+[3.883s] INFO:colcon.colcon_core.shell:Creating package script '/ros2_ws/install/twist_stamper/share/twist_stamper/package.bash'
+[3.885s] INFO:colcon.colcon_core.shell:Creating package script '/ros2_ws/install/twist_stamper/share/twist_stamper/package.zsh'
+[3.886s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/ros2_ws/install/twist_stamper/share/colcon-core/packages/twist_stamper)
+[4.032s] Level 1:colcon.colcon_core.shell:create_environment_hook('teleop_twist_keyboard', 'pythonpath_develop')
+[4.033s] INFO:colcon.colcon_core.shell:Creating environment hook '/ros2_ws/build/teleop_twist_keyboard/share/teleop_twist_keyboard/hook/pythonpath_develop.ps1'
+[4.033s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/ros2_ws/build/teleop_twist_keyboard' returned '0': PYTHONPATH=/ros2_ws/build/teleop_twist_keyboard/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/ros2_ws/install/teleop_twist_keyboard/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /ros2_ws/build/teleop_twist_keyboard/build --no-deps symlink_data
+[4.035s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/ros2_ws/build/teleop_twist_keyboard/share/teleop_twist_keyboard/hook/pythonpath_develop.dsv'
+[4.036s] INFO:colcon.colcon_core.shell:Creating environment hook '/ros2_ws/build/teleop_twist_keyboard/share/teleop_twist_keyboard/hook/pythonpath_develop.sh'
+[4.037s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/teleop_twist_keyboard' for CMake module files
+[4.038s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/teleop_twist_keyboard' for CMake config files
+[4.039s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/teleop_twist_keyboard/lib'
+[4.039s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/teleop_twist_keyboard/bin'
+[4.039s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/teleop_twist_keyboard/lib/pkgconfig/teleop_twist_keyboard.pc'
+[4.040s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/teleop_twist_keyboard/lib/python3.12/site-packages'
+[4.040s] Level 1:colcon.colcon_core.shell:create_environment_hook('teleop_twist_keyboard', 'pythonpath')
+[4.041s] INFO:colcon.colcon_core.shell:Creating environment hook '/ros2_ws/install/teleop_twist_keyboard/share/teleop_twist_keyboard/hook/pythonpath.ps1'
+[4.041s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/ros2_ws/install/teleop_twist_keyboard/share/teleop_twist_keyboard/hook/pythonpath.dsv'
+[4.042s] INFO:colcon.colcon_core.shell:Creating environment hook '/ros2_ws/install/teleop_twist_keyboard/share/teleop_twist_keyboard/hook/pythonpath.sh'
+[4.044s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/teleop_twist_keyboard/bin'
+[4.044s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(teleop_twist_keyboard)
+[4.044s] INFO:colcon.colcon_core.shell:Creating package script '/ros2_ws/install/teleop_twist_keyboard/share/teleop_twist_keyboard/package.ps1'
+[4.045s] INFO:colcon.colcon_core.shell:Creating package descriptor '/ros2_ws/install/teleop_twist_keyboard/share/teleop_twist_keyboard/package.dsv'
+[4.046s] INFO:colcon.colcon_core.shell:Creating package script '/ros2_ws/install/teleop_twist_keyboard/share/teleop_twist_keyboard/package.sh'
+[4.047s] INFO:colcon.colcon_core.shell:Creating package script '/ros2_ws/install/teleop_twist_keyboard/share/teleop_twist_keyboard/package.bash'
+[4.048s] INFO:colcon.colcon_core.shell:Creating package script '/ros2_ws/install/teleop_twist_keyboard/share/teleop_twist_keyboard/package.zsh'
+[4.048s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/ros2_ws/install/teleop_twist_keyboard/share/colcon-core/packages/teleop_twist_keyboard)
+[4.584s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/ros2_ws/build/luna_control' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake /ros2_ws/src/luna_control -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/ros2_ws/install/luna_control
+[4.585s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/ros2_ws/build/luna_control': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake --build /ros2_ws/build/luna_control -- -j4 -l4
+[24.429s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/ros2_ws/build/luna_control' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake --build /ros2_ws/build/luna_control -- -j4 -l4
+[24.431s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/ros2_ws/build/luna_control': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake --install /ros2_ws/build/luna_control
+[24.802s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(luna_control)
+[24.802s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/luna_control' for CMake module files
+[24.803s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/ros2_ws/build/luna_control' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake --install /ros2_ws/build/luna_control
+[24.804s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/luna_control' for CMake config files
+[24.804s] Level 1:colcon.colcon_core.shell:create_environment_hook('luna_control', 'cmake_prefix_path')
+[24.805s] INFO:colcon.colcon_core.shell:Creating environment hook '/ros2_ws/install/luna_control/share/luna_control/hook/cmake_prefix_path.ps1'
+[24.805s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/ros2_ws/install/luna_control/share/luna_control/hook/cmake_prefix_path.dsv'
+[24.806s] INFO:colcon.colcon_core.shell:Creating environment hook '/ros2_ws/install/luna_control/share/luna_control/hook/cmake_prefix_path.sh'
+[24.807s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/luna_control/lib'
+[24.807s] Level 1:colcon.colcon_core.shell:create_environment_hook('luna_control', 'ld_library_path_lib')
+[24.807s] INFO:colcon.colcon_core.shell:Creating environment hook '/ros2_ws/install/luna_control/share/luna_control/hook/ld_library_path_lib.ps1'
+[24.807s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/ros2_ws/install/luna_control/share/luna_control/hook/ld_library_path_lib.dsv'
+[24.808s] INFO:colcon.colcon_core.shell:Creating environment hook '/ros2_ws/install/luna_control/share/luna_control/hook/ld_library_path_lib.sh'
+[24.808s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/luna_control/bin'
+[24.809s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/luna_control/lib/pkgconfig/luna_control.pc'
+[24.809s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/luna_control/lib/python3.12/site-packages'
+[24.809s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/luna_control/bin'
+[24.810s] INFO:colcon.colcon_core.shell:Creating package script '/ros2_ws/install/luna_control/share/luna_control/package.ps1'
+[24.810s] INFO:colcon.colcon_core.shell:Creating package descriptor '/ros2_ws/install/luna_control/share/luna_control/package.dsv'
+[24.811s] INFO:colcon.colcon_core.shell:Creating package script '/ros2_ws/install/luna_control/share/luna_control/package.sh'
+[24.811s] INFO:colcon.colcon_core.shell:Creating package script '/ros2_ws/install/luna_control/share/luna_control/package.bash'
+[24.812s] INFO:colcon.colcon_core.shell:Creating package script '/ros2_ws/install/luna_control/share/luna_control/package.zsh'
+[24.812s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/ros2_ws/install/luna_control/share/colcon-core/packages/luna_control)
+[24.813s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(luna_control)
+[24.813s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/luna_control' for CMake module files
+[24.814s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/luna_control' for CMake config files
+[24.814s] Level 1:colcon.colcon_core.shell:create_environment_hook('luna_control', 'cmake_prefix_path')
+[24.815s] INFO:colcon.colcon_core.shell:Creating environment hook '/ros2_ws/install/luna_control/share/luna_control/hook/cmake_prefix_path.ps1'
+[24.815s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/ros2_ws/install/luna_control/share/luna_control/hook/cmake_prefix_path.dsv'
+[24.816s] INFO:colcon.colcon_core.shell:Creating environment hook '/ros2_ws/install/luna_control/share/luna_control/hook/cmake_prefix_path.sh'
+[24.816s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/luna_control/lib'
+[24.817s] Level 1:colcon.colcon_core.shell:create_environment_hook('luna_control', 'ld_library_path_lib')
+[24.817s] INFO:colcon.colcon_core.shell:Creating environment hook '/ros2_ws/install/luna_control/share/luna_control/hook/ld_library_path_lib.ps1'
+[24.817s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/ros2_ws/install/luna_control/share/luna_control/hook/ld_library_path_lib.dsv'
+[24.818s] INFO:colcon.colcon_core.shell:Creating environment hook '/ros2_ws/install/luna_control/share/luna_control/hook/ld_library_path_lib.sh'
+[24.818s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/luna_control/bin'
+[24.818s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/luna_control/lib/pkgconfig/luna_control.pc'
+[24.818s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/luna_control/lib/python3.12/site-packages'
+[24.819s] Level 1:colcon.colcon_core.environment:checking '/ros2_ws/install/luna_control/bin'
+[24.819s] INFO:colcon.colcon_core.shell:Creating package script '/ros2_ws/install/luna_control/share/luna_control/package.ps1'
+[24.820s] INFO:colcon.colcon_core.shell:Creating package descriptor '/ros2_ws/install/luna_control/share/luna_control/package.dsv'
+[24.821s] INFO:colcon.colcon_core.shell:Creating package script '/ros2_ws/install/luna_control/share/luna_control/package.sh'
+[24.821s] INFO:colcon.colcon_core.shell:Creating package script '/ros2_ws/install/luna_control/share/luna_control/package.bash'
+[24.822s] INFO:colcon.colcon_core.shell:Creating package script '/ros2_ws/install/luna_control/share/luna_control/package.zsh'
+[24.822s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/ros2_ws/install/luna_control/share/colcon-core/packages/luna_control)
+[24.823s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:closing loop
+[24.823s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:loop closed
+[24.823s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete finished with '0'
+[24.824s] DEBUG:colcon.colcon_core.event_reactor:joining thread
+[24.834s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.notify_send': Could not find 'notify-send'
+[24.835s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.terminal_notifier': Not used on non-Darwin systems
+[24.835s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.win32': Not used on non-Windows systems
+[24.835s] INFO:colcon.colcon_notification.desktop_notification:Sending desktop notification using 'notify2'
+[24.838s] DEBUG:colcon.colcon_notification.desktop_notification.notify2:Failed to initialize notify2: org.freedesktop.DBus.Error.Spawn.ExecFailed: /usr/bin/dbus-launch terminated abnormally without any error message
+[24.839s] DEBUG:colcon.colcon_core.event_reactor:joined thread
+[24.839s] INFO:colcon.colcon_core.shell:Creating prefix script '/ros2_ws/install/local_setup.ps1'
+[24.841s] INFO:colcon.colcon_core.shell:Creating prefix util module '/ros2_ws/install/_local_setup_util_ps1.py'
+[24.842s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/ros2_ws/install/setup.ps1'
+[24.844s] INFO:colcon.colcon_core.shell:Creating prefix script '/ros2_ws/install/local_setup.sh'
+[24.845s] INFO:colcon.colcon_core.shell:Creating prefix util module '/ros2_ws/install/_local_setup_util_sh.py'
+[24.846s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/ros2_ws/install/setup.sh'
+[24.847s] INFO:colcon.colcon_core.shell:Creating prefix script '/ros2_ws/install/local_setup.bash'
+[24.848s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/ros2_ws/install/setup.bash'
+[24.849s] INFO:colcon.colcon_core.shell:Creating prefix script '/ros2_ws/install/local_setup.zsh'
+[24.850s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/ros2_ws/install/setup.zsh'

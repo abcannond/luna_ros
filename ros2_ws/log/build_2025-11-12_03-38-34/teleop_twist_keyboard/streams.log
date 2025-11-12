@@ -1,0 +1,32 @@
+[1.729s] Invoking command in '/ros2_ws/build/teleop_twist_keyboard': PYTHONPATH=/ros2_ws/build/teleop_twist_keyboard/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/ros2_ws/install/teleop_twist_keyboard/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --uninstall --editable --build-directory /ros2_ws/build/teleop_twist_keyboard/build
+[2.158s] running develop
+[2.365s] Removing /ros2_ws/install/teleop_twist_keyboard/lib/python3.12/site-packages/teleop-twist-keyboard.egg-link (link to .)
+[2.427s] Invoked command in '/ros2_ws/build/teleop_twist_keyboard' returned '0': PYTHONPATH=/ros2_ws/build/teleop_twist_keyboard/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/ros2_ws/install/teleop_twist_keyboard/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --uninstall --editable --build-directory /ros2_ws/build/teleop_twist_keyboard/build
+[2.428s] Invoking command in '/ros2_ws/src/teleop_twist_keyboard': PYTHONPATH=/ros2_ws/build/teleop_twist_keyboard/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/ros2_ws/install/teleop_twist_keyboard/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/teleop_twist_keyboard build --build-base /ros2_ws/build/teleop_twist_keyboard/build install --record /ros2_ws/build/teleop_twist_keyboard/install.log --single-version-externally-managed install_data --force
+[2.730s] running egg_info
+[2.750s] writing ../../build/teleop_twist_keyboard/teleop_twist_keyboard.egg-info/PKG-INFO
+[2.750s] writing dependency_links to ../../build/teleop_twist_keyboard/teleop_twist_keyboard.egg-info/dependency_links.txt
+[2.750s] writing entry points to ../../build/teleop_twist_keyboard/teleop_twist_keyboard.egg-info/entry_points.txt
+[2.751s] writing requirements to ../../build/teleop_twist_keyboard/teleop_twist_keyboard.egg-info/requires.txt
+[2.751s] writing top-level names to ../../build/teleop_twist_keyboard/teleop_twist_keyboard.egg-info/top_level.txt
+[2.790s] reading manifest file '../../build/teleop_twist_keyboard/teleop_twist_keyboard.egg-info/SOURCES.txt'
+[2.791s] adding license file 'LICENSE'
+[2.792s] writing manifest file '../../build/teleop_twist_keyboard/teleop_twist_keyboard.egg-info/SOURCES.txt'
+[2.792s] running build
+[2.792s] running build_py
+[2.793s] creating /ros2_ws/build/teleop_twist_keyboard/build
+[2.793s] creating /ros2_ws/build/teleop_twist_keyboard/build/lib
+[2.793s] copying teleop_twist_keyboard.py -> /ros2_ws/build/teleop_twist_keyboard/build/lib
+[2.793s] running install
+[2.800s] running install_lib
+[2.821s] copying /ros2_ws/build/teleop_twist_keyboard/build/lib/teleop_twist_keyboard.py -> /ros2_ws/install/teleop_twist_keyboard/lib/python3.12/site-packages
+[2.822s] byte-compiling /ros2_ws/install/teleop_twist_keyboard/lib/python3.12/site-packages/teleop_twist_keyboard.py to teleop_twist_keyboard.cpython-312.pyc
+[2.824s] running install_data
+[2.824s] copying resource/teleop_twist_keyboard -> /ros2_ws/install/teleop_twist_keyboard/share/ament_index/resource_index/packages
+[2.824s] copying package.xml -> /ros2_ws/install/teleop_twist_keyboard/share/teleop_twist_keyboard
+[2.824s] running install_egg_info
+[2.847s] Copying ../../build/teleop_twist_keyboard/teleop_twist_keyboard.egg-info to /ros2_ws/install/teleop_twist_keyboard/lib/python3.12/site-packages/teleop_twist_keyboard-2.4.0-py3.12.egg-info
+[2.848s] running install_scripts
+[2.993s] Installing teleop_twist_keyboard script to /ros2_ws/install/teleop_twist_keyboard/lib/teleop_twist_keyboard
+[2.994s] writing list of installed files to '/ros2_ws/build/teleop_twist_keyboard/install.log'
+[3.057s] Invoked command in '/ros2_ws/src/teleop_twist_keyboard' returned '0': PYTHONPATH=/ros2_ws/build/teleop_twist_keyboard/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/ros2_ws/install/teleop_twist_keyboard/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/teleop_twist_keyboard build --build-base /ros2_ws/build/teleop_twist_keyboard/build install --record /ros2_ws/build/teleop_twist_keyboard/install.log --single-version-externally-managed install_data --force

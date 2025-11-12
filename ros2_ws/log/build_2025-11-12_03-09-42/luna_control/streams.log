@@ -1,0 +1,278 @@
+[0.043s] Invoking command in '/ros2_ws/build/luna_control': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake /ros2_ws/src/luna_control -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/ros2_ws/install/luna_control
+[0.443s] -- The CXX compiler identification is GNU 13.3.0
+[0.444s] -- Detecting CXX compiler ABI info
+[0.444s] -- Detecting CXX compiler ABI info - done
+[0.458s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.458s] -- Detecting CXX compile features
+[0.459s] -- Detecting CXX compile features - done
+[0.468s] -- Found ament_cmake: 2.5.4 (/opt/ros/jazzy/share/ament_cmake/cmake)
+[0.813s] -- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+[0.991s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[1.160s] -- Found controller_interface: 4.38.0 (/opt/ros/jazzy/share/controller_interface/cmake)
+[1.350s] -- Found rosidl_generator_c: 4.6.6 (/opt/ros/jazzy/share/rosidl_generator_c/cmake)
+[1.409s] -- Found rosidl_generator_cpp: 4.6.6 (/opt/ros/jazzy/share/rosidl_generator_cpp/cmake)
+[1.471s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[1.545s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[2.511s] -- Found TinyXML2 via Config file: /usr/lib/x86_64-linux-gnu/cmake/tinyxml2
+[2.713s] -- Found rmw_implementation_cmake: 7.3.2 (/opt/ros/jazzy/share/rmw_implementation_cmake/cmake)
+[2.727s] -- Found rmw_fastrtps_cpp: 8.4.3 (/opt/ros/jazzy/share/rmw_fastrtps_cpp/cmake)
+[2.844s] -- Found TinyXML2 via Config file: /usr/lib/x86_64-linux-gnu/cmake/tinyxml2
+[3.018s] -- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.0.13")  
+[3.029s] -- Found TinyXML2 via Config file: /usr/lib/x86_64-linux-gnu/cmake/tinyxml2
+[3.068s] -- Found FastRTPS: /opt/ros/jazzy/include (Required is at least version "2.13") 
+[3.077s] -- Found TinyXML2 via Config file: /usr/lib/x86_64-linux-gnu/cmake/tinyxml2
+[3.097s] -- Found TinyXML2 via Config file: /usr/lib/x86_64-linux-gnu/cmake/tinyxml2
+[3.120s] -- Using RMW implementation 'rmw_fastrtps_cpp' as default
+[3.929s] -- Found generate_parameter_library: 0.5.0 (/opt/ros/jazzy/share/generate_parameter_library/cmake)
+[3.938s] -- Found parameter_traits: 0.5.0 (/opt/ros/jazzy/share/parameter_traits/cmake)
+[3.991s] -- Found nav_msgs: 5.3.6 (/opt/ros/jazzy/share/nav_msgs/cmake)
+[4.040s] -- Found tf2: 0.36.14 (/opt/ros/jazzy/share/tf2/cmake)
+[4.051s] -- Found tf2_msgs: 0.36.14 (/opt/ros/jazzy/share/tf2_msgs/cmake)
+[4.225s] -- Configuring done (4.2s)
+[4.270s] -- Generating done (0.0s)
+[4.277s] -- Build files have been written to: /ros2_ws/build/luna_control
+[4.296s] Invoked command in '/ros2_ws/build/luna_control' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake /ros2_ws/src/luna_control -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/ros2_ws/install/luna_control
+[4.297s] Invoking command in '/ros2_ws/build/luna_control': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake --build /ros2_ws/build/luna_control -- -j4 -l4
+[4.380s] [ 16%] [34m[1mRunning `/opt/ros/jazzy/bin/generate_parameter_library_cpp /ros2_ws/build/luna_control/include/luna_control/luna_controller_parameters.hpp /ros2_ws/src/luna_control/src/luna_controller_parameter.yaml `[0m
+[6.408s] [ 33%] [34m[1mCreating deprecated header file /ros2_ws/build/luna_control/include/luna_controller_parameters.hpp[0m
+[6.437s] [ 33%] Built target luna_controller_parameters
+[6.472s] [ 50%] [32mBuilding CXX object CMakeFiles/luna_control.dir/src/odometry.cpp.o[0m
+[6.477s] [ 83%] [32mBuilding CXX object CMakeFiles/luna_control.dir/src/LunaController.cpp.o[0m
+[6.477s] [ 83%] [32mBuilding CXX object CMakeFiles/luna_control.dir/src/speed_limiter.cpp.o[0m
+[7.435s] In file included from [01m[K/ros2_ws/src/luna_control/include/luna_control/LunaController.hpp:42[m[K,
+[7.435s]                  from [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:31[m[K:
+[7.435s] [01m[K/opt/ros/jazzy/include/realtime_tools/realtime_tools/realtime_box.h:25:2:[m[K [01;35m[Kwarning: [m[K#warning "This header include is deprecated. Please update your code to use 'realtime_box.hpp' header." [[01;35m[K-Wcpp[m[K]
+[7.435s]    25 | #[01;35m[Kwarning[m[K \
+[7.435s]       |  [01;35m[K^~~~~~~[m[K
+[7.436s] In file included from [01m[K/ros2_ws/src/luna_control/include/luna_control/LunaController.hpp:43[m[K:
+[7.436s] [01m[K/opt/ros/jazzy/include/realtime_tools/realtime_tools/realtime_publisher.h:25:2:[m[K [01;35m[Kwarning: [m[K#warning "This header include is deprecated. Please update your code to use 'realtime_publisher.hpp' header." [[01;35m[K-Wcpp[m[K]
+[7.436s]    25 | #[01;35m[Kwarning[m[K \
+[7.436s]       |  [01;35m[K^~~~~~~[m[K
+[10.562s] In file included from [01m[K/opt/ros/jazzy/include/realtime_tools/realtime_tools/realtime_box.h:18[m[K:
+[10.562s] [01m[K/opt/ros/jazzy/include/realtime_tools/realtime_tools/realtime_box.hpp:40:151:[m[K [01;36m[Knote: [m[K‘[01m[K#pragma message: 'RealtimeBox' is deprecated. Please update your code to use 'realtime_thread_safe_box.hpp' header, and class name 'RealtimeThreadSafeBox' instead.[m[K’
+[10.562s]    40 | d_safe_box.hpp' header, and class name 'RealtimeThreadSafeBox' instead."[01;36m[K)[m[K  //NOLINT
+[10.562s]       |                                                                         [01;36m[K^[m[K
+[10.562s] 
+[10.579s] In file included from [01m[K/ros2_ws/src/luna_control/include/luna_control/LunaController.hpp:47[m[K:
+[10.579s] [01m[K/ros2_ws/build/luna_control/include/luna_controller_parameters.hpp:1:145:[m[K [01;36m[Knote: [m[K‘[01m[K#pragma message: #include "luna_controller_parameters.hpp" is deprecated. Use #include <luna_control/luna_controller_parameters.hpp> instead.[m[K’
+[10.579s]     1 | s deprecated. Use #include <luna_control/luna_controller_parameters.hpp> instead."[01;36m[K)[m[K
+[10.579s]       |                                                                                   [01;36m[K^[m[K
+[10.579s] 
+[10.955s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:[m[K In member function ‘[01m[Kvirtual controller_interface::return_type luna_controller::LunaController::[01;32m[Kupdate[m[K(const rclcpp::Time&, const rclcpp::Duration&)[m[K’:
+[10.955s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:169:35:[m[K [01;35m[Kwarning: [m[K‘[01m[Kstd::enable_if_t<is_ptr_or_smart_ptr<U>, void> realtime_tools::RealtimeThreadSafeBox<T, mutex_type>::[01;32m[Kget[m[K(T&) const [35m[K[with U = std::shared_ptr<geometry_msgs::msg::TwistStamped_<std::allocator<void> > >; T = std::shared_ptr<geometry_msgs::msg::TwistStamped_<std::allocator<void> > >; mutex_type = std::mutex; std::enable_if_t<is_ptr_or_smart_ptr<U>, void> = void][m[K[m[K’ is deprecated: Use get(const std::function<void(const T &)> & func) instead! [[01;35m[K-Wdeprecated-declarations[m[K]
+[10.955s]   169 |     [01;35m[Kreceived_velocity_msg_ptr_.get(last_command_msg)[m[K;
+[10.955s]       |     [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~[m[K
+[10.955s] In file included from [01m[K/opt/ros/jazzy/include/realtime_tools/realtime_tools/realtime_box.hpp:36[m[K:
+[10.955s] [01m[K/opt/ros/jazzy/include/realtime_tools/realtime_tools/realtime_thread_safe_box.hpp:353:59:[m[K [01;36m[Knote: [m[Kdeclared here
+[10.955s]   353 |   typename std::enable_if_t<is_ptr_or_smart_ptr<U>, void> [01;36m[Kget[m[K(T & in) const
+[10.956s]       |                                                           [01;36m[K^~~[m[K
+[10.957s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:219:116:[m[K [01;35m[Kwarning: [m[K‘[01m[Kdouble hardware_interface::LoanedStateInterface::[01;32m[Kget_value[m[K() const[m[K’ is deprecated: Use std::optional<T> get_optional() instead to retrieve the value. This method will be removed by the ROS 2 Kilted Kaiju release. [[01;35m[K-Wdeprecated-declarations[m[K]
+[10.957s]   219 | l_feedback = [01;35m[Kregistered_left_back_wheel_handles_[index].feedback.get().get_value()[m[K;
+[10.957s]       |              [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~[m[K
+[10.957s] 
+[10.957s] In file included from [01m[K/opt/ros/jazzy/include/controller_interface/controller_interface/controller_interface_base.hpp:30[m[K,
+[10.958s]                  from [01m[K/opt/ros/jazzy/include/controller_interface/controller_interface/controller_interface.hpp:21[m[K,
+[10.958s]                  from [01m[K/ros2_ws/src/luna_control/include/luna_control/LunaController.hpp:35[m[K:
+[10.958s] [01m[K/opt/ros/jazzy/include/hardware_interface/hardware_interface/loaned_state_interface.hpp:94:10:[m[K [01;36m[Knote: [m[Kdeclared here
+[10.958s]    94 |   double [01;36m[Kget_value[m[K() const
+[10.959s]       |          [01;36m[K^~~~~~~~~[m[K
+[10.959s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:220:118:[m[K [01;35m[Kwarning: [m[K‘[01m[Kdouble hardware_interface::LoanedStateInterface::[01;32m[Kget_value[m[K() const[m[K’ is deprecated: Use std::optional<T> get_optional() instead to retrieve the value. This method will be removed by the ROS 2 Kilted Kaiju release. [[01;35m[K-Wdeprecated-declarations[m[K]
+[10.959s]   220 | _feedback = [01;35m[Kregistered_left_front_wheel_handles_[index].feedback.get().get_value()[m[K;
+[10.959s]       |             [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~[m[K
+[10.959s] 
+[10.960s] [01m[K/opt/ros/jazzy/include/hardware_interface/hardware_interface/loaned_state_interface.hpp:94:10:[m[K [01;36m[Knote: [m[Kdeclared here
+[10.960s]    94 |   double [01;36m[Kget_value[m[K() const
+[10.960s]       |          [01;36m[K^~~~~~~~~[m[K
+[10.960s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:221:118:[m[K [01;35m[Kwarning: [m[K‘[01m[Kdouble hardware_interface::LoanedStateInterface::[01;32m[Kget_value[m[K() const[m[K’ is deprecated: Use std::optional<T> get_optional() instead to retrieve the value. This method will be removed by the ROS 2 Kilted Kaiju release. [[01;35m[K-Wdeprecated-declarations[m[K]
+[10.960s]   221 | _feedback = [01;35m[Kregistered_right_back_wheel_handles_[index].feedback.get().get_value()[m[K;
+[10.960s]       |             [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~[m[K
+[10.961s] 
+[10.961s] [01m[K/opt/ros/jazzy/include/hardware_interface/hardware_interface/loaned_state_interface.hpp:94:10:[m[K [01;36m[Knote: [m[Kdeclared here
+[10.961s]    94 |   double [01;36m[Kget_value[m[K() const
+[10.961s]       |          [01;36m[K^~~~~~~~~[m[K
+[10.961s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:222:120:[m[K [01;35m[Kwarning: [m[K‘[01m[Kdouble hardware_interface::LoanedStateInterface::[01;32m[Kget_value[m[K() const[m[K’ is deprecated: Use std::optional<T> get_optional() instead to retrieve the value. This method will be removed by the ROS 2 Kilted Kaiju release. [[01;35m[K-Wdeprecated-declarations[m[K]
+[10.961s]   222 | feedback = [01;35m[Kregistered_right_front_wheel_handles_[index].feedback.get().get_value()[m[K;
+[10.962s]       |            [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~[m[K
+[10.962s] 
+[10.962s] [01m[K/opt/ros/jazzy/include/hardware_interface/hardware_interface/loaned_state_interface.hpp:94:10:[m[K [01;36m[Knote: [m[Kdeclared here
+[10.962s]    94 |   double [01;36m[Kget_value[m[K() const
+[10.962s]       |          [01;36m[K^~~~~~~~~[m[K
+[10.962s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:232:112:[m[K [01;35m[Kwarning: [m[K‘[01m[Kdouble hardware_interface::LoanedStateInterface::[01;32m[Kget_value[m[K() const[m[K’ is deprecated: Use std::optional<T> get_optional() instead to retrieve the value. This method will be removed by the ROS 2 Kilted Kaiju release. [[01;35m[K-Wdeprecated-declarations[m[K]
+[10.962s]   232 | pod_feedback = [01;35m[Kregistered_left_back_pod_handles_[index].feedback.get().get_value()[m[K;
+[10.963s]       |                [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~[m[K
+[10.963s] 
+[10.963s] [01m[K/opt/ros/jazzy/include/hardware_interface/hardware_interface/loaned_state_interface.hpp:94:10:[m[K [01;36m[Knote: [m[Kdeclared here
+[10.963s]    94 |   double [01;36m[Kget_value[m[K() const
+[10.963s]       |          [01;36m[K^~~~~~~~~[m[K
+[10.963s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:233:114:[m[K [01;35m[Kwarning: [m[K‘[01m[Kdouble hardware_interface::LoanedStateInterface::[01;32m[Kget_value[m[K() const[m[K’ is deprecated: Use std::optional<T> get_optional() instead to retrieve the value. This method will be removed by the ROS 2 Kilted Kaiju release. [[01;35m[K-Wdeprecated-declarations[m[K]
+[10.964s]   233 | od_feedback = [01;35m[Kregistered_left_front_pod_handles_[index].feedback.get().get_value()[m[K;
+[10.964s]       |               [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~[m[K
+[10.964s] 
+[10.964s] [01m[K/opt/ros/jazzy/include/hardware_interface/hardware_interface/loaned_state_interface.hpp:94:10:[m[K [01;36m[Knote: [m[Kdeclared here
+[10.964s]    94 |   double [01;36m[Kget_value[m[K() const
+[10.965s]       |          [01;36m[K^~~~~~~~~[m[K
+[10.965s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:234:114:[m[K [01;35m[Kwarning: [m[K‘[01m[Kdouble hardware_interface::LoanedStateInterface::[01;32m[Kget_value[m[K() const[m[K’ is deprecated: Use std::optional<T> get_optional() instead to retrieve the value. This method will be removed by the ROS 2 Kilted Kaiju release. [[01;35m[K-Wdeprecated-declarations[m[K]
+[10.965s]   234 | od_feedback = [01;35m[Kregistered_right_back_pod_handles_[index].feedback.get().get_value()[m[K;
+[10.965s]       |               [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~[m[K
+[10.965s] 
+[10.965s] [01m[K/opt/ros/jazzy/include/hardware_interface/hardware_interface/loaned_state_interface.hpp:94:10:[m[K [01;36m[Knote: [m[Kdeclared here
+[10.966s]    94 |   double [01;36m[Kget_value[m[K() const
+[10.966s]       |          [01;36m[K^~~~~~~~~[m[K
+[10.966s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:235:116:[m[K [01;35m[Kwarning: [m[K‘[01m[Kdouble hardware_interface::LoanedStateInterface::[01;32m[Kget_value[m[K() const[m[K’ is deprecated: Use std::optional<T> get_optional() instead to retrieve the value. This method will be removed by the ROS 2 Kilted Kaiju release. [[01;35m[K-Wdeprecated-declarations[m[K]
+[10.966s]   235 | d_feedback = [01;35m[Kregistered_right_front_pod_handles_[index].feedback.get().get_value()[m[K;
+[10.966s]       |              [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~[m[K
+[10.966s] 
+[10.967s] [01m[K/opt/ros/jazzy/include/hardware_interface/hardware_interface/loaned_state_interface.hpp:94:10:[m[K [01;36m[Knote: [m[Kdeclared here
+[10.967s]    94 |   double [01;36m[Kget_value[m[K() const
+[10.967s]       |          [01;36m[K^~~~~~~~~[m[K
+[10.979s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:426:76:[m[K [01;35m[Kwarning: [m[Kignoring return value of ‘[01m[Kbool hardware_interface::LoanedCommandInterface::[01;32m[Kset_value[m[K(const T&, unsigned int) [35m[K[with T = double][m[K[m[K’, declared with attribute ‘[01m[Knodiscard[m[K’ [[01;35m[K-Wunused-result[m[K]
+[10.979s]   426 |      [01;35m[Kregistered_left_back_wheel_handles_[index].velocity.get().set_value(left_back_wheel_velocity)[m[K;
+[10.980s]       |      [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[10.980s] 
+[10.980s] In file included from [01m[K/opt/ros/jazzy/include/controller_interface/controller_interface/controller_interface_base.hpp:29[m[K:
+[10.980s] [01m[K/opt/ros/jazzy/include/hardware_interface/hardware_interface/loaned_command_interface.hpp:113:22:[m[K [01;36m[Knote: [m[Kdeclared here
+[10.980s]   113 |   [[nodiscard]] bool [01;36m[Kset_value[m[K(const T & value, unsigned int max_tries = 10)
+[10.981s]       |                      [01;36m[K^~~~~~~~~[m[K
+[10.981s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:427:77:[m[K [01;35m[Kwarning: [m[Kignoring return value of ‘[01m[Kbool hardware_interface::LoanedCommandInterface::[01;32m[Kset_value[m[K(const T&, unsigned int) [35m[K[with T = double][m[K[m[K’, declared with attribute ‘[01m[Knodiscard[m[K’ [[01;35m[K-Wunused-result[m[K]
+[10.981s]   427 |     [01;35m[Kregistered_left_front_wheel_handles_[index].velocity.get().set_value(left_front_wheel_velocity)[m[K;
+[10.981s]       |     [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[10.981s] 
+[10.981s] [01m[K/opt/ros/jazzy/include/hardware_interface/hardware_interface/loaned_command_interface.hpp:113:22:[m[K [01;36m[Knote: [m[Kdeclared here
+[10.982s]   113 |   [[nodiscard]] bool [01;36m[Kset_value[m[K(const T & value, unsigned int max_tries = 10)
+[10.982s]       |                      [01;36m[K^~~~~~~~~[m[K
+[10.982s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:428:77:[m[K [01;35m[Kwarning: [m[Kignoring return value of ‘[01m[Kbool hardware_interface::LoanedCommandInterface::[01;32m[Kset_value[m[K(const T&, unsigned int) [35m[K[with T = double][m[K[m[K’, declared with attribute ‘[01m[Knodiscard[m[K’ [[01;35m[K-Wunused-result[m[K]
+[10.982s]   428 |     [01;35m[Kregistered_right_back_wheel_handles_[index].velocity.get().set_value(right_back_wheel_velocity)[m[K;
+[10.982s]       |     [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[10.982s] 
+[10.983s] [01m[K/opt/ros/jazzy/include/hardware_interface/hardware_interface/loaned_command_interface.hpp:113:22:[m[K [01;36m[Knote: [m[Kdeclared here
+[10.983s]   113 |   [[nodiscard]] bool [01;36m[Kset_value[m[K(const T & value, unsigned int max_tries = 10)
+[10.983s]       |                      [01;36m[K^~~~~~~~~[m[K
+[10.983s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:429:78:[m[K [01;35m[Kwarning: [m[Kignoring return value of ‘[01m[Kbool hardware_interface::LoanedCommandInterface::[01;32m[Kset_value[m[K(const T&, unsigned int) [35m[K[with T = double][m[K[m[K’, declared with attribute ‘[01m[Knodiscard[m[K’ [[01;35m[K-Wunused-result[m[K]
+[10.983s]   429 |    [01;35m[Kregistered_right_front_wheel_handles_[index].velocity.get().set_value(right_front_wheel_velocity)[m[K;
+[10.983s]       |    [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[10.984s] 
+[10.984s] [01m[K/opt/ros/jazzy/include/hardware_interface/hardware_interface/loaned_command_interface.hpp:113:22:[m[K [01;36m[Knote: [m[Kdeclared here
+[10.984s]   113 |   [[nodiscard]] bool [01;36m[Kset_value[m[K(const T & value, unsigned int max_tries = 10)
+[10.984s]       |                      [01;36m[K^~~~~~~~~[m[K
+[10.984s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:432:76:[m[K [01;35m[Kwarning: [m[Kignoring return value of ‘[01m[Kbool hardware_interface::LoanedCommandInterface::[01;32m[Kset_value[m[K(const T&, unsigned int) [35m[K[with T = double][m[K[m[K’, declared with attribute ‘[01m[Knodiscard[m[K’ [[01;35m[K-Wunused-result[m[K]
+[10.984s]   432 |         [01;35m[Kregistered_left_back_wheel_handles_[index].velocity.get().set_value(0.0)[m[K;
+[10.984s]       |         [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~[m[K
+[10.985s] [01m[K/opt/ros/jazzy/include/hardware_interface/hardware_interface/loaned_command_interface.hpp:113:22:[m[K [01;36m[Knote: [m[Kdeclared here
+[10.985s]   113 |   [[nodiscard]] bool [01;36m[Kset_value[m[K(const T & value, unsigned int max_tries = 10)
+[10.985s]       |                      [01;36m[K^~~~~~~~~[m[K
+[10.985s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:433:77:[m[K [01;35m[Kwarning: [m[Kignoring return value of ‘[01m[Kbool hardware_interface::LoanedCommandInterface::[01;32m[Kset_value[m[K(const T&, unsigned int) [35m[K[with T = double][m[K[m[K’, declared with attribute ‘[01m[Knodiscard[m[K’ [[01;35m[K-Wunused-result[m[K]
+[10.985s]   433 |         [01;35m[Kregistered_left_front_wheel_handles_[index].velocity.get().set_value(0.0)[m[K;
+[10.986s]       |         [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~[m[K
+[10.986s] [01m[K/opt/ros/jazzy/include/hardware_interface/hardware_interface/loaned_command_interface.hpp:113:22:[m[K [01;36m[Knote: [m[Kdeclared here
+[10.986s]   113 |   [[nodiscard]] bool [01;36m[Kset_value[m[K(const T & value, unsigned int max_tries = 10)
+[10.986s]       |                      [01;36m[K^~~~~~~~~[m[K
+[10.986s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:434:77:[m[K [01;35m[Kwarning: [m[Kignoring return value of ‘[01m[Kbool hardware_interface::LoanedCommandInterface::[01;32m[Kset_value[m[K(const T&, unsigned int) [35m[K[with T = double][m[K[m[K’, declared with attribute ‘[01m[Knodiscard[m[K’ [[01;35m[K-Wunused-result[m[K]
+[10.986s]   434 |         [01;35m[Kregistered_right_back_wheel_handles_[index].velocity.get().set_value(0.0)[m[K;
+[10.987s]       |         [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~[m[K
+[10.987s] [01m[K/opt/ros/jazzy/include/hardware_interface/hardware_interface/loaned_command_interface.hpp:113:22:[m[K [01;36m[Knote: [m[Kdeclared here
+[10.987s]   113 |   [[nodiscard]] bool [01;36m[Kset_value[m[K(const T & value, unsigned int max_tries = 10)
+[10.987s]       |                      [01;36m[K^~~~~~~~~[m[K
+[10.987s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:435:78:[m[K [01;35m[Kwarning: [m[Kignoring return value of ‘[01m[Kbool hardware_interface::LoanedCommandInterface::[01;32m[Kset_value[m[K(const T&, unsigned int) [35m[K[with T = double][m[K[m[K’, declared with attribute ‘[01m[Knodiscard[m[K’ [[01;35m[K-Wunused-result[m[K]
+[10.987s]   435 |         [01;35m[Kregistered_right_front_wheel_handles_[index].velocity.get().set_value(0.0)[m[K;
+[10.988s]       |         [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~[m[K
+[10.988s] [01m[K/opt/ros/jazzy/include/hardware_interface/hardware_interface/loaned_command_interface.hpp:113:22:[m[K [01;36m[Knote: [m[Kdeclared here
+[10.988s]   113 |   [[nodiscard]] bool [01;36m[Kset_value[m[K(const T & value, unsigned int max_tries = 10)
+[10.988s]       |                      [01;36m[K^~~~~~~~~[m[K
+[10.988s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:438:72:[m[K [01;35m[Kwarning: [m[Kignoring return value of ‘[01m[Kbool hardware_interface::LoanedCommandInterface::[01;32m[Kset_value[m[K(const T&, unsigned int) [35m[K[with T = double][m[K[m[K’, declared with attribute ‘[01m[Knodiscard[m[K’ [[01;35m[K-Wunused-result[m[K]
+[10.988s]   438 |       [01;35m[Kregistered_left_back_pod_handles_[index].position.get().set_value(left_back_pod_position)[m[K;
+[10.989s]       |       [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[10.989s] [01m[K/opt/ros/jazzy/include/hardware_interface/hardware_interface/loaned_command_interface.hpp:113:22:[m[K [01;36m[Knote: [m[Kdeclared here
+[10.989s]   113 |   [[nodiscard]] bool [01;36m[Kset_value[m[K(const T & value, unsigned int max_tries = 10)
+[10.989s]       |                      [01;36m[K^~~~~~~~~[m[K
+[10.989s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:439:73:[m[K [01;35m[Kwarning: [m[Kignoring return value of ‘[01m[Kbool hardware_interface::LoanedCommandInterface::[01;32m[Kset_value[m[K(const T&, unsigned int) [35m[K[with T = double][m[K[m[K’, declared with attribute ‘[01m[Knodiscard[m[K’ [[01;35m[K-Wunused-result[m[K]
+[10.989s]   439 |       [01;35m[Kregistered_left_front_pod_handles_[index].position.get().set_value(left_front_pod_position)[m[K;
+[10.990s]       |       [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[10.990s] [01m[K/opt/ros/jazzy/include/hardware_interface/hardware_interface/loaned_command_interface.hpp:113:22:[m[K [01;36m[Knote: [m[Kdeclared here
+[10.990s]   113 |   [[nodiscard]] bool [01;36m[Kset_value[m[K(const T & value, unsigned int max_tries = 10)
+[10.990s]       |                      [01;36m[K^~~~~~~~~[m[K
+[10.990s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:440:73:[m[K [01;35m[Kwarning: [m[Kignoring return value of ‘[01m[Kbool hardware_interface::LoanedCommandInterface::[01;32m[Kset_value[m[K(const T&, unsigned int) [35m[K[with T = double][m[K[m[K’, declared with attribute ‘[01m[Knodiscard[m[K’ [[01;35m[K-Wunused-result[m[K]
+[10.991s]   440 |       [01;35m[Kregistered_right_back_pod_handles_[index].position.get().set_value(right_back_pod_position)[m[K;
+[10.991s]       |       [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[10.991s] [01m[K/opt/ros/jazzy/include/hardware_interface/hardware_interface/loaned_command_interface.hpp:113:22:[m[K [01;36m[Knote: [m[Kdeclared here
+[10.991s]   113 |   [[nodiscard]] bool [01;36m[Kset_value[m[K(const T & value, unsigned int max_tries = 10)
+[10.991s]       |                      [01;36m[K^~~~~~~~~[m[K
+[10.991s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:441:74:[m[K [01;35m[Kwarning: [m[Kignoring return value of ‘[01m[Kbool hardware_interface::LoanedCommandInterface::[01;32m[Kset_value[m[K(const T&, unsigned int) [35m[K[with T = double][m[K[m[K’, declared with attribute ‘[01m[Knodiscard[m[K’ [[01;35m[K-Wunused-result[m[K]
+[10.992s]   441 |      [01;35m[Kregistered_right_front_pod_handles_[index].position.get().set_value(right_front_pod_position)[m[K;
+[10.992s]       |      [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[10.992s] 
+[10.992s] [01m[K/opt/ros/jazzy/include/hardware_interface/hardware_interface/loaned_command_interface.hpp:113:22:[m[K [01;36m[Knote: [m[Kdeclared here
+[10.992s]   113 |   [[nodiscard]] bool [01;36m[Kset_value[m[K(const T & value, unsigned int max_tries = 10)
+[10.992s]       |                      [01;36m[K^~~~~~~~~[m[K
+[10.993s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:[m[K In member function ‘[01m[Kvirtual controller_interface::CallbackReturn luna_controller::LunaController::[01;32m[Kon_configure[m[K(const rclcpp_lifecycle::State&)[m[K’:
+[10.993s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:512:35:[m[K [01;35m[Kwarning: [m[K‘[01m[Kstd::enable_if_t<is_ptr_or_smart_ptr<U>, void> realtime_tools::RealtimeThreadSafeBox<T, mutex_type>::[01;32m[Kset[m[K(const T&) [35m[K[with U = std::shared_ptr<geometry_msgs::msg::TwistStamped_<std::allocator<void> > >; T = std::shared_ptr<geometry_msgs::msg::TwistStamped_<std::allocator<void> > >; mutex_type = std::mutex; std::enable_if_t<is_ptr_or_smart_ptr<U>, void> = void][m[K[m[K’ is deprecated: Use set(const std::function<void(T &)> & func) instead! [[01;35m[K-Wdeprecated-declarations[m[K]
+[10.993s]   512 |     [01;35m[Kreceived_velocity_msg_ptr_.set(std::make_shared<Twist>(empty_twist))[m[K;
+[10.993s]       |     [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[10.994s] [01m[K/opt/ros/jazzy/include/realtime_tools/realtime_tools/realtime_thread_safe_box.hpp:273:59:[m[K [01;36m[Knote: [m[Kdeclared here
+[10.994s]   273 |   typename std::enable_if_t<is_ptr_or_smart_ptr<U>, void> [01;36m[Kset[m[K(const T & value)
+[10.994s]       |                                                           [01;36m[K^~~[m[K
+[10.997s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:[m[K In lambda function:
+[10.997s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:536:41:[m[K [01;35m[Kwarning: [m[K‘[01m[Kstd::enable_if_t<is_ptr_or_smart_ptr<U>, void> realtime_tools::RealtimeThreadSafeBox<T, mutex_type>::[01;32m[Kset[m[K(const T&) [35m[K[with U = std::shared_ptr<geometry_msgs::msg::TwistStamped_<std::allocator<void> > >; T = std::shared_ptr<geometry_msgs::msg::TwistStamped_<std::allocator<void> > >; mutex_type = std::mutex; std::enable_if_t<is_ptr_or_smart_ptr<U>, void> = void][m[K[m[K’ is deprecated: Use set(const std::function<void(T &)> & func) instead! [[01;35m[K-Wdeprecated-declarations[m[K]
+[10.997s]   536 |           [01;35m[Kreceived_velocity_msg_ptr_.set(std::move(msg))[m[K;
+[10.997s]       |           [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~[m[K
+[10.997s] [01m[K/opt/ros/jazzy/include/realtime_tools/realtime_tools/realtime_thread_safe_box.hpp:273:59:[m[K [01;36m[Knote: [m[Kdeclared here
+[10.998s]   273 |   typename std::enable_if_t<is_ptr_or_smart_ptr<U>, void> [01;36m[Kset[m[K(const T & value)
+[10.998s]       |                                                           [01;36m[K^~~[m[K
+[11.012s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:[m[K In member function ‘[01m[Kvirtual controller_interface::CallbackReturn luna_controller::LunaController::[01;32m[Kon_cleanup[m[K(const rclcpp_lifecycle::State&)[m[K’:
+[11.012s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:702:35:[m[K [01;35m[Kwarning: [m[K‘[01m[Kstd::enable_if_t<is_ptr_or_smart_ptr<U>, void> realtime_tools::RealtimeThreadSafeBox<T, mutex_type>::[01;32m[Kset[m[K(const T&) [35m[K[with U = std::shared_ptr<geometry_msgs::msg::TwistStamped_<std::allocator<void> > >; T = std::shared_ptr<geometry_msgs::msg::TwistStamped_<std::allocator<void> > >; mutex_type = std::mutex; std::enable_if_t<is_ptr_or_smart_ptr<U>, void> = void][m[K[m[K’ is deprecated: Use set(const std::function<void(T &)> & func) instead! [[01;35m[K-Wdeprecated-declarations[m[K]
+[11.012s]   702 |     [01;35m[Kreceived_velocity_msg_ptr_.set(std::make_shared<Twist>())[m[K;
+[11.012s]       |     [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[11.013s] [01m[K/opt/ros/jazzy/include/realtime_tools/realtime_tools/realtime_thread_safe_box.hpp:273:59:[m[K [01;36m[Knote: [m[Kdeclared here
+[11.013s]   273 |   typename std::enable_if_t<is_ptr_or_smart_ptr<U>, void> [01;36m[Kset[m[K(const T & value)
+[11.013s]       |                                                           [01;36m[K^~~[m[K
+[11.016s] /ros2_ws/src/luna_control/src/LunaController.cpp: In instantiation of ‘[01m[Kluna_controller::LunaController::halt()::<lambda(auto:47&)> [35m[K[with auto:47 = std::vector<luna_controller::LunaController::WheelHandle>][m[K[m[K’:
+[11.017s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:763:16:[m[K   required from here
+[11.017s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:752:46:[m[K [01;35m[Kwarning: [m[Kignoring return value of ‘[01m[Kbool hardware_interface::LoanedCommandInterface::[01;32m[Kset_value[m[K(const T&, unsigned int) [35m[K[with T = double][m[K[m[K’, declared with attribute ‘[01m[Knodiscard[m[K’ [[01;35m[K-Wunused-result[m[K]
+[11.017s]   752 |         [01;35m[Kwheel_handle.velocity.get().set_value(0.0)[m[K;
+[11.017s]       |         [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~[m[K
+[11.017s] [01m[K/opt/ros/jazzy/include/hardware_interface/hardware_interface/loaned_command_interface.hpp:113:22:[m[K [01;36m[Knote: [m[Kdeclared here
+[11.017s]   113 |   [[nodiscard]] bool [01;36m[Kset_value[m[K(const T & value, unsigned int max_tries = 10)
+[11.018s]       |                      [01;36m[K^~~~~~~~~[m[K
+[11.018s] /ros2_ws/src/luna_control/src/LunaController.cpp: In instantiation of ‘[01m[Kluna_controller::LunaController::halt()::<lambda(auto:48&)> [35m[K[with auto:48 = std::vector<luna_controller::LunaController::PodHandle>][m[K[m[K’:
+[11.018s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:767:14:[m[K   required from here
+[11.018s] [01m[K/ros2_ws/src/luna_control/src/LunaController.cpp:759:44:[m[K [01;35m[Kwarning: [m[Kignoring return value of ‘[01m[Kbool hardware_interface::LoanedCommandInterface::[01;32m[Kset_value[m[K(const T&, unsigned int) [35m[K[with T = double][m[K[m[K’, declared with attribute ‘[01m[Knodiscard[m[K’ [[01;35m[K-Wunused-result[m[K]
+[11.018s]   759 |         [01;35m[Kpod_handle.position.get().set_value(0.0)[m[K;
+[11.019s]       |         [01;35m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~[m[K
+[11.019s] [01m[K/opt/ros/jazzy/include/hardware_interface/hardware_interface/loaned_command_interface.hpp:113:22:[m[K [01;36m[Knote: [m[Kdeclared here
+[11.019s]   113 |   [[nodiscard]] bool [01;36m[Kset_value[m[K(const T & value, unsigned int max_tries = 10)
+[11.019s]       |                      [01;36m[K^~~~~~~~~[m[K
+[23.153s] [100%] [32m[1mLinking CXX shared library libluna_control.so[0m
+[24.125s] [100%] Built target luna_control
+[24.141s] Invoked command in '/ros2_ws/build/luna_control' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake --build /ros2_ws/build/luna_control -- -j4 -l4
+[24.143s] Invoking command in '/ros2_ws/build/luna_control': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake --install /ros2_ws/build/luna_control
+[24.155s] -- Install configuration: ""
+[24.155s] -- Execute custom install script
+[24.156s] -- Symlinking: /ros2_ws/install/luna_control/include/luna_control/luna_controller_parameters.hpp
+[24.169s] -- Symlinking: /ros2_ws/install/luna_control/share/luna_control//luna_plugin.xml
+[24.182s] -- Symlinking: /ros2_ws/install/luna_control/include/luna_control/luna_control/LunaController.hpp
+[24.196s] -- Symlinking: /ros2_ws/install/luna_control/include/luna_control/luna_control/odometry.hpp
+[24.209s] -- Symlinking: /ros2_ws/install/luna_control/include/luna_control/luna_control/speed_limiter.hpp
+[24.223s] -- Symlinking: /ros2_ws/install/luna_control/share/luna_control/environment/library_path.sh
+[24.236s] -- Symlinking: /ros2_ws/install/luna_control/share/luna_control/environment/library_path.dsv
+[24.249s] -- Symlinking: /ros2_ws/install/luna_control/share/ament_index/resource_index/package_run_dependencies/luna_control
+[24.263s] -- Symlinking: /ros2_ws/install/luna_control/share/ament_index/resource_index/parent_prefix_path/luna_control
+[24.277s] -- Symlinking: /ros2_ws/install/luna_control/share/luna_control/environment/ament_prefix_path.sh
+[24.291s] -- Symlinking: /ros2_ws/install/luna_control/share/luna_control/environment/ament_prefix_path.dsv
+[24.305s] -- Symlinking: /ros2_ws/install/luna_control/share/luna_control/environment/path.sh
+[24.318s] -- Symlinking: /ros2_ws/install/luna_control/share/luna_control/environment/path.dsv
+[24.332s] -- Symlinking: /ros2_ws/install/luna_control/share/luna_control/local_setup.bash
+[24.346s] -- Symlinking: /ros2_ws/install/luna_control/share/luna_control/local_setup.sh
+[24.359s] -- Symlinking: /ros2_ws/install/luna_control/share/luna_control/local_setup.zsh
+[24.373s] -- Symlinking: /ros2_ws/install/luna_control/share/luna_control/local_setup.dsv
+[24.386s] -- Symlinking: /ros2_ws/install/luna_control/share/luna_control/package.dsv
+[24.401s] -- Symlinking: /ros2_ws/install/luna_control/share/ament_index/resource_index/packages/luna_control
+[24.418s] -- Symlinking: /ros2_ws/install/luna_control/share/ament_index/resource_index/controller_interface__pluginlib__plugin/luna_control
+[24.433s] -- Symlinking: /ros2_ws/install/luna_control/share/luna_control/cmake/ament_cmake_export_dependencies-extras.cmake
+[24.446s] -- Symlinking: /ros2_ws/install/luna_control/share/luna_control/cmake/ament_cmake_export_targets-extras.cmake
+[24.460s] -- Symlinking: /ros2_ws/install/luna_control/share/luna_control/cmake/luna_controlConfig.cmake
+[24.475s] -- Symlinking: /ros2_ws/install/luna_control/share/luna_control/cmake/luna_controlConfig-version.cmake
+[24.489s] -- Symlinking: /ros2_ws/install/luna_control/share/luna_control/package.xml
+[24.503s] -- Installing: /ros2_ws/install/luna_control/lib/libluna_control.so
+[24.511s] -- Set non-toolchain portion of runtime path of "/ros2_ws/install/luna_control/lib/libluna_control.so" to ""
+[24.511s] -- Installing: /ros2_ws/install/luna_control/share/luna_control/cmake/export_luna_controlExport.cmake
+[24.511s] -- Installing: /ros2_ws/install/luna_control/share/luna_control/cmake/export_luna_controlExport-noconfig.cmake
+[24.515s] Invoked command in '/ros2_ws/build/luna_control' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake --install /ros2_ws/build/luna_control
