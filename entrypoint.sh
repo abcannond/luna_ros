@@ -1,18 +1,20 @@
 #!/bin/bash
 set -e
 
-# setup ros2 environment
-source "/opt/ros/$ROS_DISTRO/setup.bash" --
-source "/ros2_ws/install/setup.bash" --
+# Allow X11 connections for GUI
+xhost +local:docker
 
-# Enable verbose logging for Gazebo (optional, for debugging)
-export GZ_SIM_VERBOSE=1
+# Source ROS 2
+source /opt/ros/jazzy/setup.bash
 
-# Check OpenGL support
-if glxinfo | grep -q "OpenGL version"; then
-  echo "OpenGL support detected."
-else
-  echo "Warning: OpenGL support not detected. Gazebo GUI may fail."
+# Only source workspace if it exists (bind mount will make it available)
+if [ -f /ros2_ws/install/setup.bash ]; then
+    source /ros2_ws/install/setup.bash
 fi
 
-exec "$@"
+# If no command is passed, open bash
+if [ $# -eq 0 ]; then
+    exec bash
+else
+    exec "$@"
+fi
