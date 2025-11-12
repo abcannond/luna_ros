@@ -1,0 +1,1 @@
+#pragma message("#include \"luna_controller_parameters.hpp\" is deprecated. Use #include <luna_control/luna_controller_parameters.hpp> instead.")

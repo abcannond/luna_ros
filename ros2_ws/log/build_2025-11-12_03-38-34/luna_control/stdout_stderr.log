@@ -1,0 +1,55 @@
+-- Found ament_cmake: 2.5.4 (/opt/ros/jazzy/share/ament_cmake/cmake)
+-- Override CMake install command with custom implementation using symlinks instead of copying resources
+-- Found controller_interface: 4.38.0 (/opt/ros/jazzy/share/controller_interface/cmake)
+-- Found rosidl_generator_c: 4.6.6 (/opt/ros/jazzy/share/rosidl_generator_c/cmake)
+-- Found rosidl_generator_cpp: 4.6.6 (/opt/ros/jazzy/share/rosidl_generator_cpp/cmake)
+-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+-- Found TinyXML2 via Config file: /usr/lib/x86_64-linux-gnu/cmake/tinyxml2
+-- Found rmw_implementation_cmake: 7.3.2 (/opt/ros/jazzy/share/rmw_implementation_cmake/cmake)
+-- Found rmw_fastrtps_cpp: 8.4.3 (/opt/ros/jazzy/share/rmw_fastrtps_cpp/cmake)
+-- Found TinyXML2 via Config file: /usr/lib/x86_64-linux-gnu/cmake/tinyxml2
+-- Found TinyXML2 via Config file: /usr/lib/x86_64-linux-gnu/cmake/tinyxml2
+-- Found TinyXML2 via Config file: /usr/lib/x86_64-linux-gnu/cmake/tinyxml2
+-- Found TinyXML2 via Config file: /usr/lib/x86_64-linux-gnu/cmake/tinyxml2
+-- Using RMW implementation 'rmw_fastrtps_cpp' as default
+-- Found generate_parameter_library: 0.5.0 (/opt/ros/jazzy/share/generate_parameter_library/cmake)
+-- Found parameter_traits: 0.5.0 (/opt/ros/jazzy/share/parameter_traits/cmake)
+-- Found nav_msgs: 5.3.6 (/opt/ros/jazzy/share/nav_msgs/cmake)
+-- Found tf2: 0.36.14 (/opt/ros/jazzy/share/tf2/cmake)
+-- Found tf2_msgs: 0.36.14 (/opt/ros/jazzy/share/tf2_msgs/cmake)
+-- Configuring done (1.6s)
+-- Generating done (0.0s)
+-- Build files have been written to: /ros2_ws/build/luna_control
+[ 33%] Built target luna_controller_parameters
+[100%] Built target luna_control
+-- Install configuration: ""
+-- Execute custom install script
+-- Up-to-date symlink: /ros2_ws/install/luna_control/include/luna_control/luna_controller_parameters.hpp
+-- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control//luna_plugin.xml
+-- Up-to-date symlink: /ros2_ws/install/luna_control/include/luna_control/luna_control/LunaController.hpp
+-- Up-to-date symlink: /ros2_ws/install/luna_control/include/luna_control/luna_control/odometry.hpp
+-- Up-to-date symlink: /ros2_ws/install/luna_control/include/luna_control/luna_control/speed_limiter.hpp
+-- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/environment/library_path.sh
+-- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/environment/library_path.dsv
+-- Up-to-date symlink: /ros2_ws/install/luna_control/share/ament_index/resource_index/package_run_dependencies/luna_control
+-- Up-to-date symlink: /ros2_ws/install/luna_control/share/ament_index/resource_index/parent_prefix_path/luna_control
+-- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/environment/ament_prefix_path.sh
+-- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/environment/ament_prefix_path.dsv
+-- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/environment/path.sh
+-- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/environment/path.dsv
+-- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/local_setup.bash
+-- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/local_setup.sh
+-- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/local_setup.zsh
+-- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/local_setup.dsv
+-- Symlinking: /ros2_ws/install/luna_control/share/luna_control/package.dsv
+-- Up-to-date symlink: /ros2_ws/install/luna_control/share/ament_index/resource_index/packages/luna_control
+-- Up-to-date symlink: /ros2_ws/install/luna_control/share/ament_index/resource_index/controller_interface__pluginlib__plugin/luna_control
+-- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/cmake/ament_cmake_export_dependencies-extras.cmake
+-- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/cmake/ament_cmake_export_targets-extras.cmake
+-- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/cmake/luna_controlConfig.cmake
+-- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/cmake/luna_controlConfig-version.cmake
+-- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/package.xml
+-- Up-to-date: /ros2_ws/install/luna_control/lib/libluna_control.so
+-- Up-to-date: /ros2_ws/install/luna_control/share/luna_control/cmake/export_luna_controlExport.cmake
+-- Up-to-date: /ros2_ws/install/luna_control/share/luna_control/cmake/export_luna_controlExport-noconfig.cmake

@@ -1,0 +1,4 @@
+source;share/luna_control/local_setup.bash
+source;share/luna_control/local_setup.dsv
+source;share/luna_control/local_setup.sh
+source;share/luna_control/local_setup.zsh

@@ -1,0 +1,36 @@
+[0.048s] Invoking command in '/ros2_ws/build/luna_control': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/ros2_ws/install/twist_stamper:/ros2_ws/install/teleop_twist_keyboard:/opt/ros/jazzy /usr/bin/cmake --build /ros2_ws/build/luna_control -- -j4 -l4
+[0.385s] [ 33%] Built target luna_controller_parameters
+[0.386s] [100%] Built target luna_control
+[0.387s] Invoked command in '/ros2_ws/build/luna_control' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/ros2_ws/install/twist_stamper:/ros2_ws/install/teleop_twist_keyboard:/opt/ros/jazzy /usr/bin/cmake --build /ros2_ws/build/luna_control -- -j4 -l4
+[0.402s] Invoking command in '/ros2_ws/build/luna_control': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/ros2_ws/install/twist_stamper:/ros2_ws/install/teleop_twist_keyboard:/opt/ros/jazzy /usr/bin/cmake --install /ros2_ws/build/luna_control
+[0.709s] -- Install configuration: ""
+[0.709s] -- Execute custom install script
+[0.710s] -- Up-to-date symlink: /ros2_ws/install/luna_control/include/luna_control/luna_controller_parameters.hpp
+[0.710s] -- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control//luna_plugin.xml
+[0.710s] -- Up-to-date symlink: /ros2_ws/install/luna_control/include/luna_control/luna_control/LunaController.hpp
+[0.710s] -- Up-to-date symlink: /ros2_ws/install/luna_control/include/luna_control/luna_control/odometry.hpp
+[0.710s] -- Up-to-date symlink: /ros2_ws/install/luna_control/include/luna_control/luna_control/speed_limiter.hpp
+[0.710s] -- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/environment/library_path.sh
+[0.711s] -- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/environment/library_path.dsv
+[0.711s] -- Up-to-date symlink: /ros2_ws/install/luna_control/share/ament_index/resource_index/package_run_dependencies/luna_control
+[0.711s] -- Up-to-date symlink: /ros2_ws/install/luna_control/share/ament_index/resource_index/parent_prefix_path/luna_control
+[0.711s] -- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/environment/ament_prefix_path.sh
+[0.711s] -- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/environment/ament_prefix_path.dsv
+[0.712s] -- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/environment/path.sh
+[0.712s] -- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/environment/path.dsv
+[0.713s] -- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/local_setup.bash
+[0.713s] -- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/local_setup.sh
+[0.713s] -- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/local_setup.zsh
+[0.713s] -- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/local_setup.dsv
+[0.713s] -- Symlinking: /ros2_ws/install/luna_control/share/luna_control/package.dsv
+[0.714s] -- Up-to-date symlink: /ros2_ws/install/luna_control/share/ament_index/resource_index/packages/luna_control
+[0.714s] -- Up-to-date symlink: /ros2_ws/install/luna_control/share/ament_index/resource_index/controller_interface__pluginlib__plugin/luna_control
+[0.714s] -- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/cmake/ament_cmake_export_dependencies-extras.cmake
+[0.714s] -- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/cmake/ament_cmake_export_targets-extras.cmake
+[0.715s] -- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/cmake/luna_controlConfig.cmake
+[0.715s] -- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/cmake/luna_controlConfig-version.cmake
+[0.715s] -- Up-to-date symlink: /ros2_ws/install/luna_control/share/luna_control/package.xml
+[0.715s] -- Up-to-date: /ros2_ws/install/luna_control/lib/libluna_control.so
+[0.715s] -- Up-to-date: /ros2_ws/install/luna_control/share/luna_control/cmake/export_luna_controlExport.cmake
+[0.716s] -- Up-to-date: /ros2_ws/install/luna_control/share/luna_control/cmake/export_luna_controlExport-noconfig.cmake
+[0.729s] Invoked command in '/ros2_ws/build/luna_control' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/ros2_ws/install/twist_stamper:/ros2_ws/install/teleop_twist_keyboard:/opt/ros/jazzy /usr/bin/cmake --install /ros2_ws/build/luna_control
