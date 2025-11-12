@@ -1,67 +1,66 @@
-# # ROS2 build system
-# build/
-# install/
-# log/
+# ROS2 build system
+build/
+install/
+log/
 
-# # Colcon and ament tools
-# .colcon/
-# ament_cmake_core/
-# ament_tools/
-# ament_ws/
+# Colcon and ament tools
+.colcon/
+ament_cmake_core/
+ament_tools/
+ament_ws/
 
-# # Python build artifacts
-# *.pyc
-# *.pyo
-# *.pyd
-# __pycache__/
-# *.egg-info/
-# .eggs/
+# Python build artifacts
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.egg-info/
+.eggs/
 
-# # CMake build artifacts
-# CMakeFiles/
-# CMakeCache.txt
-# cmake_install.cmake
-# Makefile
+# CMake build artifacts
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
 
-# # IDE and editor files
-# .vscode/
-# .idea/
-# *.swp
-# *.swo
-# *.bak
-# *~
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+*~
 
-# # Launch & simulation logs
-# *.log
-# *.bag
-# *.bag.active
-# *.db3
-# *.yaml
-# *.launch.pyc
+# Launch & simulation logs
+*.log
+*.bag
+*.bag.active
+*.db3
+*.yaml
+*.launch.pyc
 
-# # Gazebo / Ignition / ros_gz artifacts
-# *.world~
-# *.sdf~
-# *.urdf~
-# .gazebo/
-# .ignition/
-# gazebo_models/
-# gzserver.log
-# gzclient.log
+# Gazebo / Ignition / ros_gz artifacts
+*.world~
+*.sdf~
+*.urdf~
+.gazebo/
+.ignition/
+gazebo_models/
+gzserver.log
+gzclient.log
 
-# # Docker artifacts
-# *.tar
-# *.img
-# *.log
+# Docker artifacts
+*.tar
+*.img
+*.log
 
-# # Miscellaneous system files
-# .DS_Store
-# Thumbs.db
-# .env
-# *.tmp
+# Miscellaneous system files
+.DS_Store
+Thumbs.db
+.env
+*.tmp
 
-# # ROS 1 compatibility (if bridging)
-# .devel/
-# .catkin_tools/
-# .catkin_workspace/
-# # 
+# ROS 1 compatibility (if bridging)
+.devel/
+.catkin_tools/
+.catkin_workspace/
