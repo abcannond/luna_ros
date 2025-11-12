@@ -1,1 +1,0 @@
-/ros2_ws/src/lunabot_2425/launch/gz_bringup.launch.py
