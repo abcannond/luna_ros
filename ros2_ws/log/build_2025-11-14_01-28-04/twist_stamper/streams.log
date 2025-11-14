@@ -1,0 +1,20 @@
+[2.762s] Invoking command in '/ros2_ws/build/twist_stamper': PYTHONPATH=/ros2_ws/build/twist_stamper/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/ros2_ws/install/twist_stamper/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /ros2_ws/build/twist_stamper/build --no-deps symlink_data --force
+[3.611s] running develop
+[4.117s] running egg_info
+[4.164s] writing twist_stamper.egg-info/PKG-INFO
+[4.165s] writing dependency_links to twist_stamper.egg-info/dependency_links.txt
+[4.165s] writing entry points to twist_stamper.egg-info/entry_points.txt
+[4.165s] writing requirements to twist_stamper.egg-info/requires.txt
+[4.165s] writing top-level names to twist_stamper.egg-info/top_level.txt
+[4.264s] reading manifest file 'twist_stamper.egg-info/SOURCES.txt'
+[4.266s] writing manifest file 'twist_stamper.egg-info/SOURCES.txt'
+[4.322s] running build_ext
+[4.322s] Creating /ros2_ws/install/twist_stamper/lib/python3.12/site-packages/twist-stamper.egg-link (link to .)
+[4.323s] Installing twist_stamper script to /ros2_ws/install/twist_stamper/lib/twist_stamper
+[4.324s] Installing twist_unstamper script to /ros2_ws/install/twist_stamper/lib/twist_stamper
+[4.325s] 
+[4.327s] Installed /ros2_ws/build/twist_stamper
+[4.327s] running symlink_data
+[4.328s] symbolically linking /ros2_ws/build/twist_stamper/resource/twist_stamper -> /ros2_ws/install/twist_stamper/share/ament_index/resource_index/packages
+[4.328s] symbolically linking /ros2_ws/build/twist_stamper/package.xml -> /ros2_ws/install/twist_stamper/share/twist_stamper
+[4.421s] Invoked command in '/ros2_ws/build/twist_stamper' returned '0': PYTHONPATH=/ros2_ws/build/twist_stamper/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/ros2_ws/install/twist_stamper/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /ros2_ws/build/twist_stamper/build --no-deps symlink_data --force

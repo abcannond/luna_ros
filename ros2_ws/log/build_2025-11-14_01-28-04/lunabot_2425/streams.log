@@ -1,0 +1,78 @@
+[0.060s] Invoking command in '/ros2_ws/build/lunabot_2425': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/ros2_ws/install/twist_stamper:/ros2_ws/install/teleop_twist_keyboard:/opt/ros/jazzy /usr/bin/cmake /ros2_ws/src/lunabot_2425 -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/ros2_ws/install/lunabot_2425
+[0.611s] -- Found ament_cmake: 2.5.4 (/opt/ros/jazzy/share/ament_cmake/cmake)
+[0.683s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[0.709s] -- Found ament_lint_auto: 0.17.3 (/opt/ros/jazzy/share/ament_lint_auto/cmake)
+[0.992s] -- Added test 'flake8' to check Python code syntax and style conventions
+[0.992s] -- Configured 'flake8' exclude dirs and/or files: 
+[0.993s] -- Added test 'lint_cmake' to check CMake code style
+[0.995s] -- Added test 'pep257' to check Python code against some of the docstring style conventions in PEP 257
+[1.005s] -- Added test 'xmllint' to check XML markup files
+[1.010s] -- Configuring done (0.9s)
+[1.021s] -- Generating done (0.0s)
+[1.026s] -- Build files have been written to: /ros2_ws/build/lunabot_2425
+[1.094s] Invoked command in '/ros2_ws/build/lunabot_2425' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/ros2_ws/install/twist_stamper:/ros2_ws/install/teleop_twist_keyboard:/opt/ros/jazzy /usr/bin/cmake /ros2_ws/src/lunabot_2425 -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/ros2_ws/install/lunabot_2425
+[1.095s] Invoking command in '/ros2_ws/build/lunabot_2425': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/ros2_ws/install/twist_stamper:/ros2_ws/install/teleop_twist_keyboard:/opt/ros/jazzy /usr/bin/cmake --build /ros2_ws/build/lunabot_2425 -- -j4 -l4
+[1.219s] Invoked command in '/ros2_ws/build/lunabot_2425' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/ros2_ws/install/twist_stamper:/ros2_ws/install/teleop_twist_keyboard:/opt/ros/jazzy /usr/bin/cmake --build /ros2_ws/build/lunabot_2425 -- -j4 -l4
+[1.246s] Invoking command in '/ros2_ws/build/lunabot_2425': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/ros2_ws/install/twist_stamper:/ros2_ws/install/teleop_twist_keyboard:/opt/ros/jazzy /usr/bin/cmake --install /ros2_ws/build/lunabot_2425
+[1.270s] -- Install configuration: ""
+[1.270s] -- Execute custom install script
+[1.272s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/config/gz_bridge.config.yaml
+[1.272s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/config/robot_controllers.yaml
+[1.274s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/description/camera.xacro
+[1.275s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/description/depth_camera.xacro
+[1.275s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/description/gz_control.xacro
+[1.275s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/description/robot.urdf.xacro
+[1.276s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/description/robot_core.xacro
+[1.276s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/description/ros2_control.xacro
+[1.276s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/launch/gz_bringup.launch.py
+[1.276s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/launch/rsp.launch.py
+[1.277s] -- Symlinking: /ros2_ws/install/lunabot_2425/share/lunabot_2425/launch/rv_gz_bringup.launch.py
+[1.303s] -- Symlinking: /ros2_ws/install/lunabot_2425/share/lunabot_2425/launch/simple.launch.py
+[1.341s] -- Symlinking: /ros2_ws/install/lunabot_2425/share/lunabot_2425/launch/view.launch.py
+[1.383s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/Arena_B.stl
+[1.384s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/Rock_A.stl
+[1.385s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/Rock_B.stl
+[1.386s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/Rock_C.stl
+[1.387s] -- Symlinking: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/back_left_knuckle_meter.stl
+[1.422s] -- Symlinking: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/back_left_wheel_meter.stl
+[1.445s] -- Symlinking: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/back_right_knuckle_meter.stl
+[1.471s] -- Symlinking: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/back_right_wheel_meter.stl
+[1.499s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/bucket.stl
+[1.504s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/bucket_meter.stl
+[1.504s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/chassis.stl
+[1.504s] -- Symlinking: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/front_left_knuckle_meter.stl
+[1.530s] -- Symlinking: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/front_left_wheel_meter.stl
+[1.555s] -- Symlinking: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/front_right_knuckle_meter.stl
+[1.581s] -- Symlinking: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/front_right_wheel_meter.stl
+[1.612s] -- Symlinking: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/knuckle_mo.stl
+[1.639s] -- Symlinking: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/left_rocker_meter.stl
+[1.663s] -- Symlinking: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/left_rocker_mo.stl
+[1.693s] -- Symlinking: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/right_rocker_meter.stl
+[1.721s] -- Symlinking: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/right_rocker_mo.stl
+[1.748s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/rocker_left.stl
+[1.748s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/rocker_left_meter.stl
+[1.749s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/rocker_right.stl
+[1.749s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/rocker_right_meter.stl
+[1.749s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/rover.stl
+[1.749s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/testing.txt
+[1.750s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/wheel.stl
+[1.753s] -- Symlinking: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/wheel_mo.stl
+[1.776s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/wheelpod.stl
+[1.777s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/worlds/arena_b.world
+[1.778s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/worlds/empty.world
+[1.779s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/ament_index/resource_index/package_run_dependencies/lunabot_2425
+[1.780s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/ament_index/resource_index/parent_prefix_path/lunabot_2425
+[1.781s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/environment/ament_prefix_path.sh
+[1.782s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/environment/ament_prefix_path.dsv
+[1.783s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/environment/path.sh
+[1.784s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/environment/path.dsv
+[1.785s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/local_setup.bash
+[1.786s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/local_setup.sh
+[1.787s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/local_setup.zsh
+[1.788s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/local_setup.dsv
+[1.792s] -- Symlinking: /ros2_ws/install/lunabot_2425/share/lunabot_2425/package.dsv
+[1.820s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/ament_index/resource_index/packages/lunabot_2425
+[1.821s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/cmake/lunabot_2425Config.cmake
+[1.823s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/cmake/lunabot_2425Config-version.cmake
+[1.823s] -- Up-to-date symlink: /ros2_ws/install/lunabot_2425/share/lunabot_2425/package.xml
+[1.829s] Invoked command in '/ros2_ws/build/lunabot_2425' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/ros2_ws/install/twist_stamper:/ros2_ws/install/teleop_twist_keyboard:/opt/ros/jazzy /usr/bin/cmake --install /ros2_ws/build/lunabot_2425
