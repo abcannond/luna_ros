@@ -1,0 +1,32 @@
+[0.028s] Invoking command in '/ros2_ws/build/quad_swerve_controller': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/ros2_ws/install/twist_stamper:/ros2_ws/install/teleop_twist_keyboard:/opt/ros/jazzy /usr/bin/cmake /ros2_ws/src/quad_swerve_controller -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/ros2_ws/install/quad_swerve_controller
+[0.057s] -- Found ament_cmake: 2.5.4 (/opt/ros/jazzy/share/ament_cmake/cmake)
+[0.400s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[0.416s] -- Found rclcpp: 28.1.12 (/opt/ros/jazzy/share/rclcpp/cmake)
+[0.460s] -- Found rosidl_generator_c: 4.6.6 (/opt/ros/jazzy/share/rosidl_generator_c/cmake)
+[0.480s] -- Found rosidl_generator_cpp: 4.6.6 (/opt/ros/jazzy/share/rosidl_generator_cpp/cmake)
+[0.513s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[0.541s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[0.689s] -- Found rmw_implementation_cmake: 7.3.2 (/opt/ros/jazzy/share/rmw_implementation_cmake/cmake)
+[0.693s] -- Found rmw_fastrtps_cpp: 8.4.3 (/opt/ros/jazzy/share/rmw_fastrtps_cpp/cmake)
+[0.830s] -- Using RMW implementation 'rmw_fastrtps_cpp' as default
+[0.990s] -- Found rclcpp_lifecycle: 28.1.12 (/opt/ros/jazzy/share/rclcpp_lifecycle/cmake)
+[1.075s] -- Found controller_interface: 4.38.0 (/opt/ros/jazzy/share/controller_interface/cmake)
+[1.556s] -- Found controller_manager: 4.38.0 (/opt/ros/jazzy/share/controller_manager/cmake)
+[1.736s] -- Found nav_msgs: 5.3.6 (/opt/ros/jazzy/share/nav_msgs/cmake)
+[1.972s] -- Configuring done (1.9s)
+[1.979s] [31mCMake Error at CMakeLists.txt:16 (add_library):
+[1.979s]   Cannot find source file:
+[1.979s] 
+[1.980s]     src/motor_interface.cpp
+[1.980s] 
+[1.980s]   Tried extensions .c .C .c++ .cc .cpp .cxx .cu .mpp .m .M .mm .ixx .cppm
+[1.980s]   .ccm .cxxm .c++m .h .hh .h++ .hm .hpp .hxx .in .txx .f .F .for .f77 .f90
+[1.980s]   .f95 .f03 .hip .ispc
+[1.980s] 
+[1.980s] [0m
+[2.000s] [31mCMake Error at CMakeLists.txt:16 (add_library):
+[2.002s]   No SOURCES given to target: quad_swerve_controller
+[2.006s] 
+[2.009s] [0m
+[2.011s] [0mCMake Generate step failed.  Build files cannot be regenerated correctly.[0m
+[2.018s] Invoked command in '/ros2_ws/build/quad_swerve_controller' returned '1': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/ros2_ws/install/twist_stamper:/ros2_ws/install/teleop_twist_keyboard:/opt/ros/jazzy /usr/bin/cmake /ros2_ws/src/quad_swerve_controller -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/ros2_ws/install/quad_swerve_controller

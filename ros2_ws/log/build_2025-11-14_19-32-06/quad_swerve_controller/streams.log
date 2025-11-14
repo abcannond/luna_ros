@@ -1,0 +1,103 @@
+[0.029s] Invoking command in '/ros2_ws/build/quad_swerve_controller': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/ros2_ws/install/twist_stamper:/ros2_ws/install/teleop_twist_keyboard:/opt/ros/jazzy /usr/bin/cmake /ros2_ws/src/quad_swerve_controller -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/ros2_ws/install/quad_swerve_controller
+[0.063s] -- Found ament_cmake: 2.5.4 (/opt/ros/jazzy/share/ament_cmake/cmake)
+[0.406s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[0.413s] -- Found rclcpp: 28.1.12 (/opt/ros/jazzy/share/rclcpp/cmake)
+[0.487s] -- Found rosidl_generator_c: 4.6.6 (/opt/ros/jazzy/share/rosidl_generator_c/cmake)
+[0.510s] -- Found rosidl_generator_cpp: 4.6.6 (/opt/ros/jazzy/share/rosidl_generator_cpp/cmake)
+[0.534s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[0.554s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[0.643s] -- Found rmw_implementation_cmake: 7.3.2 (/opt/ros/jazzy/share/rmw_implementation_cmake/cmake)
+[0.645s] -- Found rmw_fastrtps_cpp: 8.4.3 (/opt/ros/jazzy/share/rmw_fastrtps_cpp/cmake)
+[0.759s] -- Using RMW implementation 'rmw_fastrtps_cpp' as default
+[0.851s] -- Found rclcpp_lifecycle: 28.1.12 (/opt/ros/jazzy/share/rclcpp_lifecycle/cmake)
+[0.892s] -- Found controller_interface: 4.38.0 (/opt/ros/jazzy/share/controller_interface/cmake)
+[1.375s] -- Found controller_manager: 4.38.0 (/opt/ros/jazzy/share/controller_manager/cmake)
+[1.512s] -- Found nav_msgs: 5.3.6 (/opt/ros/jazzy/share/nav_msgs/cmake)
+[1.745s] -- Configuring done (1.7s)
+[1.811s] -- Generating done (0.0s)
+[1.821s] -- Build files have been written to: /ros2_ws/build/quad_swerve_controller
+[1.838s] Invoked command in '/ros2_ws/build/quad_swerve_controller' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/ros2_ws/install/twist_stamper:/ros2_ws/install/teleop_twist_keyboard:/opt/ros/jazzy /usr/bin/cmake /ros2_ws/src/quad_swerve_controller -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/ros2_ws/install/quad_swerve_controller
+[1.839s] Invoking command in '/ros2_ws/build/quad_swerve_controller': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/ros2_ws/install/twist_stamper:/ros2_ws/install/teleop_twist_keyboard:/opt/ros/jazzy /usr/bin/cmake --build /ros2_ws/build/quad_swerve_controller -- -j4 -l4
+[1.948s] [ 33%] [32mBuilding CXX object CMakeFiles/quad_swerve_controller.dir/src/quad_swerve_controller.cpp.o[0m
+[1.951s] [ 66%] [32mBuilding CXX object CMakeFiles/quad_swerve_controller.dir/src/motor_interface.cpp.o[0m
+[5.227s] [01m[K/ros2_ws/src/quad_swerve_controller/src/quad_swerve_controller.cpp:6:44:[m[K [01;31m[Kerror: [m[Kdefinition of ‘[01m[KQuadSwerveController::[01;32m[KQuadSwerveController[m[K()[m[K’ is not in namespace enclosing ‘[01m[KQuadSwerveController[m[K’ [[01;31m[K-fpermissive[m[K]
+[5.227s]     6 | QuadSwerveController::QuadSwerveController([01;31m[K)[m[K : ControllerInterface()
+[5.228s]       |                                            [01;31m[K^[m[K
+[5.228s] [01m[K/ros2_ws/src/quad_swerve_controller/src/quad_swerve_controller.cpp:[m[K In constructor ‘[01m[KQuadSwerveController::[01;32m[KQuadSwerveController[m[K()[m[K’:
+[5.228s] [01m[K/ros2_ws/src/quad_swerve_controller/src/quad_swerve_controller.cpp:6:48:[m[K [01;31m[Kerror: [m[Kclass ‘[01m[KQuadSwerveController[m[K’ does not have any field named ‘[01m[KControllerInterface[m[K’
+[5.228s]     6 | QuadSwerveController::QuadSwerveController() : [01;31m[KControllerInterface[m[K()
+[5.229s]       |                                                [01;31m[K^~~~~~~~~~~~~~~~~~~[m[K
+[5.229s] [01m[K/ros2_ws/src/quad_swerve_controller/src/quad_swerve_controller.cpp:6:68:[m[K [01;31m[Kerror: [m[Kno matching function for call to ‘[01m[Krclcpp::Node::Node()[m[K’
+[5.229s]     6 | QuadSwerveController::QuadSwerveController() : ControllerInterface([01;31m[K)[m[K
+[5.230s]       |                                                                    [01;31m[K^[m[K
+[5.230s] In file included from [01m[K/opt/ros/jazzy/include/rclcpp/rclcpp/executors/single_threaded_executor.hpp:28[m[K,
+[5.230s]                  from [01m[K/opt/ros/jazzy/include/rclcpp/rclcpp/executors.hpp:22[m[K,
+[5.230s]                  from [01m[K/opt/ros/jazzy/include/rclcpp/rclcpp/rclcpp.hpp:172[m[K,
+[5.230s]                  from [01m[K/opt/ros/jazzy/include/pal_statistics/pal_statistics/pal_statistics_utils.hpp:45[m[K,
+[5.230s]                  from [01m[K/opt/ros/jazzy/include/pal_statistics/pal_statistics/pal_statistics.hpp:38[m[K,
+[5.231s]                  from [01m[K/opt/ros/jazzy/include/pal_statistics/pal_statistics/pal_statistics_macros.hpp:36[m[K,
+[5.231s]                  from [01m[K/opt/ros/jazzy/include/hardware_interface/hardware_interface/introspection.hpp:23[m[K,
+[5.231s]                  from [01m[K/opt/ros/jazzy/include/hardware_interface/hardware_interface/handle.hpp:33[m[K,
+[5.231s]                  from [01m[K/opt/ros/jazzy/include/controller_interface/controller_interface/controller_interface_base.hpp:27[m[K,
+[5.231s]                  from [01m[K/opt/ros/jazzy/include/controller_interface/controller_interface/controller_interface.hpp:21[m[K,
+[5.231s]                  from [01m[K/ros2_ws/src/quad_swerve_controller/include/quad_swerve_controller/quad_swerve_controller.hpp:3[m[K,
+[5.231s]                  from [01m[K/ros2_ws/src/quad_swerve_controller/src/quad_swerve_controller.cpp:1[m[K:
+[5.231s] [01m[K/opt/ros/jazzy/include/rclcpp/rclcpp/node.hpp:1629:3:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Krclcpp::Node::[01;32m[KNode[m[K(const rclcpp::Node&, const std::string&)[m[K’
+[5.232s]  1629 |   [01;36m[KNode[m[K(
+[5.232s]       |   [01;36m[K^~~~[m[K
+[5.232s] [01m[K/opt/ros/jazzy/include/rclcpp/rclcpp/node.hpp:1629:3:[m[K [01;36m[Knote: [m[K  candidate expects 2 arguments, 0 provided
+[5.232s] [01m[K/opt/ros/jazzy/include/rclcpp/rclcpp/node.hpp:103:12:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Krclcpp::Node::[01;32m[KNode[m[K(const std::string&, const std::string&, const rclcpp::NodeOptions&)[m[K’
+[5.232s]   103 |   explicit [01;36m[KNode[m[K(
+[5.232s]       |            [01;36m[K^~~~[m[K
+[5.232s] [01m[K/opt/ros/jazzy/include/rclcpp/rclcpp/node.hpp:103:12:[m[K [01;36m[Knote: [m[K  candidate expects 3 arguments, 0 provided
+[5.232s] [01m[K/opt/ros/jazzy/include/rclcpp/rclcpp/node.hpp:91:12:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Krclcpp::Node::[01;32m[KNode[m[K(const std::string&, const rclcpp::NodeOptions&)[m[K’
+[5.232s]    91 |   explicit [01;36m[KNode[m[K(
+[5.233s]       |            [01;36m[K^~~~[m[K
+[5.233s] [01m[K/opt/ros/jazzy/include/rclcpp/rclcpp/node.hpp:91:12:[m[K [01;36m[Knote: [m[K  candidate expects 2 arguments, 0 provided
+[5.233s] [01m[K/ros2_ws/src/quad_swerve_controller/src/quad_swerve_controller.cpp:[m[K At global scope:
+[5.233s] [01m[K/ros2_ws/src/quad_swerve_controller/src/quad_swerve_controller.cpp:10:96:[m[K [01;31m[Kerror: [m[Kdefinition of ‘[01m[Kcontroller_interface::return_type QuadSwerveController::[01;32m[Kinit[m[K(const std::string&)[m[K’ is not in namespace enclosing ‘[01m[KQuadSwerveController[m[K’ [[01;31m[K-fpermissive[m[K]
+[5.233s]    10 | urn_type QuadSwerveController::init(const std::string &controller_name[01;31m[K)[m[K
+[5.233s]       |                                                                       [01;31m[K^[m[K
+[5.233s] 
+[5.233s] [01m[K/ros2_ws/src/quad_swerve_controller/src/quad_swerve_controller.cpp:10:35:[m[K [01;31m[Kerror: [m[Kno declaration matches ‘[01m[Kcontroller_interface::return_type QuadSwerveController::[01;32m[Kinit[m[K(const std::string&)[m[K’
+[5.233s]    10 | controller_interface::return_type [01;31m[KQuadSwerveController[m[K::init(const std::string &controller_name)
+[5.233s]       |                                   [01;31m[K^~~~~~~~~~~~~~~~~~~~[m[K
+[5.233s] [01m[K/ros2_ws/src/quad_swerve_controller/src/quad_swerve_controller.cpp:10:35:[m[K [01;36m[Knote: [m[Kno functions named ‘[01m[Kcontroller_interface::return_type QuadSwerveController::[01;32m[Kinit[m[K(const std::string&)[m[K’
+[5.234s] [01m[K/ros2_ws/src/quad_swerve_controller/include/quad_swerve_controller/quad_swerve_controller.hpp:12:7:[m[K [01;36m[Knote: [m[K‘[01m[Kclass QuadSwerveController[m[K’ defined here
+[5.234s]    12 | class [01;36m[KQuadSwerveController[m[K : public rclcpp::Node
+[5.234s]       |       [01;36m[K^~~~~~~~~~~~~~~~~~~~[m[K
+[5.234s] [01m[K/ros2_ws/src/quad_swerve_controller/src/quad_swerve_controller.cpp:16:64:[m[K [01;31m[Kerror: [m[Kdefinition of ‘[01m[Kcontroller_interface::return_type QuadSwerveController::[01;32m[Kupdate[m[K()[m[K’ is not in namespace enclosing ‘[01m[KQuadSwerveController[m[K’ [[01;31m[K-fpermissive[m[K]
+[5.234s]    16 | controller_interface::return_type QuadSwerveController::update([01;31m[K)[m[K
+[5.234s]       |                                                                [01;31m[K^[m[K
+[5.234s] [01m[K/ros2_ws/src/quad_swerve_controller/src/quad_swerve_controller.cpp:16:35:[m[K [01;31m[Kerror: [m[Kno declaration matches ‘[01m[Kcontroller_interface::return_type QuadSwerveController::[01;32m[Kupdate[m[K()[m[K’
+[5.234s]    16 | controller_interface::return_type [01;31m[KQuadSwerveController[m[K::update()
+[5.234s]       |                                   [01;31m[K^~~~~~~~~~~~~~~~~~~~[m[K
+[5.234s] [01m[K/ros2_ws/src/quad_swerve_controller/src/quad_swerve_controller.cpp:16:35:[m[K [01;36m[Knote: [m[Kno functions named ‘[01m[Kcontroller_interface::return_type QuadSwerveController::[01;32m[Kupdate[m[K()[m[K’
+[5.234s] [01m[K/ros2_ws/src/quad_swerve_controller/include/quad_swerve_controller/quad_swerve_controller.hpp:12:7:[m[K [01;36m[Knote: [m[K‘[01m[Kclass QuadSwerveController[m[K’ defined here
+[5.234s]    12 | class [01;36m[KQuadSwerveController[m[K : public rclcpp::Node
+[5.234s]       |       [01;36m[K^~~~~~~~~~~~~~~~~~~~[m[K
+[5.317s] In file included from [01m[K/opt/ros/jazzy/include/class_loader/class_loader/class_loader.hpp:56[m[K,
+[5.317s]                  from [01m[K/opt/ros/jazzy/include/pluginlib/pluginlib/class_list_macros.hpp:40[m[K,
+[5.317s]                  from [01m[K/ros2_ws/src/quad_swerve_controller/src/quad_swerve_controller.cpp:25[m[K:
+[5.318s] [01m[K/ros2_ws/src/quad_swerve_controller/src/quad_swerve_controller.cpp:26:24:[m[K [01;31m[Kerror: [m[K‘[01m[Kmy_luna_controller[m[K’ does not name a type
+[5.318s]    26 | PLUGINLIB_EXPORT_CLASS([01;31m[Kmy_luna_controller[m[K::QuadSwerveController, controller_interface::ControllerInterface)
+[5.318s]       |                        [01;31m[K^~~~~~~~~~~~~~~~~~[m[K
+[5.329s] [01m[K/ros2_ws/src/quad_swerve_controller/src/quad_swerve_controller.cpp:[m[K In constructor ‘[01m[K{anonymous}::ProxyExec0::[01;32m[KProxyExec0[m[K()[m[K’:
+[5.330s] [01m[K/ros2_ws/src/quad_swerve_controller/src/quad_swerve_controller.cpp:26:1:[m[K [01;31m[Kerror: [m[K‘[01m[K_derived[m[K’ was not declared in this scope
+[5.330s]    26 | [01;31m[KPLUGINLIB_EXPORT_CLASS[m[K(my_luna_controller::QuadSwerveController, controller_interface::ControllerInterface)
+[5.330s]       | [01;31m[K^~~~~~~~~~~~~~~~~~~~~~[m[K
+[5.330s] [01m[K/ros2_ws/src/quad_swerve_controller/src/quad_swerve_controller.cpp:26:1:[m[K [01;31m[Kerror: [m[Kno matching function for call to ‘[01m[KregisterPlugin<<expression error>, {anonymous}::ProxyExec0::_base>(const char [41], const char [42])[m[K’
+[5.330s]    26 | [01;31m[KPLUGINLIB_EXPORT_CLASS[m[K(my_luna_controller::QuadSwerveController, controller_interface::ControllerInterface)
+[5.331s]       | [01;31m[K^~~~~~~~~~~~~~~~~~~~~~[m[K
+[5.331s] In file included from [01m[K/opt/ros/jazzy/include/class_loader/class_loader/class_loader.hpp:55[m[K:
+[5.331s] [01m[K/opt/ros/jazzy/include/class_loader/class_loader/class_loader_core.hpp:241:1:[m[K [01;36m[Knote: [m[Kcandidate: ‘[01m[Ktemplate<class Derived, class Base> class_loader::impl::UniquePtr<class_loader::impl::AbstractMetaObjectBase> class_loader::impl::[01;32m[KregisterPlugin[m[K(const std::string&, const std::string&)[m[K’
+[5.331s]   241 | [01;36m[KregisterPlugin[m[K(const std::string & class_name, const std::string & base_class_name)
+[5.331s]       | [01;36m[K^~~~~~~~~~~~~~[m[K
+[5.331s] [01m[K/opt/ros/jazzy/include/class_loader/class_loader/class_loader_core.hpp:241:1:[m[K [01;36m[Knote: [m[K  template argument deduction/substitution failed:
+[5.331s] [01m[K/ros2_ws/src/quad_swerve_controller/src/quad_swerve_controller.cpp:26:1:[m[K [01;31m[Kerror: [m[Ktemplate argument 1 is invalid
+[5.331s]    26 | [01;31m[KPLUGINLIB_EXPORT_CLASS[m[K(my_luna_controller::QuadSwerveController, controller_interface::ControllerInterface)
+[5.332s]       | [01;31m[K^~~~~~~~~~~~~~~~~~~~~~[m[K
+[6.217s] gmake[2]: *** [CMakeFiles/quad_swerve_controller.dir/build.make:76: CMakeFiles/quad_swerve_controller.dir/src/quad_swerve_controller.cpp.o] Error 1
+[6.217s] gmake[1]: *** [CMakeFiles/Makefile2:137: CMakeFiles/quad_swerve_controller.dir/all] Error 2
+[6.217s] gmake: *** [Makefile:146: all] Error 2
+[6.219s] Invoked command in '/ros2_ws/build/quad_swerve_controller' returned '2': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/ros2_ws/install/twist_stamper:/ros2_ws/install/teleop_twist_keyboard:/opt/ros/jazzy /usr/bin/cmake --build /ros2_ws/build/quad_swerve_controller -- -j4 -l4

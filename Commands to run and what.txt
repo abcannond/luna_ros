@@ -13,8 +13,18 @@ docker build --no-cache -t luna_ros:latest .
 
 ./run_ros_image.sh run_luna_sim:latest
 
+cd ros2_ws
 
-to access docker container: 
+source /ros2_ws/install/setup.bash
+
+colcon build --symlink-install
+
+source install/setup.bash
+
+ros2 launch lunabot_2425 gz_bringup.launch.py
+
+TO DRIVE: 
+to access docker container in a second terminal: 
 
 docker ps
 - (from docker ps - find Container ID (i.e. 4cf7939857c5)

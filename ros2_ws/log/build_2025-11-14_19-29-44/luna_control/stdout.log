@@ -1,0 +1,4 @@
+[ 33%] Built target luna_controller_parameters
+[ 50%] [32mBuilding CXX object CMakeFiles/luna_control.dir/src/LunaController.cpp.o[0m
+[ 66%] [32m[1mLinking CXX shared library libluna_control.so[0m
+[100%] Built target luna_control

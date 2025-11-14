@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(my_luna_controller)
+project(quad_swerve_controller)
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -13,12 +13,12 @@ find_package(nav_msgs REQUIRED)
 
 include_directories(include)
 
-add_library(my_luna_controller SHARED
+add_library(quad_swerve_controller SHARED
   src/quad_swerve_controller.cpp
   src/motor_interface.cpp
 )
 
-ament_target_dependencies(my_luna_controller
+ament_target_dependencies(quad_swerve_controller
   rclcpp
   rclcpp_lifecycle
   controller_interface
@@ -29,7 +29,7 @@ ament_target_dependencies(my_luna_controller
   nav_msgs
 )
 
-install(TARGETS my_luna_controller
+install(TARGETS quad_swerve_controller
   DESTINATION lib/${PROJECT_NAME}
 )
 

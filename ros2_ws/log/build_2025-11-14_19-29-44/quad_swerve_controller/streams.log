@@ -1,0 +1,41 @@
+[0.032s] Invoking command in '/ros2_ws/build/quad_swerve_controller': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/ros2_ws/install/twist_stamper:/ros2_ws/install/teleop_twist_keyboard:/opt/ros/jazzy /usr/bin/cmake /ros2_ws/src/quad_swerve_controller -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/ros2_ws/install/quad_swerve_controller
+[0.255s] -- The C compiler identification is GNU 13.3.0
+[0.413s] -- The CXX compiler identification is GNU 13.3.0
+[0.458s] -- Detecting C compiler ABI info
+[0.650s] -- Detecting C compiler ABI info - done
+[0.671s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.672s] -- Detecting C compile features
+[0.676s] -- Detecting C compile features - done
+[0.698s] -- Detecting CXX compiler ABI info
+[0.977s] -- Detecting CXX compiler ABI info - done
+[1.008s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[1.008s] -- Detecting CXX compile features
+[1.008s] -- Detecting CXX compile features - done
+[1.024s] -- Found ament_cmake: 2.5.4 (/opt/ros/jazzy/share/ament_cmake/cmake)
+[1.464s] -- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+[1.646s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[1.831s] -- Found rclcpp: 28.1.12 (/opt/ros/jazzy/share/rclcpp/cmake)
+[2.018s] -- Found rosidl_generator_c: 4.6.6 (/opt/ros/jazzy/share/rosidl_generator_c/cmake)
+[2.107s] -- Found rosidl_generator_cpp: 4.6.6 (/opt/ros/jazzy/share/rosidl_generator_cpp/cmake)
+[2.169s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[2.230s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[2.509s] -- Found rmw_implementation_cmake: 7.3.2 (/opt/ros/jazzy/share/rmw_implementation_cmake/cmake)
+[2.525s] -- Found rmw_fastrtps_cpp: 8.4.3 (/opt/ros/jazzy/share/rmw_fastrtps_cpp/cmake)
+[2.761s] -- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.0.13")  
+[2.807s] -- Found FastRTPS: /opt/ros/jazzy/include (Required is at least version "2.13") 
+[2.857s] -- Using RMW implementation 'rmw_fastrtps_cpp' as default
+[3.091s] -- Found rclcpp_lifecycle: 28.1.12 (/opt/ros/jazzy/share/rclcpp_lifecycle/cmake)
+[3.206s] -- Found controller_interface: 4.38.0 (/opt/ros/jazzy/share/controller_interface/cmake)
+[4.063s] -- Found controller_manager: 4.38.0 (/opt/ros/jazzy/share/controller_manager/cmake)
+[4.288s] -- Found nav_msgs: 5.3.6 (/opt/ros/jazzy/share/nav_msgs/cmake)
+[4.506s] [31mCMake Error at /opt/ros/jazzy/share/ament_cmake_core/cmake/core/ament_package_xml.cmake:53 (message):
+[4.507s]   ament_package_xml() package name 'quad_swerve_controller' in '/package.xml'
+[4.507s]   does not match current PROJECT_NAME 'my_luna_controller'.  You must call
+[4.507s]   project() with the same package name before.
+[4.507s] Call Stack (most recent call first):
+[4.507s]   /opt/ros/jazzy/share/ament_cmake_core/cmake/core/ament_package.cmake:63 (ament_package_xml)
+[4.507s]   CMakeLists.txt:40 (ament_package)
+[4.507s] 
+[4.508s] [0m
+[4.508s] -- Configuring incomplete, errors occurred!
+[4.526s] Invoked command in '/ros2_ws/build/quad_swerve_controller' returned '1': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/ros2_ws/install/twist_stamper:/ros2_ws/install/teleop_twist_keyboard:/opt/ros/jazzy /usr/bin/cmake /ros2_ws/src/quad_swerve_controller -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/ros2_ws/install/quad_swerve_controller

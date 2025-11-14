@@ -21,6 +21,7 @@
 /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/back_right_wheel_meter.stl
 /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/bucket.stl
 /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/bucket_meter.stl
+/ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/bucket_mo.stl
 /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/chassis.stl
 /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/front_left_knuckle_meter.stl
 /ros2_ws/install/lunabot_2425/share/lunabot_2425/stl/front_left_wheel_meter.stl

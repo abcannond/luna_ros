@@ -1,0 +1,18 @@
+[1.659s] Invoking command in '/ros2_ws/build/twist_stamper': PYTHONPATH=/ros2_ws/build/twist_stamper/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/ros2_ws/install/twist_stamper/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /ros2_ws/build/twist_stamper/build --no-deps symlink_data
+[2.316s] running develop
+[2.699s] running egg_info
+[2.737s] writing twist_stamper.egg-info/PKG-INFO
+[2.741s] writing dependency_links to twist_stamper.egg-info/dependency_links.txt
+[2.742s] writing entry points to twist_stamper.egg-info/entry_points.txt
+[2.743s] writing requirements to twist_stamper.egg-info/requires.txt
+[2.744s] writing top-level names to twist_stamper.egg-info/top_level.txt
+[2.812s] reading manifest file 'twist_stamper.egg-info/SOURCES.txt'
+[2.814s] writing manifest file 'twist_stamper.egg-info/SOURCES.txt'
+[2.851s] running build_ext
+[2.851s] Creating /ros2_ws/install/twist_stamper/lib/python3.12/site-packages/twist-stamper.egg-link (link to .)
+[2.853s] Installing twist_stamper script to /ros2_ws/install/twist_stamper/lib/twist_stamper
+[2.853s] Installing twist_unstamper script to /ros2_ws/install/twist_stamper/lib/twist_stamper
+[2.853s] 
+[2.853s] Installed /ros2_ws/build/twist_stamper
+[2.853s] running symlink_data
+[2.918s] Invoked command in '/ros2_ws/build/twist_stamper' returned '0': PYTHONPATH=/ros2_ws/build/twist_stamper/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/ros2_ws/install/twist_stamper/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /ros2_ws/build/twist_stamper/build --no-deps symlink_data
