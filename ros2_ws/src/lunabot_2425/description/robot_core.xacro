@@ -4,17 +4,60 @@
   <xacro:property name="deg180" value="3.14159265"/>
   <xacro:property name="deg90" value="1.5707963"/>
 
+  <!-- BASE ROCKER Transform -->
   <xacro:property name="brx" value="0"/>
   <xacro:property name="bry" value="0.126975"/>
   <xacro:property name="brz" value="0.229093"/>
   
+  <!-- ROCKER KNUCKLE Transform -->
   <xacro:property name="rkx" value="0.254"/>
   <xacro:property name="rky" value="0.019"/>
   <xacro:property name="rkz" value="0.139725"/>
 
+  <!-- KNUCKLE WHEEL Transform -->
   <xacro:property name="kwx" value="0"/>
   <xacro:property name="kwy" value="-0.038135"/>
   <xacro:property name="kwz" value="-0.146383"/>
+
+  <!-- BUCKET Dimensions -->
+  <xacro:property name="buck_sx" value="0.65"/>
+  <xacro:property name="buck_sy" value="0.25"/>
+  <xacro:property name="buck_sz" value="0.30"/>
+
+  <xacro:property name="buck_px" value="-0.1"/>
+  <xacro:property name="buck_py" value="0"/>
+  <xacro:property name="buck_pz" value="0.295"/>
+
+  <!-- Rocker Dimensions -->
+  <xacro:property name="rock_rad" value="0.025"/>
+  <xacro:property name="rock_len" value="0.55"/>
+
+  <xacro:property name="rock_px" value="0"/>
+  <xacro:property name="rock_py" value="0.05"/>
+  <xacro:property name="rock_pz" value="0.075"/>
+
+  <xacro:property name="rock_rx" value="0"/>
+  <xacro:property name="rock_ry" value="${deg90}"/>
+  <xacro:property name="rock_rz" value="0"/>
+
+  <!-- KNUCKLE Dimensions -->
+  <xacro:property name="nuck_sx" value="0.0675"/>
+  <xacro:property name="nuck_sy" value="0.035"/>
+  <xacro:property name="nuck_sz" value="0.15"/>
+
+  <xacro:property name="nuck_px" value="0"/>
+  <xacro:property name="nuck_py" value="-0.065"/>
+  <xacro:property name="nuck_pz" value="-0.075"/>
+
+  <!-- WHEEL Dimensions -->
+  <xacro:property name="whee_rad" value="0.1"/>
+  <xacro:property name="whee_len" value="0.075"/>
+
+  <xacro:property name="whee_px" value="0"/>
+  <xacro:property name="whee_py" value="0"/>
+  <xacro:property name="whee_pz" value="0.035"/>
+
+
 
   <!-- MATERIALS -->
   <material name="grey">
@@ -50,16 +93,18 @@
   <link name="bucket">
     <visual>
       <geometry>
-        <mesh filename="package://lunabot_2425/stl/bucket_mo.stl"/>
+        <!-- <mesh filename="package://lunabot_2425/stl/bucket_mo.stl"/> -->
+        <box size="${buck_sx} ${buck_sy} ${buck_sz}"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${buck_px} ${buck_py} ${buck_pz}" rpy="0 0 0"/>
       <material name="green"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://lunabot_2425/stl/bucket_mo.stl"/>
+        <!-- <mesh filename="package://lunabot_2425/stl/bucket_mo.stl"/> -->
+        <box size="${buck_sx} ${buck_sy} ${buck_sz}"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${buck_px} ${buck_py} ${buck_pz}" rpy="0 0 0"/>
     </collision>
     <inertial>
       <mass value="15"/>
@@ -79,20 +124,22 @@
   <link name="left_rocker">
     <visual>
       <geometry>
-        <mesh filename="package://lunabot_2425/stl/left_rocker_mo.stl"/>
+        <!-- <mesh filename="package://lunabot_2425/stl/left_rocker_mo.stl"/> -->
+        <cylinder radius="${rock_rad}" length="${rock_len}"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${rock_px} ${rock_py} ${rock_pz}" rpy="${rock_rx} ${rock_ry} ${rock_rz}"/>
       <material name="blue"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://lunabot_2425/stl/left_rocker_mo.stl"/>
+        <!-- <mesh filename="package://lunabot_2425/stl/left_rocker_mo.stl"/> -->
+        <cylinder radius="${rock_rad}" length="${rock_len}"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${rock_px} ${rock_py} ${rock_pz}" rpy="${rock_rx} ${rock_ry} ${rock_rz}"/>
     </collision>
     <inertial>
       <mass value="5"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${rock_px} ${rock_py} ${rock_pz}" rpy="${rock_rx} ${rock_ry} ${rock_rz}"/>
       <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
     </inertial>
   </link>
@@ -108,20 +155,22 @@
   <link name="right_rocker">
     <visual>
       <geometry>
-        <mesh filename="package://lunabot_2425/stl/right_rocker_mo.stl"/>
+        <!-- <mesh filename="package://lunabot_2425/stl/right_rocker_mo.stl"/> -->
+        <cylinder radius="${rock_rad}" length="${rock_len}"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${rock_px} ${rock_py} ${rock_pz}" rpy="${rock_rx} ${rock_ry} ${rock_rz}"/>
       <material name="blue"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://lunabot_2425/stl/right_rocker_mo.stl"/>
+        <!-- <mesh filename="package://lunabot_2425/stl/right_rocker_mo.stl"/> -->
+        <cylinder radius="${rock_rad}" length="${rock_len}"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${rock_px} ${rock_py} ${rock_pz}" rpy="${rock_rx} ${rock_ry} ${rock_rz}"/>
     </collision>
     <inertial>
       <mass value="5"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${rock_px} ${rock_py} ${rock_pz}" rpy="${rock_rx} ${rock_ry} ${rock_rz}"/>
       <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
     </inertial>
   </link>
@@ -141,20 +190,22 @@
   <link name="front_left_knuckle">
     <visual>
       <geometry>
-        <mesh filename="package://lunabot_2425/stl/knuckle_mo.stl"/>
+        <!-- <mesh filename="package://lunabot_2425/stl/knuckle_mo.stl"/> -->
+        <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${nuck_px} ${nuck_py} ${nuck_pz}" rpy="0 0 0"/>
       <material name="gold"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://lunabot_2425/stl/knuckle_mo.stl"/>
+        <!-- <mesh filename="package://lunabot_2425/stl/knuckle_mo.stl"/> -->
+        <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${nuck_px} ${nuck_py} ${nuck_pz}" rpy="0 0 0"/>
     </collision>
     <inertial>
       <mass value="2.0"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${nuck_px} ${nuck_py} ${nuck_pz}" rpy="0 0 0"/>
       <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
     </inertial>
   </link>
@@ -170,20 +221,22 @@
   <link name="front_left_wheel">
     <visual>
       <geometry>
-        <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/>
+        <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
+        <cylinder radius="${whee_rad}" length="${whee_len}"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
       <material name="red"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/>
+        <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
+        <cylinder radius="${whee_rad}" length="${whee_len}"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
     </collision>
     <inertial>
       <mass value="2.0"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
       <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
     </inertial>
   </link>
@@ -203,20 +256,22 @@
   <link name="front_right_knuckle">
     <visual>
       <geometry>
-        <mesh filename="package://lunabot_2425/stl/knuckle_mo.stl"/>
+        <!-- <mesh filename="package://lunabot_2425/stl/knuckle_mo.stl"/> -->
+        <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${nuck_px} ${nuck_py} ${nuck_pz}" rpy="0 0 0"/>
       <material name="gold"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://lunabot_2425/stl/knuckle_mo.stl"/>
+        <!-- <mesh filename="package://lunabot_2425/stl/knuckle_mo.stl"/> -->
+        <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${nuck_px} ${nuck_py} ${nuck_pz}" rpy="0 0 0"/>
     </collision>
     <inertial>
       <mass value="2.0"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${nuck_px} ${nuck_py} ${nuck_pz}" rpy="0 0 0"/>
       <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
     </inertial>
   </link>
@@ -232,20 +287,22 @@
   <link name="front_right_wheel">
     <visual>
       <geometry>
-        <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/>
+        <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
+        <cylinder radius="${whee_rad}" length="${whee_len}"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
       <material name="red"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/>
+        <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
+        <cylinder radius="${whee_rad}" length="${whee_len}"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
     </collision>
     <inertial>
       <mass value="2.0"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
       <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
     </inertial>
   </link>
@@ -262,20 +319,22 @@
   <link name="back_left_knuckle">
     <visual>
       <geometry>
-        <mesh filename="package://lunabot_2425/stl/knuckle_mo.stl"/>
+        <!-- <mesh filename="package://lunabot_2425/stl/knuckle_mo.stl"/> -->
+        <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${nuck_px} ${nuck_py} ${nuck_pz}" rpy="0 0 0"/>
       <material name="gold"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://lunabot_2425/stl/knuckle_mo.stl"/>
+        <!-- <mesh filename="package://lunabot_2425/stl/knuckle_mo.stl"/> -->
+        <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${nuck_px} ${nuck_py} ${nuck_pz}" rpy="0 0 0"/>
     </collision>
     <inertial>
       <mass value="2.0"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${nuck_px} ${nuck_py} ${nuck_pz}" rpy="0 0 0"/>
       <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
     </inertial>
   </link>
@@ -291,20 +350,22 @@
   <link name="back_left_wheel">
     <visual>
       <geometry>
-        <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/>
+        <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
+        <cylinder radius="${whee_rad}" length="${whee_len}"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
       <material name="red"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/>
+        <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
+        <cylinder radius="${whee_rad}" length="${whee_len}"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
     </collision>
     <inertial>
       <mass value="2.0"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
       <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
     </inertial>
   </link>
@@ -316,25 +377,30 @@
     <origin xyz="${kwx} ${kwy} ${kwz}" rpy="${deg90} 0 ${deg180}"/>
   </joint>
 
+
+
+
   <!-- BACK RIGHT WHEEL POD -->
   <!-- BACK RIGHT KNUCKLE -->
   <link name="back_right_knuckle">
     <visual>
       <geometry>
-        <mesh filename="package://lunabot_2425/stl/knuckle_mo.stl"/>
+        <!-- <mesh filename="package://lunabot_2425/stl/knuckle_mo.stl"/> -->
+        <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${nuck_px} ${nuck_py} ${nuck_pz}" rpy="0 0 0"/>
       <material name="gold"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://lunabot_2425/stl/knuckle_mo.stl"/>
+        <!-- <mesh filename="package://lunabot_2425/stl/knuckle_mo.stl"/> -->
+        <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${nuck_px} ${nuck_py} ${nuck_pz}" rpy="0 0 0"/>
     </collision>
     <inertial>
       <mass value="2.0"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${nuck_px} ${nuck_py} ${nuck_pz}" rpy="0 0 0"/>
       <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
     </inertial>
   </link>
@@ -350,20 +416,22 @@
   <link name="back_right_wheel">
     <visual>
       <geometry>
-        <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/>
+        <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
+        <cylinder radius="${whee_rad}" length="${whee_len}"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
       <material name="red"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/>
+        <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
+        <cylinder radius="${whee_rad}" length="${whee_len}"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
     </collision>
     <inertial>
       <mass value="2.0"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
       <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
     </inertial>
   </link>
