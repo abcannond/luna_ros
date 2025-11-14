@@ -1,9 +1,0 @@
-/ros2_ws/build/lunabot_2425/CMakeFiles/uninstall.dir
-/ros2_ws/build/lunabot_2425/CMakeFiles/lunabot_2425_uninstall.dir
-/ros2_ws/build/lunabot_2425/CMakeFiles/test.dir
-/ros2_ws/build/lunabot_2425/CMakeFiles/edit_cache.dir
-/ros2_ws/build/lunabot_2425/CMakeFiles/rebuild_cache.dir
-/ros2_ws/build/lunabot_2425/CMakeFiles/list_install_components.dir
-/ros2_ws/build/lunabot_2425/CMakeFiles/install.dir
-/ros2_ws/build/lunabot_2425/CMakeFiles/install/local.dir
-/ros2_ws/build/lunabot_2425/CMakeFiles/install/strip.dir

@@ -1,3 +1,0 @@
-/ros2_ws/install/luna_control/lib/libluna_control.so
-/ros2_ws/install/luna_control/share/luna_control/cmake/export_luna_controlExport.cmake
-/ros2_ws/install/luna_control/share/luna_control/cmake/export_luna_controlExport-noconfig.cmake

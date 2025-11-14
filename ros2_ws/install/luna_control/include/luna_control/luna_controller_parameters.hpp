@@ -1,1 +1,0 @@
-/ros2_ws/build/luna_control/include/luna_control/luna_controller_parameters.hpp
