@@ -3,6 +3,8 @@ build/
 install/
 log/
 
+run_ros_image.sh
+
 # Colcon and ament tools
 .colcon/
 ament_cmake_core/

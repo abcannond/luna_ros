@@ -32,7 +32,9 @@ docker ps
 Run this for terminal access: 
 docker exec -it <CONTAINER ID> /bin/bash
 
-source /ros2_ws/install/setup.bash
+cd ros2_ws
+
+source install/setup.bash
 
 This Runs a twist keyboard with the correct topic: 
 - (note to self: Fix the topic permanently later). 

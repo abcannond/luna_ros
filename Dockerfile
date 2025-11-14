@@ -32,7 +32,7 @@ COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Environment for Gazebo resources
-ENV GZ_SIM_RESOURCE_PATH="$GZ_SIM_RESOURCE_PATH:/ros2_ws/src/"
+ENV GZ_SIM_RESOURCE_PATH="/ros2_ws/src/"
 
 # Use entrypoint
 ENTRYPOINT ["/entrypoint.sh"]
