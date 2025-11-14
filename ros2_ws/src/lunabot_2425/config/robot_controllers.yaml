@@ -18,13 +18,13 @@ luna_cont:
 
     base_frame_id: base_link
 
-    left_back_wheel_names: ['rear_left_drive_joint']
+    left_back_wheel_names: ['back_left_drive_joint']
     left_front_wheel_names: ['front_left_drive_joint']
-    right_back_wheel_names: ['rear_right_drive_joint']
+    right_back_wheel_names: ['back_right_drive_joint']
     right_front_wheel_names: ['front_right_drive_joint']
-    left_back_pod_names: ['rear_left_steer_joint']
+    left_back_pod_names: ['back_left_steer_joint']
     left_front_pod_names: ['front_left_steer_joint']
-    right_back_pod_names: ['rear_right_steer_joint']
+    right_back_pod_names: ['back_right_steer_joint']
     right_front_pod_names: ['front_right_steer_joint']
 
     wheel_track: 0.531
