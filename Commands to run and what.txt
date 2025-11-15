@@ -25,6 +25,8 @@ ros2 launch lunabot_2425 gz_bringup.launch.py
 
 TO DRIVE: 
 to access docker container in a second terminal: 
+to access docker container: 
+in a new terminal: 
 
 docker ps
 - (from docker ps - find Container ID (i.e. 4cf7939857c5)
