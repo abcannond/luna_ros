@@ -1,0 +1,9 @@
+<library path="lib/libquad_swerve_controller.so">
+  <class name="quad_swerve_controller/QuadSwerveController"
+         type="quad_swerve_controller::QuadSwerveController"
+         base_class_type="controller_interface::ControllerInterface">
+    <description>
+      Custom controller for Luna quadruplex swerve drive.
+    </description>
+  </class>
+</library>

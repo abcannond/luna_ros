@@ -1,275 +1,453 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+<robot name="lunabot" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-    <material name="white">
-        <color rgba="1 1 1 1" />
-    </material>
+  <xacro:property name="deg180" value="3.14159265"/>
+  <xacro:property name="deg90" value="1.5707963"/>
 
-    <material name="red">
-        <color rgba="0.8 0.1 0.1 1" />
-    </material>
+  <!-- BASE ROCKER Transform -->
+  <xacro:property name="brx" value="0"/>
+  <xacro:property name="bry" value="0.126975"/>
+  <xacro:property name="brz" value="0.229093"/>
+  
+  <!-- ROCKER KNUCKLE Transform -->
+  <xacro:property name="rkx" value="0.254"/>
+  <xacro:property name="rky" value="0.019"/>
+  <xacro:property name="rkz" value="0.139725"/>
 
-    <material name="grey">
-        <color rgba="0.7 0.7 0.7 1" />
-    </material>
+  <!-- KNUCKLE WHEEL Transform -->
+  <xacro:property name="kwx" value="0"/>
+  <xacro:property name="kwy" value="-0.038135"/>
+  <xacro:property name="kwz" value="-0.146383"/>
 
-    <material name="green">
-        <color rgba="0.1 0.8 0.1 1" />
-    </material>
+  <!-- BUCKET Dimensions -->
+  <xacro:property name="buck_sx" value="0.65"/>
+  <xacro:property name="buck_sy" value="0.25"/>
+  <xacro:property name="buck_sz" value="0.30"/>
 
-    <material name="black">
-        <color rgba="0 0 0 1" />
-    </material>
+  <xacro:property name="buck_px" value="-0.1"/>
+  <xacro:property name="buck_py" value="0"/>
+  <xacro:property name="buck_pz" value="0.295"/>
 
-    <!-- BASE LINK -->
+  <!-- Rocker Dimensions -->
+  <xacro:property name="rock_rad" value="0.025"/>
+  <xacro:property name="rock_len" value="0.55"/>
 
-    <link name="base_link">
+  <xacro:property name="rock_px" value="0"/>
+  <xacro:property name="rock_py" value="0.05"/>
+  <xacro:property name="rock_pz" value="0.075"/>
 
-    </link>
+  <xacro:property name="rock_rx" value="0"/>
+  <xacro:property name="rock_ry" value="${deg90}"/>
+  <xacro:property name="rock_rz" value="0"/>
 
-    <!-- CHASSIS LINK -->
+  <!-- KNUCKLE Dimensions -->
+  <xacro:property name="nuck_sx" value="0.0675"/>
+  <xacro:property name="nuck_sy" value="0.035"/>
+  <xacro:property name="nuck_sz" value="0.15"/>
 
-    <joint name="chassis_joint" type="fixed">
-        <parent link="base_link" />
-        <child link="chassis" />
-        <origin xyz="0 0 0.144" rpy="0 0 1.57079632679489" />
-    </joint>
+  <xacro:property name="nuck_px" value="0"/>
+  <xacro:property name="nuck_py" value="-0.065"/>
+  <xacro:property name="nuck_pz" value="-0.075"/>
 
-    <link name="chassis">
-        <visual>
-            <origin xyz="0 0 0" rpy=" -1.57079632679489 -3.14159265358979 -1.57079632679489" />
-            <geometry>
-                <mesh filename="package://lunabot_2425/stl/bucket_meter.stl" />
-            </geometry>
-            <material name="white" />
-        </visual>
-        <collision>
-            <origin xyz="0 0 0" rpy=" -1.57079632679489 -3.14159265358979 -1.57079632679489" />
-            <geometry>
-                <mesh filename="package://lunabot_2425/stl/bucket_meter.stl" />
-            </geometry>
-        </collision>
-        <inertial>
-            <origin xyz="0.00047255856824676841735 0.0223648596978729651 0.13076886029956547031" rpy="0 0 0"/>
-            <mass value="25" />
-            <inertia ixx="0.90389242187733576106" ixy="0.0034717089339218617193"  ixz="-0.0076346994671778805816" iyy="0.40577362837262359596" iyz="-0.068059613649222985843" izz="0.9121615213756760765" />
-        </inertial>
-    </link>
+  <!-- WHEEL Dimensions -->
+  <xacro:property name="whee_rad" value="0.1"/>
+  <xacro:property name="whee_len" value="0.075"/>
 
-    <!-- REAR LEFT WHEEL POD ASSEMBLY -->
+  <xacro:property name="whee_px" value="0"/>
+  <xacro:property name="whee_py" value="0"/>
+  <xacro:property name="whee_pz" value="0.035"/>
 
-    <joint name="rear_left_steer_joint" type="continuous">
-        <parent link="chassis" />
-        <child link="rear_left_pod" />
-        <origin xyz="0.2655 0.2539125 0.0894" rpy="0 0 3.14159265358979" />
-        <axis xyz="0 0 1" />
-    </joint>
 
-    <link name="rear_left_pod">
-        <visual>
-            <geometry>
-                <mesh filename="package://lunabot_2425/stl/wheelpod.stl" />
-            </geometry>
-            <material name="red" />
-        </visual>
-        <collision>
-            <geometry>
-                <mesh filename="package://lunabot_2425/stl/wheelpod.stl" />
-            </geometry>
-        </collision>
-        <inertial>
-            <origin xyz="0.030048248825093670095 0 -0.054580062726334643841" rpy="0 0 0"/>
-            <mass value="0.5" />
-            <inertia ixx="0.0013087489021583560353" ixy="0"  ixz="0.00026671164402675704222" iyy="0.0013673630909145266868" iyz="0" izz="0.00042583920876048439019" />
-        </inertial>
-    </link>
 
-    <joint name="rear_left_drive_joint" type="continuous">
-        <parent link="rear_left_pod" />
-        <child link="rear_left_wheel" />
-        <origin xyz="0.0335 0 -0.13335" rpy="-1.57079632679489 0 3.14159265358979" />
-        <axis xyz="1 0 0"/>
-    </joint>
+  <!-- MATERIALS -->
+  <material name="grey">
+    <color rgba="0.7 0.7 0.7 1"/>
+  </material>
 
-    <link name="rear_left_wheel">
-        <visual>
-            <geometry>
-                <mesh filename="package://lunabot_2425/stl/wheel.stl" />
-            </geometry>
-            <material name="black" />
-        </visual>
-        <collision>
-            <geometry>
-                <mesh filename="package://lunabot_2425/stl/wheel.stl" />
-            </geometry>
-        </collision>
-        <inertial>
-            <origin xyz="0.03 0 0" rpy="0 0 0"/>
-            <mass value="1" />
-            <inertia ixx="0.0052" ixy="0" ixz="0" iyy="0.0029" iyz="0" izz="0.0029" />
-        </inertial>
-    </link>
+  <material name="green">
+    <color rgba="0.6 0.2 0.5 1"/>
+  </material>
 
-    <!-- REAR RIGHT WHEEL POD ASSEMBLY -->
+  <material name="blue">
+    <color rgba="0.1 0.1 0.7 1"/>
+  </material>
 
-    <joint name="rear_right_steer_joint" type="continuous">
-        <parent link="chassis" />
-        <child link="rear_right_pod" />
-        <origin xyz="-0.2655 0.2539125 0.0894" rpy="0 0 0" />
-        <axis xyz="0 0 1" />
-    </joint>
+  <material name="red">
+    <color rgba="0.7 0.1 0.1 1"/>
+  </material>
 
-    <link name="rear_right_pod">
-        <visual>
-            <geometry>
-                <mesh filename="package://lunabot_2425/stl/wheelpod.stl" />
-            </geometry>
-            <material name="red" />
-        </visual>
-        <collision>
-            <geometry>
-                <mesh filename="package://lunabot_2425/stl/wheelpod.stl" />
-            </geometry>
-        </collision>
-        <inertial>
-            <origin xyz="0.030048248825093670095 0 -0.054580062726334643841" rpy="0 0 0"/>
-            <mass value="0.5" />
-            <inertia ixx="0.0013087489021583560353" ixy="0"  ixz="0.00026671164402675704222" iyy="0.0013673630909145266868" iyz="0" izz="0.00042583920876048439019" />
-        </inertial>
-    </link>
+  <material name="gold">
+    <color rgba="0.83 0.67 0.2 1"/>
+  </material>
 
-    <joint name="rear_right_drive_joint" type="continuous">
-        <parent link="rear_right_pod" />
-        <child link="rear_right_wheel" />
-        <origin xyz="0.0335 0 -0.13335" rpy="-1.57079632679489 0 3.14159265358979" />
-        <axis xyz="-1 0 0"/>
-    </joint>
+  <!-- BASE LINK -->
+  <link name="base_link">
+    <inertial>
+      <mass value="1.0"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+  </link>
 
-    <link name="rear_right_wheel">
-        <visual>
-            <geometry>
-                <mesh filename="package://lunabot_2425/stl/wheel.stl" />
-            </geometry>
-            <material name="black" />
-        </visual>
-        <collision>
-            <geometry>
-                <mesh filename="package://lunabot_2425/stl/wheel.stl" />
-            </geometry>
-        </collision>
-        <inertial>
-            <origin xyz="0.03 0 0" rpy="0 0 0"/>
-            <mass value="1" />
-            <inertia ixx="0.0052" ixy="0" ixz="0" iyy="0.0029" iyz="0" izz="0.0029" />
-        </inertial>
-    </link>
+  <!-- BUCKET -->
+  <link name="bucket">
+    <visual>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/bucket_mo.stl"/> -->
+        <box size="${buck_sx} ${buck_sy} ${buck_sz}"/>
+      </geometry>
+      <origin xyz="${buck_px} ${buck_py} ${buck_pz}" rpy="0 0 0"/>
+      <material name="green"/>
+    </visual>
+    <collision>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/bucket_mo.stl"/> -->
+        <box size="${buck_sx} ${buck_sy} ${buck_sz}"/>
+      </geometry>
+      <origin xyz="${buck_px} ${buck_py} ${buck_pz}" rpy="0 0 0"/>
+    </collision>
+    <inertial>
+      <mass value="15"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.9" ixy="0" ixz="0" iyy="0.4" iyz="0" izz="0.9"/>
+    </inertial>
+  </link>
 
-    <!-- FRONT LEFT WHEEL POD ASSEMBLY -->
+  <!-- BUCKET JOINT -->
+  <joint name="bucket_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="bucket"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
 
-    <joint name="front_left_steer_joint" type="continuous">
-        <parent link="chassis" />
-        <child link="front_left_pod" />
-        <origin xyz="0.2655 -0.2539125 0.0894" rpy="0 0 3.14159265358979" />
-        <axis xyz="0 0 1" />
-    </joint>
+  <!-- LEFT ROCKER -->
+  <link name="left_rocker">
+    <visual>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/left_rocker_mo.stl"/> -->
+        <cylinder radius="${rock_rad}" length="${rock_len}"/>
+      </geometry>
+      <origin xyz="${rock_px} ${rock_py} ${rock_pz}" rpy="${rock_rx} ${rock_ry} ${rock_rz}"/>
+      <material name="blue"/>
+    </visual>
+    <collision>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/left_rocker_mo.stl"/> -->
+        <cylinder radius="${rock_rad}" length="${rock_len}"/>
+      </geometry>
+      <origin xyz="${rock_px} ${rock_py} ${rock_pz}" rpy="${rock_rx} ${rock_ry} ${rock_rz}"/>
+    </collision>
+    <inertial>
+      <mass value="5"/>
+      <origin xyz="${rock_px} ${rock_py} ${rock_pz}" rpy="${rock_rx} ${rock_ry} ${rock_rz}"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+  </link>
 
-    <link name="front_left_pod">
-        <visual>
-            <geometry>
-                <mesh filename="package://lunabot_2425/stl/wheelpod.stl" />
-            </geometry>
-            <material name="red" />
-        </visual>
-        <collision>
-            <geometry>
-                <mesh filename="package://lunabot_2425/stl/wheelpod.stl" />
-            </geometry>
-        </collision>
-        <inertial>
-            <origin xyz="0.030048248825093670095 0 -0.054580062726334643841" rpy="0 0 0"/>
-            <mass value="0.5" />
-            <inertia ixx="0.0013087489021583560353" ixy="0"  ixz="0.00026671164402675704222" iyy="0.0013673630909145266868" iyz="0" izz="0.00042583920876048439019" />
-        </inertial>
-    </link>
+  <!-- LEFT ROCKER JOINT -->
+  <joint name="left_rocker_joint" type="fixed">
+    <parent link="bucket"/>
+    <child link="left_rocker"/>
+    <origin xyz="${brx} ${bry} ${brz}" rpy="-${deg90} ${deg180} 0"/>
+  </joint>
 
-    <joint name="front_left_drive_joint" type="continuous">
-        <parent link="front_left_pod" />
-        <child link="front_left_wheel" />
-        <origin xyz="0.0335 0 -0.13335" rpy="-1.57079632679489 0 3.14159265358979" />
-        <axis xyz="1 0 0"/>
-    </joint>
+  <!-- RIGHT ROCKER -->
+  <link name="right_rocker">
+    <visual>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/right_rocker_mo.stl"/> -->
+        <cylinder radius="${rock_rad}" length="${rock_len}"/>
+      </geometry>
+      <origin xyz="${rock_px} ${rock_py} ${rock_pz}" rpy="${rock_rx} ${rock_ry} ${rock_rz}"/>
+      <material name="blue"/>
+    </visual>
+    <collision>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/right_rocker_mo.stl"/> -->
+        <cylinder radius="${rock_rad}" length="${rock_len}"/>
+      </geometry>
+      <origin xyz="${rock_px} ${rock_py} ${rock_pz}" rpy="${rock_rx} ${rock_ry} ${rock_rz}"/>
+    </collision>
+    <inertial>
+      <mass value="5"/>
+      <origin xyz="${rock_px} ${rock_py} ${rock_pz}" rpy="${rock_rx} ${rock_ry} ${rock_rz}"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+  </link>
 
-    <link name="front_left_wheel">
-        <visual>
-            <geometry>
-                <mesh filename="package://lunabot_2425/stl/wheel.stl" />
-            </geometry>
-            <material name="black" />
-        </visual>
-        <collision>
-            <geometry>
-                <mesh filename="package://lunabot_2425/stl/wheel.stl" />
-            </geometry>
-        </collision>
-        <inertial>
-            <origin xyz="0.03 0 0" rpy="0 0 0"/>
-            <mass value="1" />
-            <inertia ixx="0.0052" ixy="0" ixz="0" iyy="0.0029" iyz="0" izz="0.0029" />
-        </inertial>
-    </link>
+  <!-- RIGHT ROCKER JOINT -->
+  <joint name="right_rocker_joint" type="fixed">
+    <parent link="bucket"/>
+    <child link="right_rocker"/>
+    <origin xyz="${brx} -${bry} ${brz}" rpy="${deg90} 0 0"/>
+  </joint>
 
-    <!-- FRONT RIGHT WHEEL POD ASSEMBLY -->
 
-    <joint name="front_right_steer_joint" type="continuous">
-        <parent link="chassis" />
-        <child link="front_right_pod" />
-        <origin xyz="-0.2655 -0.2539125 0.0894" rpy="0 0 0" />
-        <axis xyz="0 0 1" />
-    </joint>
 
-    <link name="front_right_pod">
-        <visual>
-            <geometry>
-                <mesh filename="package://lunabot_2425/stl/wheelpod.stl" />
-            </geometry>
-            <material name="red" />
-        </visual>
-        <collision>
-            <geometry>
-                <mesh filename="package://lunabot_2425/stl/wheelpod.stl" />
-            </geometry>
-        </collision>
-        <inertial>
-            <origin xyz="0.030048248825093670095 0 -0.054580062726334643841" rpy="0 0 0"/>
-            <mass value="0.5" />
-            <inertia ixx="0.0013087489021583560353" ixy="0"  ixz="0.00026671164402675704222" iyy="0.0013673630909145266868" iyz="0" izz="0.00042583920876048439019" />
-        </inertial>
-    </link>
 
-    <joint name="front_right_drive_joint" type="continuous">
-        <parent link="front_right_pod" />
-        <child link="front_right_wheel" />
-        <origin xyz="0.0335 0 -0.13335" rpy="-1.57079632679489 0 3.14159265358979" />
-        <axis xyz="-1 0 0"/>
-    </joint>
+  <!-- FRONT LEFT WHEEL POD -->
+  <!-- FRONT LEFT KNUCKLE -->
+  <link name="front_left_knuckle">
+    <visual>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/knuckle_mo.stl"/> -->
+        <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
+      </geometry>
+      <origin xyz="${nuck_px} ${nuck_py} ${nuck_pz}" rpy="0 0 0"/>
+      <material name="gold"/>
+    </visual>
+    <collision>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/knuckle_mo.stl"/> -->
+        <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
+      </geometry>
+      <origin xyz="${nuck_px} ${nuck_py} ${nuck_pz}" rpy="0 0 0"/>
+    </collision>
+    <inertial>
+      <mass value="2.0"/>
+      <origin xyz="${nuck_px} ${nuck_py} ${nuck_pz}" rpy="0 0 0"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+  </link>
 
-    <link name="front_right_wheel">
-        <visual>
-            <geometry>
-                <mesh filename="package://lunabot_2425/stl/wheel.stl" />
-            </geometry>
-            <material name="black" />
-        </visual>
-        <collision>
-            <geometry>
-                <mesh filename="package://lunabot_2425/stl/wheel.stl" />
-            </geometry>
-        </collision>
-        <inertial>
-            <origin xyz="0.03 0 0" rpy="0 0 0"/>
-            <mass value="1" />
-            <inertia ixx="0.0052" ixy="0" ixz="0" iyy="0.0029" iyz="0" izz="0.0029" />
-        </inertial>
-    </link>
+  <!-- FRONT LEFT STEER JOINT -->
+  <joint name="front_left_steer_joint" type="continuous">
+    <parent link="left_rocker"/>
+    <child link="front_left_knuckle"/>
+    <origin xyz="-${rkx} ${rky} ${rkz}" rpy="-${deg90} ${deg180} 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
 
+  <!-- FRONT LEFT WHEEL -->
+  <link name="front_left_wheel">
+    <visual>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
+        <cylinder radius="${whee_rad}" length="${whee_len}"/>
+      </geometry>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
+      <material name="red"/>
+    </visual>
+    <collision>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
+        <cylinder radius="${whee_rad}" length="${whee_len}"/>
+      </geometry>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
+    </collision>
+    <inertial>
+      <mass value="2.0"/>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+  </link>
+
+  <!-- FRONT LEFT DRIVE JOINT -->
+  <joint name="front_left_drive_joint" type="continuous">
+    <parent link="front_left_knuckle"/>
+    <child link="front_left_wheel"/>
+    <origin xyz="${kwx} ${kwy} ${kwz}" rpy="${deg90} 0 ${deg180}"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+
+
+
+  <!-- FRONT RIGHT WHEEL POD -->
+  <!-- FRONT RIGHT KNUCKLE -->
+  <link name="front_right_knuckle">
+    <visual>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/knuckle_mo.stl"/> -->
+        <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
+      </geometry>
+      <origin xyz="${nuck_px} ${nuck_py} ${nuck_pz}" rpy="0 0 0"/>
+      <material name="gold"/>
+    </visual>
+    <collision>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/knuckle_mo.stl"/> -->
+        <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
+      </geometry>
+      <origin xyz="${nuck_px} ${nuck_py} ${nuck_pz}" rpy="0 0 0"/>
+    </collision>
+    <inertial>
+      <mass value="2.0"/>
+      <origin xyz="${nuck_px} ${nuck_py} ${nuck_pz}" rpy="0 0 0"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+  </link>
+
+  <!-- FRONT RIGHT STEER JOINT -->
+  <joint name="front_right_steer_joint" type="continuous">
+    <parent link="right_rocker"/>
+    <child link="front_right_knuckle"/>
+    <origin xyz="${rkx} ${rky} ${rkz}" rpy="${deg90} 0 ${deg180}"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <!-- FRONT RIGHT WHEEL -->
+  <link name="front_right_wheel">
+    <visual>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
+        <cylinder radius="${whee_rad}" length="${whee_len}"/>
+      </geometry>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
+      <material name="red"/>
+    </visual>
+    <collision>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
+        <cylinder radius="${whee_rad}" length="${whee_len}"/>
+      </geometry>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
+    </collision>
+    <inertial>
+      <mass value="2.0"/>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+  </link>
+
+  <!-- FRONT RIGHT DRIVE JOINT -->
+  <joint name="front_right_drive_joint" type="continuous">
+    <parent link="front_right_knuckle"/>
+    <child link="front_right_wheel"/>
+    <origin xyz="${kwx} ${kwy} ${kwz}" rpy="${deg90} 0 ${deg180}"/>
+    <axis xyz="0 0 -1"/>
+  </joint>
+
+  <!-- BACK LEFT WHEEL POD -->
+  <!-- BACK LEFT KNUCKLE -->
+  <link name="back_left_knuckle">
+    <visual>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/knuckle_mo.stl"/> -->
+        <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
+      </geometry>
+      <origin xyz="${nuck_px} ${nuck_py} ${nuck_pz}" rpy="0 0 0"/>
+      <material name="gold"/>
+    </visual>
+    <collision>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/knuckle_mo.stl"/> -->
+        <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
+      </geometry>
+      <origin xyz="${nuck_px} ${nuck_py} ${nuck_pz}" rpy="0 0 0"/>
+    </collision>
+    <inertial>
+      <mass value="2.0"/>
+      <origin xyz="${nuck_px} ${nuck_py} ${nuck_pz}" rpy="0 0 0"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+  </link>
+
+  <!-- BACK LEFT STEER JOINT -->
+  <joint name="back_left_steer_joint" type="continuous">
+    <parent link="left_rocker"/>
+    <child link="back_left_knuckle"/>
+    <origin xyz="${rkx} ${rky} ${rkz}" rpy="${deg90} 0 ${deg180}"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+    <!-- BACK LEFT WHEEL -->
+  <link name="back_left_wheel">
+    <visual>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
+        <cylinder radius="${whee_rad}" length="${whee_len}"/>
+      </geometry>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
+      <material name="red"/>
+    </visual>
+    <collision>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
+        <cylinder radius="${whee_rad}" length="${whee_len}"/>
+      </geometry>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
+    </collision>
+    <inertial>
+      <mass value="2.0"/>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+  </link>
+
+  <!-- BACK LEFT DRIVE JOINT -->
+  <joint name="back_left_drive_joint" type="continuous">
+    <parent link="back_left_knuckle"/>
+    <child link="back_left_wheel"/>
+    <origin xyz="${kwx} ${kwy} ${kwz}" rpy="${deg90} 0 ${deg180}"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+
+
+
+  <!-- BACK RIGHT WHEEL POD -->
+  <!-- BACK RIGHT KNUCKLE -->
+  <link name="back_right_knuckle">
+    <visual>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/knuckle_mo.stl"/> -->
+        <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
+      </geometry>
+      <origin xyz="${nuck_px} ${nuck_py} ${nuck_pz}" rpy="0 0 0"/>
+      <material name="gold"/>
+    </visual>
+    <collision>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/knuckle_mo.stl"/> -->
+        <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
+      </geometry>
+      <origin xyz="${nuck_px} ${nuck_py} ${nuck_pz}" rpy="0 0 0"/>
+    </collision>
+    <inertial>
+      <mass value="2.0"/>
+      <origin xyz="${nuck_px} ${nuck_py} ${nuck_pz}" rpy="0 0 0"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+  </link>
+
+  <!-- BACK RIGHT STEER JOINT -->
+  <joint name="back_right_steer_joint" type="continuous">
+    <parent link="right_rocker"/>
+    <child link="back_right_knuckle"/>
+    <origin xyz="-${rkx} ${rky} ${rkz}" rpy="${deg90} 0 ${deg180}"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <!-- BACK RIGHT WHEEL -->
+  <link name="back_right_wheel">
+    <visual>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
+        <cylinder radius="${whee_rad}" length="${whee_len}"/>
+      </geometry>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
+      <material name="red"/>
+    </visual>
+    <collision>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
+        <cylinder radius="${whee_rad}" length="${whee_len}"/>
+      </geometry>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
+    </collision>
+    <inertial>
+      <mass value="2.0"/>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+  </link>
+
+  <!-- BACK RIGHT DRIVE JOINT -->
+  <joint name="back_right_drive_joint" type="continuous">
+    <parent link="back_right_knuckle"/>
+    <child link="back_right_wheel"/>
+    <origin xyz="${kwx} ${kwy} ${kwz}" rpy="${deg90} 0 ${deg180}"/>
+    <axis xyz="0 0 1"/>
+  </joint>
 </robot>

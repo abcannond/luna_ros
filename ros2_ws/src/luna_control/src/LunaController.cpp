@@ -36,6 +36,7 @@
 
 namespace
 {
+  // Default topic names
   constexpr auto DEFAULT_COMMAND_TOPIC = "~/cmd_vel";
   constexpr auto DEFAULT_COMMAND_OUT_TOPIC = "~/cmd_vel_out";
   constexpr auto DEFAULT_ODOMETRY_TOPIC = "~/odom";
@@ -51,8 +52,12 @@ namespace luna_controller
   using hardware_interface::HW_IF_VELOCITY;
   using lifecycle_msgs::msg::State;
 
+  // Constructor
   LunaController::LunaController() : controller_interface::ControllerInterface() {}
 
+
+  // on_init implementation
+  // Loads the using the parameter listener
   controller_interface::CallbackReturn LunaController::on_init()
   {
     try
@@ -70,8 +75,16 @@ namespace luna_controller
     return controller_interface::CallbackReturn::SUCCESS;
   }
 
+
+  // command_interface_configuration implementation
+  // Declares which hardware interfaces the controller will write to (these need to exist)
+  // wheels -> velocity interfaces
+  // pods -> position interfaces 
   InterfaceConfiguration LunaController::command_interface_configuration() const
   {
+    // where does params_.left_wheel_names get set?
+    // -> from the parameter listener, which gets it from ROS parameters
+    // ros parameters can be found in the luna_controller/params.yaml file
     std::vector<std::string> conf_names;
     for (const auto &joint_name : params_.left_back_wheel_names)
     {
