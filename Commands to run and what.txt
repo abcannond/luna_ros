@@ -40,6 +40,11 @@ This Runs a twist keyboard with the correct topic:
 ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/luna_cont/cmd_vel_unstamped
 
 
+
+
+
+
+
 Other entrypoint.sh file stuff: 
 # #!/bin/bash
 # set -e

@@ -32,12 +32,17 @@
 #include <string>
 #include <vector>
 
+// Ros2 Controler API
 #include "controller_interface/controller_interface.hpp"
+// Internal helper components (look at this code later)
 #include "luna_control/odometry.hpp"
 #include "luna_control/speed_limiter.hpp"
+
+// message types. 
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
-#include "odometry.hpp"
+#include "odometry.hpp" //dupicate of above?
+
 #include "rclcpp_lifecycle/state.hpp"
 #include "realtime_tools/realtime_box.h"
 #include "realtime_tools/realtime_publisher.h"
@@ -49,41 +54,82 @@
 namespace luna_controller
 {
 
+    // For convenience redefine commonly used message types
     using Twist = geometry_msgs::msg::TwistStamped;
 
+    // Main Class of control package. Inherits from ControllerInterface base class
     class LunaController : public controller_interface::ControllerInterface
     {
     public:
+        // Constructor
         LunaController();
 
+        // Controller Interface methods
+        // tell ROS2 what joint interfaces are needed. 
         controller_interface::InterfaceConfiguration command_interface_configuration() const override;
 
         controller_interface::InterfaceConfiguration state_interface_configuration() const override;
 
+        // declare a function called update that returns controller_interface::return_type
+        // and takes two parameters: a constant reference to rclcpp::Time named time,
+        // and a constant reference to rclcpp::Duration named period.
         controller_interface::return_type update(
             const rclcpp::Time &time, const rclcpp::Duration &period) override;
 
+
+        // functions for each lifecycle transition
+        // these are called automatically by the lifecycle manager
+
+        // on_init implementation
+        // called when the controller is created
+        // loads the parameters using the parameter listener
         controller_interface::CallbackReturn on_init() override;
 
+        // on_configure implementation
+        // called when the controller is configured
+        // sets up publishers and subscribers, configures odometry - sets up other paraemeters. 
         controller_interface::CallbackReturn on_configure(
             const rclcpp_lifecycle::State &previous_state) override;
 
+        // on_activate implementation
+        // called when the controller is activated
+        // action is unclear in code - likely resets odometry and timestamps.
         controller_interface::CallbackReturn on_activate(
             const rclcpp_lifecycle::State &previous_state) override;
 
+        // on_deactivate implementation
+        // called when the controller is deactivated
+        // action is unclear in code - likely halts the robot. (calls the clear fucntion for every handle)
         controller_interface::CallbackReturn on_deactivate(
             const rclcpp_lifecycle::State &previous_state) override;
 
+        // on_cleanup implementation
+        // called when the controller is cleaned up
+        // calls received_velocity_msg_ptr_.set(std::make_shared<Twist>());
+            // likely resets the controller to a clean state.
         controller_interface::CallbackReturn on_cleanup(
             const rclcpp_lifecycle::State &previous_state) override;
 
+        // on_error implementation
+        // called when the controller enters an error state
+        // calls reset() - likely resets the controller to a clean state.
+        // if reset fails, returns ERROR
         controller_interface::CallbackReturn on_error(
             const rclcpp_lifecycle::State &previous_state) override;
 
+        // on_shutdown implementation
+        // called when the controller is shutdown
+        // calls a halt() function - likely stops the robot.
         controller_interface::CallbackReturn on_shutdown(
             const rclcpp_lifecycle::State &previous_state) override;
+    return controller_interface::return_type::OK;
 
+    // define protected members 
     protected:
+        // Define handle structures for wheels and pods
+        // these hold references to the command and feedback interfaces for each wheel/pod
+        // can call .get() on the reference wrappers to get the actual interface
+            // .get().set_value(...) to set command values (get acquires the reference, set sends a value to it)
         struct WheelHandle
         {
             std::reference_wrapper<const hardware_interface::LoanedStateInterface> feedback;
@@ -96,6 +142,13 @@ namespace luna_controller
             std::reference_wrapper<hardware_interface::LoanedCommandInterface> position;
         };
 
+        // Functions to configure wheel and pod segments
+        // called in on_configure to set up the handles for each wheel and pod
+        // parameters: 
+            // segment: string name of the segment (e.g. "left_back_wheel")
+            // wheel_names/pod_names: vector of strings with the names of the joints in the segment
+            // registered_handles: vector to store the configured handles
+        // i.e. : configure_wheel_segment("right_front", params_.right_front_wheel_names, registered_right_front_wheel_handles_);
         controller_interface::CallbackReturn configure_wheel_segment(
             const std::string &segment, const std::vector<std::string> &wheel_names,
             std::vector<WheelHandle> &registered_handles);
@@ -104,6 +157,10 @@ namespace luna_controller
             const std::string &segment, const std::vector<std::string> &pod_names,
             std::vector<PodHandle> &registered_handles);
 
+        // Member variables
+        // Vectors of handles for each wheel and pod segment
+        // DYNAMIC ARRAYS to support multiple wheels/pods per side
+        // 8 TOTAL VECTORS FOR 8 JOINT TYPES
         std::vector<WheelHandle> registered_left_back_wheel_handles_;
         std::vector<WheelHandle> registered_right_back_wheel_handles_;
         std::vector<WheelHandle> registered_left_front_wheel_handles_;
@@ -113,6 +170,7 @@ namespace luna_controller
         std::vector<PodHandle> registered_right_back_pod_handles_;
         std::vector<PodHandle> registered_left_front_pod_handles_;
         std::vector<PodHandle> registered_right_front_pod_handles_;
+
 
         // Parameters from ROS for diff_drive_controller
         std::shared_ptr<luna_controller::ParamListener> param_listener_;
@@ -129,6 +187,8 @@ namespace luna_controller
         // Timeout to consider cmd_vel commands old
         std::chrono::milliseconds cmd_vel_timeout_{500};
 
+        // odometry publishers 
+        // publish odometry and tf messages on "~/odom" and "/tf" topics
         std::shared_ptr<rclcpp::Publisher<nav_msgs::msg::Odometry>> odometry_publisher_ = nullptr;
         std::shared_ptr<realtime_tools::RealtimePublisher<nav_msgs::msg::Odometry>>
             realtime_odometry_publisher_ = nullptr;
