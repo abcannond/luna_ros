@@ -123,6 +123,10 @@ namespace luna_controller
     return {interface_configuration_type::INDIVIDUAL, conf_names};
   }
 
+  // state_interface_configuration implementation
+  // Declares which hardware interfaces the controller will read from (these need to exist)
+  // wheels -> velocity interfaces
+  // pods -> position interfaces
   InterfaceConfiguration LunaController::state_interface_configuration() const
   {
     std::vector<std::string> conf_names;
@@ -163,6 +167,22 @@ namespace luna_controller
 
     return {interface_configuration_type::INDIVIDUAL, conf_names};
   }
+
+
+  static double wrap_to_pi(double a) {
+    /* normalize angle to [-pi, pi) */
+    a = fmod(a + M_PI, 2.0 * M_PI);
+    if (a < 0.0) a += 2.0 * M_PI;
+    return a - M_PI;
+  }
+
+  static double shortest_angular_diff(double target, double source) {
+    /* returns signed shortest difference (target - source) in range [-pi, pi) */
+    double diff = wrap_to_pi(target) - wrap_to_pi(source);
+    /* after subtraction we may be in (-2pi, 2pi), normalize again */
+    return wrap_to_pi(diff);
+  }  
+
 
   controller_interface::return_type LunaController::update(
       const rclcpp::Time &time, const rclcpp::Duration &period)
@@ -361,74 +381,182 @@ namespace luna_controller
     double right_back_pod_position = 0.0;
     double right_front_pod_position = 0.0;
 
-    if (angular_command == 0.0 && linear_command == 0.0 && strafe_command != 0.0) {
-      left_back_wheel_velocity = strafe_command / wheel_radius;
-      left_front_wheel_velocity = -strafe_command / wheel_radius;
-      right_back_wheel_velocity = -strafe_command / wheel_radius;
-      right_front_wheel_velocity = strafe_command / wheel_radius;
+    // if (angular_command == 0.0 && linear_command == 0.0 && strafe_command != 0.0) {
+    //   left_back_wheel_velocity = strafe_command / wheel_radius;
+    //   left_front_wheel_velocity = -strafe_command / wheel_radius;
+    //   right_back_wheel_velocity = -strafe_command / wheel_radius;
+    //   right_front_wheel_velocity = strafe_command / wheel_radius;
 
-      left_back_pod_position = M_PI_2;
-      left_front_pod_position = -M_PI_2;
-      right_back_pod_position = -M_PI_2;
-      right_front_pod_position = M_PI_2;
+    //   left_back_pod_position = M_PI_2;
+    //   left_front_pod_position = -M_PI_2;
+    //   right_back_pod_position = -M_PI_2;
+    //   right_front_pod_position = M_PI_2;
+    // }
+    // else if (angular_command == 0.0)
+    // {
+    //   left_back_wheel_velocity = linear_command / wheel_radius;
+    //   left_front_wheel_velocity = linear_command / wheel_radius;
+    //   right_back_wheel_velocity = linear_command / wheel_radius;
+    //   right_front_wheel_velocity = linear_command / wheel_radius;
+    //   left_back_pod_position = 0.0;
+    //   left_front_pod_position = 0.0;
+    //   right_back_pod_position = 0.0;
+    //   right_front_pod_position = 0.0;
+    // }
+    // else if (linear_command == 0.0)
+    // {
+    //   const double theta_L = (M_PI / 2.0) - atan(wheel_track / wheel_base);
+    //   const double theta_R = -((M_PI / 2.0) - atan(wheel_track / wheel_base));
+    //   const double R = sqrt(pow(wheel_track / 2, 2) + pow(wheel_base / 2, 2));
+    //   const double v = angular_command * R / wheel_radius;
+    //   left_back_wheel_velocity = -v;
+    //   left_front_wheel_velocity = -v;
+    //   right_back_wheel_velocity = v;
+    //   right_front_wheel_velocity = v;
+    //   left_back_pod_position = theta_L;
+    //   left_front_pod_position = -theta_L;
+    //   right_back_pod_position = theta_R;
+    //   right_front_pod_position = -theta_R;
+    // }
+    // else
+    // {
+    //   const double icc = linear_command / angular_command;
+
+    //   const double theta_L = -atan((wheel_base / 2) / (icc - (wheel_track / 2)));
+    //   const double theta_R = -atan((wheel_base / 2) / (icc + (wheel_track / 2)));
+    //   const double R_L = pow(pow(wheel_base / 2, 2) + pow(icc - (wheel_track / 2), 2), 0.5);
+    //   const double R_R = pow(pow(wheel_base / 2, 2) + pow(icc + (wheel_track / 2), 2), 0.5);
+
+    //   const double v_L = linear_command * abs(R_L / icc) / wheel_radius;
+    //   const double v_R = linear_command * abs(R_R / icc) / wheel_radius;
+
+    //   left_back_wheel_velocity = v_L;
+    //   left_front_wheel_velocity = v_L;
+    //   right_back_wheel_velocity = v_R;
+    //   right_front_wheel_velocity = v_R;
+    //   left_back_pod_position = theta_L;
+    //   left_front_pod_position = -theta_L;
+    //   right_back_pod_position = theta_R;
+    //   right_front_pod_position = -theta_R;
+    // }
+
+    // const double left_back_pod_delta = abs(left_back_pod_position - left_back_pod_feedback_mean);
+    // const double left_front_pod_delta = abs(left_front_pod_position - left_front_pod_feedback_mean);
+    // const double right_back_pod_delta = abs(right_back_pod_position - right_back_pod_feedback_mean);
+    // const double right_front_pod_delta = abs(right_front_pod_position - right_front_pod_feedback_mean);
+    // const bool allow_wheel_movement = (
+    //   left_back_pod_delta < params_.allowed_steer_pod_driving_angle &&
+    //   left_front_pod_delta < params_.allowed_steer_pod_driving_angle &&
+    //   right_back_pod_delta < params_.allowed_steer_pod_driving_angle &&
+    //   right_front_pod_delta < params_.allowed_steer_pod_driving_angle
+    // );
+
+    /* intermediate variables */
+    double hx = wheel_base / 2.0;   /* half wheelbase (x offsets)  */
+    double hy = wheel_track / 2.0;  /* half track    (y offsets)  */
+
+    /* wheel module coordinates (x forward, y left) */
+    const double fl_x =  hx; const double fl_y =  hy; /* front_left  */
+    const double fr_x =  hx; const double fr_y = -hy; /* front_right */
+    const double rl_x = -hx; const double rl_y =  hy; /* rear_left   */
+    const double rr_x = -hx; const double rr_y = -hy; /* rear_right  */
+
+    /* compute per-module velocity vectors in robot frame:
+      v_mod_i = [ vx - omega * y_i,  vy + omega * x_i ]
+      where vx = linear_command, vy = strafe_command, omega = angular_command
+    */
+    double vx = linear_command;
+    double vy = strafe_command;
+    double omega = angular_command;
+
+    /* module vector components */
+    double fl_vx = vx - omega * fl_y;
+    double fl_vy = vy + omega * fl_x;
+    double fr_vx = vx - omega * fr_y;
+    double fr_vy = vy + omega * fr_x;
+    double rl_vx = vx - omega * rl_y;
+    double rl_vy = vy + omega * rl_x;
+    double rr_vx = vx - omega * rr_y;
+    double rr_vy = vy + omega * rr_x;
+
+    /* desired raw angles (radians) and rim speeds (m/s) */
+    double fl_angle = atan2(fl_vy, fl_vx);
+    double fr_angle = atan2(fr_vy, fr_vx);
+    double rl_angle = atan2(rl_vy, rl_vx);
+    double rr_angle = atan2(rr_vy, rr_vx);
+
+    double fl_speed = hypot(fl_vx, fl_vy); /* linear rim speed m/s */
+    double fr_speed = hypot(fr_vx, fr_vy);
+    double rl_speed = hypot(rl_vx, rl_vy);
+    double rr_speed = hypot(rr_vx, rr_vy);
+
+    /* Convert linear rim speed -> wheel angular velocity (rad/s):
+      omega_wheel = linear_speed / wheel_radius
+      (this matches common motor controllers that expect rad/s)
+    */
+    double fl_wheel_rad_s = fl_speed / wheel_radius;
+    double fr_wheel_rad_s = fr_speed / wheel_radius;
+    double rl_wheel_rad_s = rl_speed / wheel_radius;
+    double rr_wheel_rad_s = rr_speed / wheel_radius;
+
+    /* Angle-flip optimization relative to current feedback means:
+      If the angle change (target - current) has magnitude > 90deg (pi/2),
+      flip desired angle by pi and invert wheel speed so steering travel is smaller.
+      We compute signed shortest diff and use it to decide flipping.
+    */
+    double fl_diff = shortest_angular_diff(fl_angle, left_front_pod_feedback_mean); /* careful: mapping to your variable naming */
+    double fr_diff = shortest_angular_diff(fr_angle, right_front_pod_feedback_mean);
+    double rl_diff = shortest_angular_diff(rl_angle, left_back_pod_feedback_mean);
+    double rr_diff = shortest_angular_diff(rr_angle, right_back_pod_feedback_mean);
+
+    /* Note: your original code uses different naming (left_back_pod_feedback_mean etc).
+      Make sure the mapping above matches your actual feedback variables:
+        - left_front_pod_feedback_mean -> feedback for left front pod
+        - left_back_pod_feedback_mean  -> feedback for left back pod
+        - right_front_pod_feedback_mean...
+        - right_back_pod_feedback_mean...
+    */
+
+    /* apply optimization (flip if steering delta would exceed 90 degrees) */
+    if (fabs(fl_diff) > M_PI_2) {
+      fl_angle = wrap_to_pi(fl_angle + M_PI);
+      fl_wheel_rad_s = -fl_wheel_rad_s;
     }
-    else if (angular_command == 0.0)
-    {
-      left_back_wheel_velocity = linear_command / wheel_radius;
-      left_front_wheel_velocity = linear_command / wheel_radius;
-      right_back_wheel_velocity = linear_command / wheel_radius;
-      right_front_wheel_velocity = linear_command / wheel_radius;
-      left_back_pod_position = 0.0;
-      left_front_pod_position = 0.0;
-      right_back_pod_position = 0.0;
-      right_front_pod_position = 0.0;
+    if (fabs(fr_diff) > M_PI_2) {
+      fr_angle = wrap_to_pi(fr_angle + M_PI);
+      fr_wheel_rad_s = -fr_wheel_rad_s;
     }
-    else if (linear_command == 0.0)
-    {
-      const double theta_L = (M_PI / 2.0) - atan(wheel_track / wheel_base);
-      const double theta_R = -((M_PI / 2.0) - atan(wheel_track / wheel_base));
-      const double R = sqrt(pow(wheel_track / 2, 2) + pow(wheel_base / 2, 2));
-      const double v = angular_command * R / wheel_radius;
-      left_back_wheel_velocity = -v;
-      left_front_wheel_velocity = -v;
-      right_back_wheel_velocity = v;
-      right_front_wheel_velocity = v;
-      left_back_pod_position = theta_L;
-      left_front_pod_position = -theta_L;
-      right_back_pod_position = theta_R;
-      right_front_pod_position = -theta_R;
+    if (fabs(rl_diff) > M_PI_2) {
+      rl_angle = wrap_to_pi(rl_angle + M_PI);
+      rl_wheel_rad_s = -rl_wheel_rad_s;
     }
-    else
-    {
-      const double icc = linear_command / angular_command;
-
-      const double theta_L = -atan((wheel_base / 2) / (icc - (wheel_track / 2)));
-      const double theta_R = -atan((wheel_base / 2) / (icc + (wheel_track / 2)));
-      const double R_L = pow(pow(wheel_base / 2, 2) + pow(icc - (wheel_track / 2), 2), 0.5);
-      const double R_R = pow(pow(wheel_base / 2, 2) + pow(icc + (wheel_track / 2), 2), 0.5);
-
-      const double v_L = linear_command * abs(R_L / icc) / wheel_radius;
-      const double v_R = linear_command * abs(R_R / icc) / wheel_radius;
-
-      left_back_wheel_velocity = v_L;
-      left_front_wheel_velocity = v_L;
-      right_back_wheel_velocity = v_R;
-      right_front_wheel_velocity = v_R;
-      left_back_pod_position = theta_L;
-      left_front_pod_position = -theta_L;
-      right_back_pod_position = theta_R;
-      right_front_pod_position = -theta_R;
+    if (fabs(rr_diff) > M_PI_2) {
+      rr_angle = wrap_to_pi(rr_angle + M_PI);
+      rr_wheel_rad_s = -rr_wheel_rad_s;
     }
 
-    const double left_back_pod_delta = abs(left_back_pod_position - left_back_pod_feedback_mean);
-    const double left_front_pod_delta = abs(left_front_pod_position - left_front_pod_feedback_mean);
-    const double right_back_pod_delta = abs(right_back_pod_position - right_back_pod_feedback_mean);
-    const double right_front_pod_delta = abs(right_front_pod_position - right_front_pod_feedback_mean);
-    const bool allow_wheel_movement = (
-      left_back_pod_delta < params_.allowed_steer_pod_driving_angle &&
+    /* Now assign to your original output variables (rad/s for wheel velocities,
+      and pod positions in radians) */
+    left_front_pod_position  = fl_angle;
+    right_front_pod_position = fr_angle;
+    left_back_pod_position   = rl_angle;
+    right_back_pod_position  = rr_angle;
+
+    left_front_wheel_velocity  = fr_wheel_rad_s; /* careful mapping: set this how your code expects */
+    left_back_wheel_velocity   = rl_wheel_rad_s;
+    right_front_wheel_velocity = fr_wheel_rad_s;
+    right_back_wheel_velocity  = rr_wheel_rad_s;
+
+    double left_back_pod_delta  = fabs(shortest_angular_diff(left_back_pod_position, left_back_pod_feedback_mean));
+    double left_front_pod_delta = fabs(shortest_angular_diff(left_front_pod_position, left_front_pod_feedback_mean));
+    double right_back_pod_delta = fabs(shortest_angular_diff(right_back_pod_position, right_back_pod_feedback_mean));
+    double right_front_pod_delta= fabs(shortest_angular_diff(right_front_pod_position, right_front_pod_feedback_mean));
+
+    bool allow_wheel_movement = (
+      left_back_pod_delta  < params_.allowed_steer_pod_driving_angle &&
       left_front_pod_delta < params_.allowed_steer_pod_driving_angle &&
       right_back_pod_delta < params_.allowed_steer_pod_driving_angle &&
-      right_front_pod_delta < params_.allowed_steer_pod_driving_angle
+      right_front_pod_delta< params_.allowed_steer_pod_driving_angle
     );
 
     // Set wheel / steering pod targets
