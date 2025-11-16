@@ -122,7 +122,7 @@ namespace luna_controller
         // calls a halt() function - likely stops the robot.
         controller_interface::CallbackReturn on_shutdown(
             const rclcpp_lifecycle::State &previous_state) override;
-    return controller_interface::return_type::OK;
+    // return controller_interface::return_type::OK;
 
     // define protected members 
     protected:
@@ -189,29 +189,41 @@ namespace luna_controller
 
         // odometry publishers 
         // publish odometry and tf messages on "~/odom" and "/tf" topics
+        //publisher for nav_msgs::msg::Odometry
         std::shared_ptr<rclcpp::Publisher<nav_msgs::msg::Odometry>> odometry_publisher_ = nullptr;
+        // realtime publisher for nav_msgs::msg::Odometry
+        // realtime means it can be called from the realtime update loop
+        // non-blocking method to publish messages
         std::shared_ptr<realtime_tools::RealtimePublisher<nav_msgs::msg::Odometry>>
             realtime_odometry_publisher_ = nullptr;
 
+        // publisher for tf2_msgs::msg::TFMessage
         std::shared_ptr<rclcpp::Publisher<tf2_msgs::msg::TFMessage>> odometry_transform_publisher_ =
             nullptr;
+        // realtime publisher for tf2_msgs::msg::TFMessage
         std::shared_ptr<realtime_tools::RealtimePublisher<tf2_msgs::msg::TFMessage>>
             realtime_odometry_transform_publisher_ = nullptr;
 
+        // Subscriber for velocity commands
         bool subscriber_is_active_ = false;
         rclcpp::Subscription<Twist>::SharedPtr velocity_command_subscriber_ = nullptr;
 
+        // Realtime buffer to store the last received velocity command
         realtime_tools::RealtimeBox<std::shared_ptr<Twist>> received_velocity_msg_ptr_{nullptr};
 
+        //store previous commands to understand derivatives acceleration etc. 
         std::queue<Twist> previous_commands_; // last two commands
 
-        // speed limiters
+        // instances of speed limiters for linear, strafe and angular velocities
         SpeedLimiter limiter_linear_;
         SpeedLimiter limiter_strafe_;
         SpeedLimiter limiter_angular_;
 
+        // whether to publish limited velocity commands
         bool publish_limited_velocity_ = false;
+        // publisher for limited velocity commands
         std::shared_ptr<rclcpp::Publisher<Twist>> limited_velocity_publisher_ = nullptr;
+        // realtime publisher for limited velocity commands
         std::shared_ptr<realtime_tools::RealtimePublisher<Twist>> realtime_limited_velocity_publisher_ =
             nullptr;
 
