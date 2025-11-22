@@ -90,28 +90,12 @@ def generate_launch_description():
         executable="image_bridge",
         arguments=["/camera/image_raw"]
     )
-
-        # Convert depth images to PointCloud2
-    depth_to_pointcloud = Node(
-        package='depth_image_proc',
-        executable='point_cloud_xyz',
-        name='depth_to_pointcloud',
-        output='screen',
-        remappings=[
-            ('image', '/depth_camera/depth/image_raw'),
-            ('camera_info', '/depth_camera/depth/camera_info'),
-            ('points', '/depth_camera/depth/points')  # output PointCloud2
-        ],
-        parameters=[{'use_sim_time': True}]
-    )
-
+    
     controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
         arguments=["luna_cont", "joint_broad"],
     )
-
-
 
     return LaunchDescription([
         rsp,
@@ -120,6 +104,5 @@ def generate_launch_description():
         gz_create_robot,
         gz_param_bridge,
         gz_image_bridge,
-        depth_to_pointcloud,
         controller_spawner,
     ])
