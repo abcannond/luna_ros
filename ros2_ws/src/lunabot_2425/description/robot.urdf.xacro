@@ -6,7 +6,11 @@
     <!-- <xacro:include filename="gz_control.xacro" /> -->
     <xacro:include filename="ros2_control.xacro" />
 
-    <xacro:include filename="camera.xacro" />
-    <xacro:include filename="depth_camera.xacro" />
+    <!-- <xacro:include filename="camera.xacro" /> -->
+    <!-- <xacro:include filename="depth_camera.xacro" /> -->
+
+    <xacro:include filename="realsense_d455_macro.xacro" />
+    <xacro:realsense_camera parent_link="base_link" />
+
 
 </robot>

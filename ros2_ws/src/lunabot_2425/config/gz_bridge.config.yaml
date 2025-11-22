@@ -42,13 +42,13 @@
   direction: "GZ_TO_ROS"
 # gz topics published by Sensors plugin (Depth Camera)
 - ros_topic_name: "/depth_camera/image/points"
-  gz_topic_name: "/depth_camera/image/points"
+  gz_topic_name: "/world/arena_b/model/mooncake/link/base_link/sensor/d455_depth_camera/depth_image"
   ros_type_name: "sensor_msgs/msg/PointCloud2"
   gz_type_name: "gz.msgs.PointCloudPacked"
   direction: "GZ_TO_ROS"
 # gz topics published by Sensors plugin (Depth Camera)
 - ros_topic_name: "/depth_camera/image"
-  gz_topic_name: "/depth_camera/image"
+  gz_topic_name: "/world/arena_b/model/mooncake/link/base_link/sensor/d455_rgb_camera/image"
   ros_type_name: "sensor_msgs/msg/Image"
   gz_type_name: "gz.msgs.Image"
   direction: "GZ_TO_ROS"
