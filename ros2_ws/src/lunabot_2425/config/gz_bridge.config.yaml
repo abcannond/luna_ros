@@ -40,26 +40,34 @@
   ros_type_name: "sensor_msgs/msg/JointState"
   gz_type_name: "gz.msgs.Model"
   direction: "GZ_TO_ROS"
-# gz topics published by Sensors plugin (Depth Camera)
-- ros_topic_name: "/depth_camera/image/points"
-  gz_topic_name: "/world/arena_b/model/mooncake/link/base_link/sensor/d455_depth_camera/depth_image"
-  ros_type_name: "sensor_msgs/msg/PointCloud2"
-  gz_type_name: "gz.msgs.PointCloudPacked"
-  direction: "GZ_TO_ROS"
-# gz topics published by Sensors plugin (Depth Camera)
-- ros_topic_name: "/depth_camera/image"
-  gz_topic_name: "/world/arena_b/model/mooncake/link/base_link/sensor/d455_rgb_camera/image"
+# RGB Camera
+- ros_topic_name: "/depth_camera/color/image_raw"
+  gz_topic_name: "/sim/camera/rgb/image"
   ros_type_name: "sensor_msgs/msg/Image"
   gz_type_name: "gz.msgs.Image"
-  direction: "GZ_TO_ROS"
-  # with this one, make sure the sensor is set to publish in RGB8 encoding
-- ros_topic_name: "/depth_camera/camera_info"
-  gz_topic_name: "/depth_camera/camera_info"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/depth_camera/color/camera_info"
+  gz_topic_name: "/sim/camera/rgb/camera_info"
   ros_type_name: "sensor_msgs/msg/CameraInfo"
   gz_type_name: "gz.msgs.CameraInfo"
   direction: GZ_TO_ROS
-- ros_topic_name: "/depth_camera/imu"
-  gz_topic_name: "/depth_camera/imu"
-  ros_type_name: "sensor_msgs/msg/Imu"
-  gz_type_name: "gz.msgs.IMU"
-  direction: "GZ_TO_ROS"
+
+# Depth Camera
+- ros_topic_name: "/depth_camera/depth/image_raw"
+  gz_topic_name: "/sim/camera/depth/image"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/depth_camera/depth/camera_info"
+  gz_topic_name: "/sim/camera/depth/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+
+
+
+
+
