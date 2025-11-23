@@ -11,7 +11,7 @@ docker build -t luna_ros:latest .   (build docker container, period is necesarry
 
 docker build --no-cache -t luna_ros:latest .
 
-./run_ros_image.sh run_luna_sim:latest
+./run_ros_image.sh luna_ros:latest
 
 cd ros2_ws
 

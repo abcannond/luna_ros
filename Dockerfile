@@ -2,7 +2,7 @@ FROM ros:jazzy-perception-noble
 
 SHELL ["/bin/bash", "-c"]
 
-# Install required ROS and system packages
+# Install required ROS and GUI dependencies
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y \
     ros-jazzy-ros-gz \
@@ -10,10 +10,13 @@ RUN apt-get update && apt-get upgrade -y && \
     ros-jazzy-ros2-controllers \
     ros-jazzy-gz-ros2-control \
     ros-jazzy-depth-image-proc \
-    libqt5gui5 \
-    libqt5widgets5 \
-    libqt5core5a \
-    libx11-xcb1 \
+    # OpenGL + Vulkan (Intel/AMD/NVIDIA support)
+    libgl1 \
+    libglx0 \
+    libgl1-mesa-dri \
+    libglx-mesa0 \
+    mesa-vulkan-drivers \
+    # X11 + Qt deps
     libxcb-xinerama0 \
     libxcb-xfixes0 \
     libxcb-shape0 \
@@ -21,22 +24,22 @@ RUN apt-get update && apt-get upgrade -y && \
     libxcb-image0 \
     libxcb-keysyms1 \
     libxcb-xtest0 \
+    libx11-xcb1 \
+    libqt5gui5 \
+    libqt5widgets5 \
+    libqt5core5a \
     mesa-utils \
-    dos2unix \
-    && rm -rf /var/lib/apt/lists/*
+    dos2unix && \
+    rm -rf /var/lib/apt/lists/*
 
-# Set working directory
+
 WORKDIR /ros2_ws
 
-# Entry point will handle sourcing ROS and workspace
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Environment for Gazebo resources
+# Gazebo resources
 ENV GZ_SIM_RESOURCE_PATH="$GZ_SIM_RESOURCE_PATH:/ros2_ws/src/"
 
-# Use entrypoint
 ENTRYPOINT ["/entrypoint.sh"]
-
-# Default command: open bash
 CMD ["bash"]
