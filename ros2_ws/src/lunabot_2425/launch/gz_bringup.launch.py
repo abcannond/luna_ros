@@ -1,9 +1,11 @@
 import os
 
 from ament_index_python.packages import get_package_share_directory
+
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, SetEnvironmentVariable
+from launch.actions import IncludeLaunchDescription, SetEnvironmentVariable, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+
 from launch_ros.actions import Node
 
 def generate_launch_description():
@@ -11,76 +13,79 @@ def generate_launch_description():
     package_name = "lunabot_2425"
     new_world_package = "luna_ros2_worlds"
 
+    ### DECLARE LAUNCH ARGUMENTS
+    # ...
+
     ### INCLUDE LAUNCH FILES
 
-    # Robot State Publisher
+    # Create the robot state publisher
     rsp_source = PythonLaunchDescriptionSource(os.path.join(
-        get_package_share_directory(package_name),
+        get_package_share_directory("lunabot_2425"),
         "launch",
         "rsp.launch.py"
     ))
     
     rsp = IncludeLaunchDescription(
         rsp_source,
-        launch_arguments={"use_sim_time": "true"}.items()
+        launch_arguments={
+            "use_sim_time": "true"
+        }.items()
     )
 
-    # Gazebo Sim Launch
     gz_sim_source = PythonLaunchDescriptionSource(os.path.join(
-        get_package_share_directory("ros_gz_sim"),
-        "launch",
+        get_package_share_directory("ros_gz_sim"), 
+        "launch", 
         "gz_sim.launch.py"
     ))
 
-    # Gazebo resource paths
+    # Paths for the new world package
     models_path = os.path.join(get_package_share_directory(new_world_package), "models")
     worlds_path = os.path.join(get_package_share_directory(new_world_package), "worlds")
     pkg_path = get_package_share_directory(new_world_package)
 
+    # Set Gazebo resource path
     gz_sim_resource = SetEnvironmentVariable(
         name='GZ_SIM_RESOURCE_PATH',
         value=f"{models_path}:{worlds_path}:{pkg_path}"
     )
 
-    # World file
-    gz_world_file = os.path.join(worlds_path, "arena_b.sdf")
+    # New world file
+    gz_world_file = os.path.join(worlds_path, "ucf_arena.sdf")
 
     gz_sim = IncludeLaunchDescription(
         gz_sim_source,
         launch_arguments={
             'gz_args': f"-r {gz_world_file}",
             'on_exit_shutdown': 'True'
-        }.items()
+        }.items(),
     )
 
-    # Robot spawn height (adjust this as needed)
-    spawn_height = 0  # meters above the ground
+    # DEFINE NODES
 
     gz_create_robot = Node(
-        package="ros_gz_sim",
-        executable="create",
-        arguments=[
-            "-topic", "robot_description",
-            "-name", "mooncake",
-            "-x", "-3.0",
-            "-y", "-2.0",
-            "-z", str(spawn_height),
-            "-Y", "0"
-        ],
-        output="screen",
+    package="ros_gz_sim",
+    executable="create",
+    arguments=[
+        "-topic", "robot_description",
+        "-name", "mooncake",
+        "-x", "-3",
+        "-y", "-3",
+        "-z", "0.3",
+    ],
+    output="screen",
     )
 
-    # ROS-Gazebo Bridges
+
     gz_param_bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
-        parameters=[{
-            "config_file": os.path.join(
-                get_package_share_directory(package_name),
+        parameters=[
+            {"config_file": os.path.join(
+                get_package_share_directory("lunabot_2425"),
                 "config",
                 "gz_bridge.config.yaml",
-            )
-        }],
+            )}
+        ],
         output='screen'
     )
 
@@ -88,10 +93,8 @@ def generate_launch_description():
         package='twist_stamper',
         executable='twist_stamper',
         parameters=[{'use_sim_time': True}],
-        remappings=[
-            ('/cmd_vel_in','/luna_cont/cmd_vel_unstamped'),
-            ('/cmd_vel_out','/luna_cont/cmd_vel'),
-        ],
+        remappings=[('/cmd_vel_in','/luna_cont/cmd_vel_unstamped'),
+                    ('/cmd_vel_out','/luna_cont/cmd_vel')],
     )
 
     gz_image_bridge = Node(
@@ -100,10 +103,16 @@ def generate_launch_description():
         arguments=["/camera/image_raw"]
     )
     
-    controller_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["luna_cont", "joint_broad"],
+    controller_spawner_delayed = TimerAction(
+        period=6.0,   # Try 6–10 seconds
+        actions=[
+            Node(
+                package="controller_manager",
+                executable="spawner",
+                arguments=["luna_cont", "joint_broad"],
+                output="screen"
+            )
+        ]
     )
 
     return LaunchDescription([
@@ -114,5 +123,5 @@ def generate_launch_description():
         gz_create_robot,
         gz_param_bridge,
         gz_image_bridge,
-        controller_spawner,
+        controller_spawner_delayed,
     ])
