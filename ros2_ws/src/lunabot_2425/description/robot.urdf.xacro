@@ -12,5 +12,31 @@
     <xacro:include filename="realsense_d455_macro.xacro" />
     <xacro:realsense_camera parent_link="base_link" />
 
+    <xacro:include filename="camera.xacro" />
+    <xacro:camera_module 
+    cam_name="front_left_camera"
+    parent_link="front_left_knuckle"
+    xyz="0 0 0.25"
+    rpy="0 0 0"/>
+
+    <xacro:camera_module 
+    cam_name="front_right_camera"
+    parent_link="front_right_knuckle"
+    xyz="0 0 0.25"
+    rpy="0 0 1.570796"/>
+
+    <xacro:camera_module 
+    cam_name="back_left_camera"
+    parent_link="back_left_knuckle"
+    xyz="-0 0 0.25"
+    rpy="0 0 1.570796"/>
+
+    <xacro:camera_module 
+    cam_name="back_right_camera"
+    parent_link="back_right_knuckle"
+    xyz="-0 0 0.25"
+    rpy="0 0 0"/>
+
+
 
 </robot>
