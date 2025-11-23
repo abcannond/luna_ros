@@ -3,7 +3,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription
+from launch.actions import IncludeLaunchDescription, SetEnvironmentVariable
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 from launch_ros.actions import Node
@@ -11,9 +11,9 @@ from launch_ros.actions import Node
 def generate_launch_description():
 
     package_name = "lunabot_2425"
+    new_world_package = "luna_ros2_worlds"
 
     ### DECLARE LAUNCH ARGUMENTS
-
     # ...
 
     ### INCLUDE LAUNCH FILES
@@ -38,16 +38,24 @@ def generate_launch_description():
         "gz_sim.launch.py"
     ))
 
-    gz_world_file = os.path.join(
-        get_package_share_directory(package_name),
-        "worlds",
-        "arena_b.world"
+    # Paths for the new world package
+    models_path = os.path.join(get_package_share_directory(new_world_package), "models")
+    worlds_path = os.path.join(get_package_share_directory(new_world_package), "worlds")
+    pkg_path = get_package_share_directory(new_world_package)
+
+    # Set Gazebo resource path
+    gz_sim_resource = SetEnvironmentVariable(
+        name='GZ_SIM_RESOURCE_PATH',
+        value=f"{models_path}:{worlds_path}:{pkg_path}"
     )
+
+    # New world file
+    gz_world_file = os.path.join(worlds_path, "arena_b.sdf")
 
     gz_sim = IncludeLaunchDescription(
         gz_sim_source,
         launch_arguments={
-            'gz_args': ["-r ", gz_world_file],
+            'gz_args': f"-r {gz_world_file}",
             'on_exit_shutdown': 'True'
         }.items(),
     )
@@ -72,7 +80,6 @@ def generate_launch_description():
                 "gz_bridge.config.yaml",
             )}
         ],
-        # remappings=[],
         output='screen'
     )
 
@@ -83,7 +90,6 @@ def generate_launch_description():
         remappings=[('/cmd_vel_in','/luna_cont/cmd_vel_unstamped'),
                     ('/cmd_vel_out','/luna_cont/cmd_vel')],
     )
-
 
     gz_image_bridge = Node(
         package="ros_gz_image",
@@ -100,6 +106,7 @@ def generate_launch_description():
     return LaunchDescription([
         rsp,
         twist_stamper,
+        gz_sim_resource,
         gz_sim,
         gz_create_robot,
         gz_param_bridge,
