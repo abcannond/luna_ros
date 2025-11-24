@@ -542,7 +542,7 @@ namespace luna_controller
     left_back_pod_position   = rl_angle;
     right_back_pod_position  = rr_angle;
 
-    left_front_wheel_velocity  = fr_wheel_rad_s; /* careful mapping: set this how your code expects */
+    left_front_wheel_velocity  = fl_wheel_rad_s; /* careful mapping: set this how your code expects */
     left_back_wheel_velocity   = rl_wheel_rad_s;
     right_front_wheel_velocity = fr_wheel_rad_s;
     right_back_wheel_velocity  = rr_wheel_rad_s;
