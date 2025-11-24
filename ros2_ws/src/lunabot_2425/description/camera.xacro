@@ -9,11 +9,12 @@
       rpy:='0 0 0'
       radius:=0.05
       length:=0.04
-      fov:=1.089
-      width:=640
-      height:=480
-      clip_near:=0.05
+      fov:=1.869       
+      width:=1280
+      height:=720
+      clip_near:=0.3      
       clip_far:=8.0
+      update_rate:=30      
   ">
 
     <!-- BASE JOINT -->
@@ -60,7 +61,7 @@
           </clip>
         </camera>
         <visualize>true</visualize>
-        <update_rate>15</update_rate>
+        <update_rate>${update_rate}</update_rate>
         <topic>${cam_name}/image_raw</topic>
         <gz_frame_id>${cam_name}_link_optical</gz_frame_id>
       </sensor>
