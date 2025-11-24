@@ -32,6 +32,12 @@ RUN apt-get update && apt-get upgrade -y && \
     dos2unix && \
     rm -rf /var/lib/apt/lists/*
 
+RUN echo "alias src='source/install/setup.bash'" >> /root/.bashrc
+RUN echo "alias cdr='cd /ros2_ws'" >> /root/.bashrc
+RUN echo "alias bld='colcon build --symlink-install'" >> /root/.bashrc
+RUN echo "alias drive='ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/luna_cont/cmd_vel_unstamped'" >> /root/.bashrc
+RUN echo "alias sim='ros2 launch lunabot_2425 gz_bringup.launch.py'" >> /root/.bashrc
+
 
 WORKDIR /ros2_ws
 

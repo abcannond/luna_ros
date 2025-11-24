@@ -220,8 +220,8 @@
     <visual>
       <geometry>
         <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
-        <cylinder radius="${whee_rad}" length="${whee_len}"/>
-        <!-- <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/> -->
+        <!-- <cylinder radius="${whee_rad}" length="${whee_len}"/> -->
+        <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
       </geometry>
       <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
       <material name="red"/>
@@ -295,8 +295,8 @@
     <visual>
       <geometry>
         <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
-        <cylinder radius="${whee_rad}" length="${whee_len}"/>
-        <!-- <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/> -->
+        <!-- <cylinder radius="${whee_rad}" length="${whee_len}"/> -->
+        <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
       </geometry>
       <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
       <material name="red"/>
@@ -370,8 +370,8 @@
     <visual>
       <geometry>
         <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
-        <cylinder radius="${whee_rad}" length="${whee_len}"/>
-        <!-- <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/> -->
+        <!-- <cylinder radius="${whee_rad}" length="${whee_len}"/> -->
+        <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
       </geometry>
       <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
       <material name="red"/>
@@ -445,8 +445,8 @@
     <visual>
       <geometry>
         <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
-        <cylinder radius="${whee_rad}" length="${whee_len}"/>
-        <!-- <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/> -->
+        <!-- <cylinder radius="${whee_rad}" length="${whee_len}"/> -->
+        <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
       </geometry>
       <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
       <material name="red"/>

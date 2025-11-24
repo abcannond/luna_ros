@@ -115,19 +115,19 @@ def generate_launch_description():
         ]
     )
 
-    # rviz_config_file = os.path.join(
-    #     get_package_share_directory("lunabot_2425"),
-    #     "rviz",
-    #     "depth_and_fid_cams_view.rviz"
-    # )
+    rviz_config_file = os.path.join(
+        get_package_share_directory("lunabot_2425"),
+        "rviz",
+        "depth_and_fid_cams_view.rviz"
+    )
 
-    # rviz_node = Node(
-    #     package="rviz2",
-    #     executable="rviz2",
-    #     name="rviz2",
-    #     arguments=["-d", rviz_config_file],
-    #     output="screen",
-    # )
+    rviz_node = Node(
+        package="rviz2",
+        executable="rviz2",
+        name="rviz2",
+        arguments=["-d", rviz_config_file],
+        output="screen",
+    )
 
 
     return LaunchDescription([
@@ -139,5 +139,5 @@ def generate_launch_description():
         gz_param_bridge,
         gz_image_bridge,
         controller_spawner_delayed,
-        # rviz_node,
+        rviz_node,
     ])
