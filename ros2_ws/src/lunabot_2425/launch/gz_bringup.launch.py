@@ -78,8 +78,8 @@ def generate_launch_description():
         arguments=[
             "-topic", "robot_description",
             "-name", "mooncake",
-            "-x", "-3.5",
-            "-y", "2.55",
+            "-x", "-3.75",
+            "-y", "2.75",
             "-z", "0.3",
             "-R", "0",           # roll
             "-P", "0",           # pitch

@@ -220,6 +220,14 @@
     <visual>
       <geometry>
         <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
+        <cylinder radius="${whee_rad}" length="${whee_len}"/>
+        <!-- <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/> -->
+      </geometry>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
+    </visual>
+    <visual>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
         <!-- <cylinder radius="${whee_rad}" length="${whee_len}"/> -->
         <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
       </geometry>
@@ -292,6 +300,14 @@
 
   <!-- FRONT RIGHT WHEEL -->
   <link name="front_right_wheel">
+    <visual>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
+        <cylinder radius="${whee_rad}" length="${whee_len}"/>
+        <!-- <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/> -->
+      </geometry>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
+    </visual>
     <visual>
       <geometry>
         <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
@@ -370,6 +386,14 @@
     <visual>
       <geometry>
         <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
+        <cylinder radius="${whee_rad}" length="${whee_len}"/>
+        <!-- <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/> -->
+      </geometry>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
+    </visual>
+    <visual>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
         <!-- <cylinder radius="${whee_rad}" length="${whee_len}"/> -->
         <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
       </geometry>
@@ -442,6 +466,14 @@
 
   <!-- BACK RIGHT WHEEL -->
   <link name="back_right_wheel">
+    <visual>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
+        <cylinder radius="${whee_rad}" length="${whee_len}"/>
+        <!-- <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/> -->
+      </geometry>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
+    </visual>
     <visual>
       <geometry>
         <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
