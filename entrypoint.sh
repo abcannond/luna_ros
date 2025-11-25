@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+# set -e
 # Allow X11 connections for GUI
 xhost +local:docker
 # Source ROS 2

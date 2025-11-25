@@ -7,5 +7,6 @@ The script allows GUI apps to run locally via Docker.
 
 ## How to run
 
-Run the container once you've built an image by using `./run_ros_image.sh [image_id]`.
+Run the container once you've built an image by using 
+`./run_ros_image.sh [image_id]`.
 This will set up the X host properly, allowing Docker to present a visible GUI.

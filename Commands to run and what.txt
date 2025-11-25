@@ -9,6 +9,7 @@ git submodule update --init --recursive
 
 docker build -t luna_ros:latest .   (build docker container, period is necesarry)
 
+# use only if your docker is really cooked:
 docker build --no-cache -t luna_ros:latest .
 
 ./run_ros_image.sh run_luna_sim:latest

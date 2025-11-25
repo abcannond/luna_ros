@@ -22,6 +22,13 @@
  */
 
 #include <memory>
+
+  Main components:
+  - quad_swerve_controller - Low-level motor control for the swerve drive
+  - teleop_twist_keyboard - Manual keyboard teleoperation
+  - luna_control - Higher-level control logic
+  - lunabot_2425 - Main robot package with simulation/config
+  - twist_stamper - Adds timestamps to velocity commands
 #include <queue>
 #include <string>
 #include <utility>
