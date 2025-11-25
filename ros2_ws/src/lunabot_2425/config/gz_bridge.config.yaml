@@ -10,12 +10,6 @@
   ros_type_name: "sensor_msgs/msg/LaserScan"
   gz_type_name: "gz.msgs.LaserScan"
   direction: GZ_TO_ROS
-# gz topic published by Sensors plugin (Camera)
-- ros_topic_name: "camera/camera_info"
-  gz_topic_name: "camera/camera_info"
-  ros_type_name: "sensor_msgs/msg/CameraInfo"
-  gz_type_name: "gz.msgs.CameraInfo"
-  direction: GZ_TO_ROS
 # gz topic published by DiffDrive plugin
 - ros_topic_name: "odom"
   gz_topic_name: "odom"
@@ -40,23 +34,84 @@
   ros_type_name: "sensor_msgs/msg/JointState"
   gz_type_name: "gz.msgs.Model"
   direction: "GZ_TO_ROS"
-- ros_topic_name: "/depth_camera/image/points"
-  gz_topic_name: "/depth_camera/image/points"
-  ros_type_name: "sensor_msgs/msg/PointCloud2"
-  gz_type_name: "gz.msgs.PointCloudPacked"
-  direction: "GZ_TO_ROS"
-- ros_topic_name: "/depth_camera/image"
-  gz_topic_name: "/depth_camera/image"
+# RGB Camera
+- ros_topic_name: "/depth_camera/color/image_raw"
+  gz_topic_name: "/sim/camera/rgb/image"
   ros_type_name: "sensor_msgs/msg/Image"
   gz_type_name: "gz.msgs.Image"
-  direction: "GZ_TO_ROS"
-- ros_topic_name: "/depth_camera/camera_info"
-  gz_topic_name: "/depth_camera/camera_info"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/depth_camera/color/camera_info"
+  gz_topic_name: "/sim/camera/rgb/camera_info"
   ros_type_name: "sensor_msgs/msg/CameraInfo"
   gz_type_name: "gz.msgs.CameraInfo"
   direction: GZ_TO_ROS
-- ros_topic_name: "/depth_camera/imu"
-  gz_topic_name: "/depth_camera/imu"
-  ros_type_name: "sensor_msgs/msg/Imu"
-  gz_type_name: "gz.msgs.IMU"
-  direction: "GZ_TO_ROS"
+
+# Depth Camera
+- ros_topic_name: "/depth_camera/depth/image_raw"
+  gz_topic_name: "/sim/camera/depth/image"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/depth_camera/depth/camera_info"
+  gz_topic_name: "/sim/camera/depth/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+# back_left_camera
+- ros_topic_name: "/fid_cams/back_left_camera/image_raw"
+  gz_topic_name: "/back_left_camera/image_raw"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/fid_cams/back_left_camera/camera_info"
+  gz_topic_name: "/back_left_camera/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+# back_right_camera
+- ros_topic_name: "/fid_cams/back_right_camera/image_raw"
+  gz_topic_name: "/back_right_camera/image_raw"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/fid_cams/back_right_camera/camera_info"
+  gz_topic_name: "/back_right_camera/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+# front_left_camera
+- ros_topic_name: "/fid_cams/front_left_camera/image_raw"
+  gz_topic_name: "/front_left_camera/image_raw"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/fid_cams/front_left_camera/camera_info"
+  gz_topic_name: "/front_left_camera/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+# front_right_camera
+- ros_topic_name: "/fid_cams/front_right_camera/image_raw"
+  gz_topic_name: "/front_right_camera/image_raw"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/fid_cams/front_right_camera/camera_info"
+  gz_topic_name: "/front_right_camera/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+
+
+

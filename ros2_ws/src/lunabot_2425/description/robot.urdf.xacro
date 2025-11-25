@@ -6,7 +6,35 @@
     <!-- <xacro:include filename="gz_control.xacro" /> -->
     <xacro:include filename="ros2_control.xacro" />
 
+    <!-- <xacro:include filename="camera.xacro" /> -->
+    <!-- <xacro:include filename="depth_camera.xacro" /> -->
+
+    <xacro:include filename="realsense_d455_macro.xacro" />
+    <xacro:realsense_camera parent_link="base_link" />
+
     <xacro:include filename="camera.xacro" />
-    <xacro:include filename="depth_camera.xacro" />
+    <xacro:camera_module 
+    cam_name="front_left_camera"
+    parent_link="left_rocker"
+    xyz="-0.254 0.2 0.139725"
+    rpy="-1.570796 -1.570796 0"/>
+
+    <xacro:camera_module 
+    cam_name="front_right_camera"
+    parent_link="right_rocker"
+    xyz="0.254 0.2 0.139725"
+    rpy="-1.570796 0 0"/>
+
+    <xacro:camera_module 
+    cam_name="back_left_camera"
+    parent_link="left_rocker"
+    xyz="0.254 0.2 0.139725"
+    rpy="-1.570796 0 0"/>
+
+    <xacro:camera_module 
+    cam_name="back_right_camera"
+    parent_link="right_rocker"
+    xyz="-0.254 0.2 0.139725"
+    rpy="-1.570796 -1.570796 0"/>
 
 </robot>

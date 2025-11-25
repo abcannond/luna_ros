@@ -1,50 +1,72 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="robot">
-    
-    <joint name="camera_joint" type="fixed">
-        <parent link="base_link" />
-        <child link="camera_link" />
-        <origin xyz="0.275 0.12 1.17" rpy="0 0.6 0" />
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Macro: generic camera with parametric pose and naming -->
+  <xacro:macro name="camera_module" params="
+      parent_link
+      cam_name:=camera
+      xyz:='0 0 0'
+      rpy:='0 0 0'
+      radius:=0.05
+      length:=0.04
+      fov:=1.869       
+      width:=1280
+      height:=720
+      clip_near:=0.3      
+      clip_far:=8.0
+      update_rate:=15      
+  ">
+
+    <!-- BASE JOINT -->
+    <joint name="${cam_name}_joint" type="fixed">
+      <parent link="${parent_link}"/>
+      <child link="${cam_name}_link"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
     </joint>
 
-    <link name="camera_link">
-        <visual>
-            <geometry>
-                <cylinder radius="0.05" length="0.04" />
-                <material name="green" />
-            </geometry>
-            <material name="green" />
-        </visual>
+    <!-- CAMERA BODY LINK -->
+    <link name="${cam_name}_link">
+      <visual>
+        <geometry>
+          <cylinder radius="${radius}" length="${length}"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="0 -1.57079632679 0"/>
+        <material name="green"/>
+      </visual>
     </link>
 
-    <joint name="camera_optical_joint" type="fixed">
-        <parent link="camera_link" />
-        <child link="camera_link_optical" />
-        <origin xyz="0 0 0" rpy="-1.57079632679 0 -1.57079632679" />
+    <!-- OPTICAL FRAME -->
+    <joint name="${cam_name}_optical_joint" type="fixed">
+      <parent link="${cam_name}_link"/>
+      <child link="${cam_name}_link_optical"/>
+      <origin xyz="0 0 0" rpy="-1.57079632679 0 -1.57079632679"/>
     </joint>
 
-    <link name="camera_link_optical"></link>
+    <link name="${cam_name}_link_optical"/>
 
-    <gazebo reference="camera_link">
-        <sensor name="camera" type="camera">
-            <camera>
-                <camera_info_topic>camera/camera_info</camera_info_topic>
-                <horizontal_fov>1.089</horizontal_fov>
-                <image>
-                    <format>R8G8B8</format>
-                    <width>640</width>
-                    <height>480</height>
-                </image>
-                <clip>
-                    <near>0.05</near>
-                    <far>8.0</far>
-                </clip>
-            </camera>
-            <visualize>true</visualize>
-            <update_rate>15</update_rate>
-            <topic>camera/image_raw</topic>
-            <gz_frame_id>camera_link_optical</gz_frame_id>
-        </sensor>
+    <!-- GAZEBO SENSOR -->
+    <gazebo reference="${cam_name}_link">
+      <sensor name="${cam_name}" type="camera">
+        <camera>
+          <camera_info_topic>${cam_name}/camera_info</camera_info_topic>
+          <horizontal_fov>${fov}</horizontal_fov>
+          <image>
+            <format>R8G8B8</format>
+            <width>${width}</width>
+            <height>${height}</height>
+          </image>
+          <clip>
+            <near>${clip_near}</near>
+            <far>${clip_far}</far>
+          </clip>
+        </camera>
+        <visualize>true</visualize>
+        <update_rate>${update_rate}</update_rate>
+        <topic>${cam_name}/image_raw</topic>
+        <gz_frame_id>${cam_name}_link_optical</gz_frame_id>
+      </sensor>
     </gazebo>
+
+  </xacro:macro>
 
 </robot>
