@@ -14,7 +14,7 @@
       height:=720
       clip_near:=0.3      
       clip_far:=8.0
-      update_rate:=30      
+      update_rate:=15      
   ">
 
     <!-- BASE JOINT -->

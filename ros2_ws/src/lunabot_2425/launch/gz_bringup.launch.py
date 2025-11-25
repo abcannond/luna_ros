@@ -1,4 +1,5 @@
 import os
+import math
 
 from ament_index_python.packages import get_package_share_directory
 
@@ -57,16 +58,32 @@ def generate_launch_description():
         }.items(),
     )
 
-    # --- SPAWN ROBOT ---
+    # # --- SPAWN ROBOT ---
+    # gz_create_robot = Node(
+    #     package="ros_gz_sim",
+    #     executable="create",
+    #     arguments=[
+    #         "-topic", "robot_description",
+    #         "-name", "mooncake",
+    #         "-x", "-3",
+    #         "-y", "-3",
+    #         "-z", "0.3",
+    #     ],
+    #     output="screen",
+    # )
+
     gz_create_robot = Node(
         package="ros_gz_sim",
         executable="create",
         arguments=[
             "-topic", "robot_description",
             "-name", "mooncake",
-            "-x", "-3",
-            "-y", "-3",
+            "-x", "-3.85",
+            "-y", "2.75",
             "-z", "0.3",
+            "-R", "0",           # roll
+            "-P", "0",           # pitch
+            "-Y", str(-math.pi/2) # yaw about Z
         ],
         output="screen",
     )
