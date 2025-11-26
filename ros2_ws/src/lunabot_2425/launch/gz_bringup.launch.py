@@ -48,7 +48,7 @@ def generate_launch_description():
         value=f"{models_path}:{worlds_path}:{pkg_path}"
     )
 
-    gz_world_file = os.path.join(worlds_path, "ucf_arena.sdf")
+    gz_world_file = os.path.join(worlds_path, "artemis_arena.sdf")
 
     gz_sim = IncludeLaunchDescription(
         gz_sim_source,
