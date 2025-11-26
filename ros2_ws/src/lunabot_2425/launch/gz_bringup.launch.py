@@ -58,20 +58,6 @@ def generate_launch_description():
         }.items(),
     )
 
-    # # --- SPAWN ROBOT ---
-    # gz_create_robot = Node(
-    #     package="ros_gz_sim",
-    #     executable="create",
-    #     arguments=[
-    #         "-topic", "robot_description",
-    #         "-name", "mooncake",
-    #         "-x", "-3",
-    #         "-y", "-3",
-    #         "-z", "0.3",
-    #     ],
-    #     output="screen",
-    # )
-
     gz_create_robot = Node(
         package="ros_gz_sim",
         executable="create",
@@ -81,9 +67,9 @@ def generate_launch_description():
             "-x", "-3.75",
             "-y", "2.75",
             "-z", "0.3",
-            "-R", "0",           # roll
-            "-P", "0",           # pitch
-            "-Y", str(-math.pi/2) # yaw about Z
+            "-R", "0",
+            "-P", "0",
+            "-Y", str(-math.pi/2)
         ],
         output="screen",
     )
@@ -118,8 +104,7 @@ def generate_launch_description():
         arguments=["/camera/image_raw"]
     )
 
-    # --- CONTROLLER SPAWNERS (correct order) ---
-
+    # --- CONTROLLER SPAWNERS ---
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
         executable="spawner",
@@ -140,7 +125,6 @@ def generate_launch_description():
         output="screen"
     )
 
-    # Spawn controllers AFTER the robot is spawned into Gazebo
     spawn_controllers_after_robot = RegisterEventHandler(
         OnProcessExit(
             target_action=gz_create_robot,
@@ -152,6 +136,35 @@ def generate_launch_description():
                 luna_controller_spawner,
             ]
         )
+    )
+
+    # -------------------------------
+    # --- POINT CLOUD GENERATOR -----
+    # -------------------------------
+    #
+    # Converts:
+    #   /depth_camera/depth/image_raw + /depth_camera/depth/camera_info
+    # into:
+    #   /depth_camera/points   (PointCloud2)
+    #
+    # Depth → PointCloud conversion
+# --- DEPTH IMAGE TO POINTCLOUD ---
+    depth_to_pc_node = Node(
+        package="depthimage_to_pointcloud2",
+        executable="depthimage_to_pointcloud2_node",
+        name="depth_to_pointcloud",
+        output="screen",
+        parameters=[{
+            "colorful": False,       # depth-only pointcloud
+            "range_max": 10.0,       # same as your Gazebo camera far plane
+            "use_quiet_nan": False,
+            "use_sim_time": True
+        }],
+        remappings=[
+            ("depth", "/depth_camera/depth/image_raw"),
+            ("depth_camera_info", "/depth_camera/depth/camera_info"),
+            ("pointcloud2", "/depth_camera/points")
+        ]
     )
 
     # --- RVIZ ---
@@ -178,7 +191,12 @@ def generate_launch_description():
         spawn_controllers_after_robot,
         gz_param_bridge,
         gz_image_bridge,
+
+        # 💡 ADD THE NEW POINT CLOUD GENERATOR
+        # pointcloud_node,
+
         rviz_node,
+        depth_to_pc_node,
     ])
 
 

@@ -5,18 +5,23 @@ SHELL ["/bin/bash", "-c"]
 # Install required ROS and GUI dependencies
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y \
+    build-essential \
+    cmake \
+    git \
     ros-jazzy-ros-gz \
     ros-jazzy-ros2-control \
     ros-jazzy-ros2-controllers \
     ros-jazzy-gz-ros2-control \
     ros-jazzy-depth-image-proc \
-    # OpenGL + Vulkan (Intel/AMD/NVIDIA support)
+    ros-jazzy-cv-bridge \
+    libeigen3-dev \
+    libopencv-dev \
+    python3-colcon-common-extensions \
     libgl1 \
     libglx0 \
     libgl1-mesa-dri \
     libglx-mesa0 \
     mesa-vulkan-drivers \
-    # X11 + Qt deps
     libxcb-xinerama0 \
     libxcb-xfixes0 \
     libxcb-shape0 \
@@ -32,13 +37,13 @@ RUN apt-get update && apt-get upgrade -y && \
     dos2unix && \
     rm -rf /var/lib/apt/lists/*
 
+
 RUN echo "alias src='source install/setup.bash'" >> /etc/bash.bashrc
 RUN echo "alias srcr='source /opt/ros/jazzy/setup.bash'" >> /etc/bash.bashrc
 RUN echo "alias cdr='cd /ros2_ws'" >> /etc/bash.bashrc
 RUN echo "alias bld='colcon build --symlink-install'" >> /etc/bash.bashrc
 RUN echo "alias drive='ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/luna_cont/cmd_vel_unstamped'" >> /etc/bash.bashrc
 RUN echo "alias sim='ros2 launch lunabot_2425 gz_bringup.launch.py'" >> /etc/bash.bashrc
-
 
 WORKDIR /ros2_ws
 
