@@ -154,6 +154,30 @@ def generate_launch_description():
         )
     )
 
+    depth_to_pointcloud_node = Node(
+        package='depth_to_pointcloud',          # your package name
+        executable='depth_to_pointcloud_node',  # node executable
+        name='depth_to_pointcloud_node',
+        output='screen',
+        parameters=[{'use_sim_time': True}],     # optional if you want sim time
+        remappings=[                             # optional, remap your topics
+            # ('/input_depth', '/camera/depth/image_raw'),
+            # ('/output_points', '/camera/depth/points'),
+        ]
+    )
+
+    # Start depth_to_pointcloud AFTER the robot is spawned
+    start_depth_to_pointcloud = RegisterEventHandler(
+        OnProcessExit(
+            target_action=gz_create_robot,
+            on_exit=[
+                LogInfo(msg="Robot spawned — starting depth_to_pointcloud node..."),
+                depth_to_pointcloud_node
+            ]
+        )
+    )
+
+
     # --- RVIZ ---
     rviz_config_file = os.path.join(
         get_package_share_directory(package_name),
@@ -178,6 +202,7 @@ def generate_launch_description():
         spawn_controllers_after_robot,
         gz_param_bridge,
         gz_image_bridge,
+        start_depth_to_pointcloud,
         rviz_node,
     ])
 
