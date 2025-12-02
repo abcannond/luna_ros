@@ -80,7 +80,7 @@ def generate_launch_description():
             "-name", "mooncake",
             "-x", "-3.75",
             "-y", "2.75",
-            "-z", "0.3",
+            "-z", "0.1",
             "-R", "0",           # roll
             "-P", "0",           # pitch
             "-Y", str(-math.pi/2) # yaw about Z

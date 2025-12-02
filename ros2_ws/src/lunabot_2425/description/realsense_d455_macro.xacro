@@ -3,7 +3,7 @@
 
   <xacro:macro name="realsense_camera" params="parent_link">
 
-    <link name="camera_link">
+    <link name="depth_camera_link">
       <visual>
         <geometry>
           <box size="0.05 0.05 0.04"/>
@@ -26,16 +26,16 @@
 
 
     <!-- Fixed joint connecting camera to robot -->
-    <joint name="camera_joint" type="fixed">
+    <joint name="depth_camera_joint" type="fixed">
       <parent link="${parent_link}"/>
-      <child link="camera_link"/>
+      <child link="depth_camera_link"/>
       <origin xyz="0.3 0.1 0.65" rpy="0 1 0"/>
     </joint>
 
     <!-- ======================================================= -->
     <!-- ================= GAZEBO HARMONIC SENSORS ============= -->
     <!-- ======================================================= -->
-    <gazebo reference="camera_link">
+    <gazebo reference="depth_camera_link">
 
       <!-- ================= RGB CAMERA ================= -->
       <sensor name="d455_rgb_camera" type="camera">
