@@ -51,7 +51,7 @@ private:
 
     sensor_msgs::msg::PointCloud2 cloud;
     cloud.header = msg->header;
-    cloud.header.frame_id = "base_link";
+    cloud.header.frame_id = "depth_camera_link";
     cloud.height = 1;
     cloud.width = num_points;
     cloud.is_dense = false;
@@ -113,7 +113,7 @@ int main(int argc, char* argv[]) {
 //     DepthToPointCloud()
 //     : Node("depth_to_pointcloud_node"), camera_info_received_(false)
 //     {
-//         // Fixed transform from camera -> base_link
+//         // Fixed transform from camera -> depth_camera_link
 //         tx_ = 0.275; ty_ = 0.12; tz_ = 1.17;
 //         roll_ = 0.0; pitch_ = 0.6; yaw_ = 0.0;
 //         R_ = rotationMatrix(roll_, pitch_, yaw_);
@@ -185,7 +185,7 @@ int main(int argc, char* argv[]) {
 
 //         sensor_msgs::msg::PointCloud2 pc_msg;
 //         pc_msg.header = msg->header;
-//         pc_msg.header.frame_id = "base_link";
+//         pc_msg.header.frame_id = "depth_camera_link";
 //         pc_msg.height = 1;
 //         pc_msg.width = points.size();
 //         pc_msg.is_dense = false;
