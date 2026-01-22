@@ -7,6 +7,7 @@ RUN apt-get update && \
     ros-jazzy-ros2-control \
     ros-jazzy-ros2-controllers \
     ros-jazzy-gz-ros2-control \
+    ros-jazzy-depth-image-proc \
     libqt5gui5 \
     libqt5widgets5 \
     libqt5core5a \

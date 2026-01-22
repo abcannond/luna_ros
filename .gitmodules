@@ -7,3 +7,6 @@
 [submodule "ros2_ws/src/luna_brain"]
 	path = ros2_ws/src/luna_brain
 	url = git@github.com:thesamrooney/luna_brain.git
+[submodule "ros2_ws/src/luna_ros2_worlds"]
+	path = ros2_ws/src/luna_ros2_worlds
+	url = git@github.com:WPI-Lunabotics-MQP/luna_ros2_worlds.git

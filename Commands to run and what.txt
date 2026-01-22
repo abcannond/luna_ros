@@ -11,7 +11,7 @@ docker build -t luna_ros:latest .   (build docker container, period is necesarry
 
 docker build --no-cache -t luna_ros:latest .
 
-./run_ros_image.sh run_luna_sim:latest
+./run_ros_image.sh luna_ros:latest
 
 cd ros2_ws
 
@@ -25,6 +25,8 @@ ros2 launch lunabot_2425 gz_bringup.launch.py
 
 TO DRIVE: 
 to access docker container in a second terminal: 
+to access docker container: 
+in a new terminal: 
 
 docker ps
 - (from docker ps - find Container ID (i.e. 4cf7939857c5)
@@ -38,6 +40,11 @@ This Runs a twist keyboard with the correct topic:
 - (note to self: Fix the topic permanently later). 
 
 ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/luna_cont/cmd_vel_unstamped
+
+
+
+
+
 
 
 Other entrypoint.sh file stuff: 
