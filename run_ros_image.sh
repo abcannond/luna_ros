@@ -1,29 +1,38 @@
 #!/usr/bin/env bash
 set -e
 
-# Enable X11 for GUI (run on host)
-xhost +local:docker || true
+IMAGE_NAME=$1
 
-# Workspace path on host
-HOST_WS="$(pwd)/ros2_ws"
-
-# Image name passed as first argument
-IMAGE_NAME="$1"
-
-# Only pass /dev/dri if it exists (Jetson has it, Mac might not)
-EXTRA_DEV=""
-if [ -e /dev/dri ]; then
-  EXTRA_DEV="--device /dev/dri:/dev/dri"
+if [ -z "$IMAGE_NAME" ]; then
+    echo "Usage: $0 <docker_image_name>"
+    exit 1
 fi
 
-docker run -it \
-  --env DISPLAY="$DISPLAY" \
-  --volume /tmp/.X11-unix:/tmp/.X11-unix \
-  --volume "$HOST_WS":/ros2_ws:rw \
-  $EXTRA_DEV \
-  --network host \
-  --privileged \
-  -v /dev:/dev \
-  --entrypoint /bin/bash \
-  "$IMAGE_NAME"
+# Allow X11 access to local docker containers
+xhost +local:root
 
+# Detect GPU
+if command -v nvidia-smi &>/dev/null; then
+    echo "NVIDIA GPU detected: enabling --gpus all"
+    GPU_FLAGS="--gpus all \
+        -e NVIDIA_VISIBLE_DEVICES=all \
+        -e NVIDIA_DRIVER_CAPABILITIES=all"
+else
+    echo "No NVIDIA GPU detected: using software rendering"
+    GPU_FLAGS="-e LIBGL_ALWAYS_SOFTWARE=1"
+fi
+
+# Mount workspace
+HOST_WS=$(pwd)/ros2_ws
+
+docker run -it \
+    $GPU_FLAGS \
+    --env DISPLAY=$DISPLAY \
+    --env QT_X11_NO_MITSHM=1 \
+    --env LIBGL_ALWAYS_INDIRECT=0 \
+    --volume /tmp/.X11-unix:/tmp/.X11-unix:rw \
+    --volume "$HOST_WS":/ros2_ws:rw \
+    --network host \
+    --privileged \
+    $IMAGE_NAME \
+    bash
