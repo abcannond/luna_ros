@@ -11,17 +11,21 @@ docker build -t luna_ros:latest .   (build docker container, period is necesarry
 
 docker build --no-cache -t luna_ros:latest .
 
+(start here)
+
 ./run_ros_image.sh luna_ros:latest
 
 cd ros2_ws
 
 source /ros2_ws/install/setup.bash
 
-colcon build --symlink-install
+colcon build --symlink-install (may need to run twice if fails on quadplex)
 
-source install/setup.bash
+src
 
-ros2 launch lunabot_2425 gz_bringup.launch.py
+sim
+
+
 
 TO DRIVE: 
 to access docker container in a second terminal: 
@@ -39,7 +43,7 @@ source /ros2_ws/install/setup.bash
 This Runs a twist keyboard with the correct topic: 
 - (note to self: Fix the topic permanently later). 
 
-ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/luna_cont/cmd_vel_unstamped
+drive (ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/luna_cont/cmd_vel_unstamped)
 
 
 
