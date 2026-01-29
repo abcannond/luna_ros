@@ -1,7 +1,7 @@
 import os
 import math
 
-from ament_index_python.packages import get_package_share_directory
+from ament_index_python.packages import get_package_share_directory, PackageNotFoundError
 
 from launch import LaunchDescription
 from launch.actions import (
@@ -18,7 +18,20 @@ from launch_ros.actions import Node
 def generate_launch_description():
 
     package_name = "lunabot_2425"
-    new_world_package = "luna_ros2_worlds"
+    try:
+        new_world_package = "luna_ros2_worlds"
+        worlds_pkg_share = get_package_share_directory(new_world_package)
+        models_path = os.path.join(worlds_pkg_share, "models")
+        worlds_path = os.path.join(worlds_pkg_share, "worlds")
+        pkg_path = worlds_pkg_share
+        gz_world_file = os.path.join(worlds_path, "ucf_arena.sdf")
+    except PackageNotFoundError:
+        new_world_package = package_name
+        pkg_share = get_package_share_directory(package_name)
+        models_path = os.path.join(pkg_share, "stl")
+        worlds_path = os.path.join(pkg_share, "worlds")
+        pkg_path = pkg_share
+        gz_world_file = os.path.join(worlds_path, "empty.world")
 
     # --- RSP ---
     rsp_source = PythonLaunchDescriptionSource(os.path.join(
@@ -39,16 +52,10 @@ def generate_launch_description():
         "gz_sim.launch.py"
     ))
 
-    models_path = os.path.join(get_package_share_directory(new_world_package), "models")
-    worlds_path = os.path.join(get_package_share_directory(new_world_package), "worlds")
-    pkg_path = get_package_share_directory(new_world_package)
-
     gz_sim_resource = SetEnvironmentVariable(
         name='GZ_SIM_RESOURCE_PATH',
         value=f"{models_path}:{worlds_path}:{pkg_path}"
     )
-
-    gz_world_file = os.path.join(worlds_path, "ucf_arena.sdf")
 
     gz_sim = IncludeLaunchDescription(
         gz_sim_source,
@@ -102,13 +109,16 @@ def generate_launch_description():
         output='screen',
     )
 
+    # Twist stamper: converts unstamped Twist to TwistStamped if needed
+    # Input: /cmd_vel (from Nav2/teleop)
+    # Output: /cmd_vel_stamped (for nodes that need TwistStamped)
     twist_stamper = Node(
         package='twist_stamper',
         executable='twist_stamper',
         parameters=[{'use_sim_time': True}],
         remappings=[
-            ('/cmd_vel_in', '/luna_cont/cmd_vel_unstamped'),
-            ('/cmd_vel_out', '/luna_cont/cmd_vel'),
+            ('/cmd_vel_in', '/cmd_vel'),
+            ('/cmd_vel_out', '/cmd_vel_stamped'),
         ],
     )
 

@@ -24,12 +24,37 @@
       </inertial>
     </link>
 
-
     <!-- Fixed joint connecting camera to robot -->
     <joint name="depth_camera_joint" type="fixed">
       <parent link="${parent_link}"/>
       <child link="depth_camera_link"/>
       <origin xyz="0.3 0.1 0.65" rpy="0 1 0"/>
+    </joint>
+
+    <!-- ===== Optical frames for ROS conventions ===== -->
+    <!-- Color optical frame (rotated for camera coordinate system: Z forward, X right, Y down) -->
+    <link name="camera_color_optical_frame"/>
+    <joint name="camera_color_optical_joint" type="fixed">
+      <parent link="depth_camera_link"/>
+      <child link="camera_color_optical_frame"/>
+      <!-- Rotation: -90 deg roll, 0 pitch, -90 deg yaw transforms robot frame to optical frame -->
+      <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+    </joint>
+
+    <!-- Depth optical frame (same orientation as color for aligned depth) -->
+    <link name="camera_depth_optical_frame"/>
+    <joint name="camera_depth_optical_joint" type="fixed">
+      <parent link="depth_camera_link"/>
+      <child link="camera_depth_optical_frame"/>
+      <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+    </joint>
+
+    <!-- Camera link (standard ROS naming convention) -->
+    <link name="camera_link"/>
+    <joint name="camera_link_joint" type="fixed">
+      <parent link="depth_camera_link"/>
+      <child link="camera_link"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
     </joint>
 
     <!-- ======================================================= -->
