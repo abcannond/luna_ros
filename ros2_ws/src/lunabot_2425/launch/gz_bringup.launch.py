@@ -48,7 +48,7 @@ def generate_launch_description():
         value=f"{models_path}:{worlds_path}:{pkg_path}"
     )
 
-    gz_world_file = os.path.join(worlds_path, "artemis_arena.sdf")
+    gz_world_file = os.path.join(worlds_path, "ucf_arena.sdf")
 
     gz_sim = IncludeLaunchDescription(
         gz_sim_source,
@@ -78,12 +78,12 @@ def generate_launch_description():
         arguments=[
             "-topic", "robot_description",
             "-name", "mooncake",
-            "-x", "-3.75",
-            "-y", "2.75",
+            "-x", "-1.250",
+            "-y", "-3.00",
             "-z", "0.1",
             "-R", "0",           # roll
             "-P", "0",           # pitch
-            "-Y", str(-math.pi/2) # yaw about Z
+            "-Y", str(math.pi/2) # yaw about Z
         ],
         output="screen",
     )
