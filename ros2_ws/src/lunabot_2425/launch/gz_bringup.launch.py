@@ -59,20 +59,6 @@ def generate_launch_description():
         }.items(),
     )
 
-    # # --- SPAWN ROBOT ---
-    # gz_create_robot = Node(
-    #     package="ros_gz_sim",
-    #     executable="create",
-    #     arguments=[
-    #         "-topic", "robot_description",
-    #         "-name", "mooncake",
-    #         "-x", "-3",
-    #         "-y", "-3",
-    #         "-z", "0.3",
-    #     ],
-    #     output="screen",
-    # )
-
     # gz_create_robot = Node(
     #     package="ros_gz_sim",
     #     executable="create",
