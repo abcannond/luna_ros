@@ -48,7 +48,8 @@ def generate_launch_description():
         value=f"{models_path}:{worlds_path}:{pkg_path}"
     )
 
-    gz_world_file = os.path.join(worlds_path, "ucf_arena.sdf")
+    gz_world_file = os.path.join(worlds_path, "artemis_arena.sdf")
+    # gz_world_file = os.path.join(worlds_path, "ucf_arena.sdf")
 
     gz_sim = IncludeLaunchDescription(
         gz_sim_source,
@@ -72,14 +73,30 @@ def generate_launch_description():
     #     output="screen",
     # )
 
+    # gz_create_robot = Node(
+    #     package="ros_gz_sim",
+    #     executable="create",
+    #     arguments=[
+    #         "-topic", "robot_description",
+    #         "-name", "mooncake",
+    #         "-x", "-1.250",
+    #         "-y", "-3.00",
+    #         "-z", "0.1",
+    #         "-R", "0",           # roll
+    #         "-P", "0",           # pitch
+    #         "-Y", str(math.pi/2) # yaw about Z
+    #     ],
+    #     output="screen",
+    # )
+
     gz_create_robot = Node(
         package="ros_gz_sim",
         executable="create",
         arguments=[
             "-topic", "robot_description",
             "-name", "mooncake",
-            "-x", "-1.250",
-            "-y", "-3.00",
+            "-x", "-2.750",
+            "-y", "-1.750",
             "-z", "0.1",
             "-R", "0",           # roll
             "-P", "0",           # pitch
