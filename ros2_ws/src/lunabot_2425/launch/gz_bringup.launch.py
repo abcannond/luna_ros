@@ -5,6 +5,7 @@ from ament_index_python.packages import get_package_share_directory, PackageNotF
 
 from launch import LaunchDescription
 from launch.actions import (
+    DeclareLaunchArgument,
     IncludeLaunchDescription,
     SetEnvironmentVariable,
     RegisterEventHandler,
@@ -13,6 +14,7 @@ from launch.actions import (
 )
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.event_handlers import OnProcessExit
+from launch.substitutions import LaunchConfiguration, TextSubstitution
 from launch_ros.actions import Node
 
 
@@ -25,14 +27,33 @@ def generate_launch_description():
         models_path = os.path.join(worlds_pkg_share, "models")
         worlds_path = os.path.join(worlds_pkg_share, "worlds")
         pkg_path = worlds_pkg_share
-        gz_world_file = os.path.join(worlds_path, "ucf_arena.sdf")
+        has_worlds_pkg = True
     except PackageNotFoundError:
         new_world_package = package_name
         pkg_share = get_package_share_directory(package_name)
         models_path = os.path.join(pkg_share, "stl")
         worlds_path = os.path.join(pkg_share, "worlds")
         pkg_path = pkg_share
-        gz_world_file = os.path.join(worlds_path, "empty.world")
+        has_worlds_pkg = False
+
+    # World selection: ucf_arena (default) or artemis_arena (from artemis_arenas merge)
+    declare_world = DeclareLaunchArgument(
+        "world",
+        default_value="ucf_arena",
+        description="World basename in luna_ros2_worlds/worlds: ucf_arena or artemis_arena",
+    )
+    world_name = LaunchConfiguration("world", default="ucf_arena")
+    # gz_args as Substitutions so launch arg is applied when using luna_ros2_worlds
+    if has_worlds_pkg:
+        gz_args_parts = [
+            TextSubstitution(text="-r " + worlds_path + "/"),
+            world_name,
+            TextSubstitution(text=".sdf"),
+        ]
+    else:
+        gz_args_parts = [
+            TextSubstitution(text="-r " + os.path.join(worlds_path, "empty.world")),
+        ]
 
     # --- RSP ---
     rsp_source = PythonLaunchDescriptionSource(os.path.join(
@@ -61,21 +82,23 @@ def generate_launch_description():
     gz_sim = IncludeLaunchDescription(
         gz_sim_source,
         launch_arguments={
-            "gz_args": f"-r {gz_world_file}",
+            "gz_args": gz_args_parts,
             "on_exit_shutdown": "True",
         }.items(),
     )
 
-    # # --- SPAWN ROBOT ---
     # gz_create_robot = Node(
     #     package="ros_gz_sim",
     #     executable="create",
     #     arguments=[
     #         "-topic", "robot_description",
     #         "-name", "mooncake",
-    #         "-x", "-3",
-    #         "-y", "-3",
-    #         "-z", "0.3",
+    #         "-x", "-1.250",
+    #         "-y", "-3.00",
+    #         "-z", "0.1",
+    #         "-R", "0",           # roll
+    #         "-P", "0",           # pitch
+    #         "-Y", str(math.pi/2) # yaw about Z
     #     ],
     #     output="screen",
     # )
@@ -86,12 +109,12 @@ def generate_launch_description():
         arguments=[
             "-topic", "robot_description",
             "-name", "mooncake",
-            "-x", "-3.75",
-            "-y", "2.75",
+            "-x", "-2.750",
+            "-y", "-1.750",
             "-z", "0.1",
             "-R", "0",           # roll
             "-P", "0",           # pitch
-            "-Y", str(-math.pi/2) # yaw about Z
+            "-Y", str(math.pi/2) # yaw about Z
         ],
         output="screen",
     )
@@ -219,6 +242,7 @@ def generate_launch_description():
     rviz_delayed = TimerAction(period=5.0, actions=[rviz_node])
 
     return LaunchDescription([
+        declare_world,
         rsp,
         gz_sim_resource,
         gz_sim,
