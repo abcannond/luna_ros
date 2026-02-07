@@ -15,6 +15,11 @@ setup(
         # Install all Python launch files in the launch/ directory
         (os.path.join('share', package_name, 'launch'),
          glob(os.path.join('launch', '*.py'))),
+        # Install config files
+        (os.path.join('share', package_name, 'config'),
+         glob(os.path.join('config', '*.yaml'))),
+        (os.path.join('share', package_name, 'config'),
+         glob(os.path.join('config', '*.rviz'))),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -25,6 +30,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'camera_info_fixer = luna_mapping.camera_info_fixer:main',
+            'tf_relay = luna_mapping.tf_relay:main',
+            'image_frame_fixer = luna_mapping.image_frame_fixer:main',
         ],
     },
 )

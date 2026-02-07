@@ -11,16 +11,13 @@ if [ -f /ros2_ws/install/setup.bash ]; then
     source /ros2_ws/install/setup.bash
 fi
 
+# Go to the workspace by default (nice QoL)
+cd /ros2_ws
+
 # If no arguments, launch interactive login shell so aliases work
 if [ $# -eq 0 ]; then
     exec bash -il
 else
     exec "$@"
 fi
-
-# Go to the workspace by default (nice QoL)
-cd /ros2_ws
-
-# Hand off to whatever was passed (default is "bash")
-exec "$@"
 

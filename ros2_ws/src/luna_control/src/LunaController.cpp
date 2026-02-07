@@ -656,9 +656,9 @@ namespace luna_controller
     previous_commands_.emplace(empty_twist);
     previous_commands_.emplace(empty_twist);
 
-    // initialize command subscriber
+    // initialize command subscriber (topic configurable so gz_ros2_control can use /cmd_vel_stamped)
     velocity_command_subscriber_ = get_node()->create_subscription<Twist>(
-        DEFAULT_COMMAND_TOPIC, rclcpp::SystemDefaultsQoS(),
+        params_.command_topic, rclcpp::SystemDefaultsQoS(),
         [this](const std::shared_ptr<Twist> msg) -> void
         {
           if (!subscriber_is_active_)

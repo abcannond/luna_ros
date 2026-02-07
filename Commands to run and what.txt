@@ -1,70 +1,259 @@
-Commands to run and what they do: 
+Commands to run and what they do
+================================
 
-git clone git@github.com:abcannond/luna_ros.git
+Your work from ros2_ws/luna_ros has been moved here. This folder is the repo root.
 
-cd luna_ros
+Full explanation and troubleshooting: see LAUNCH_COMMANDS.md.
+This file is a short reference: what to run and in what order.
 
-git submodule update --init --recursive
+Where you run things:
+  Git and Docker: on the host, from the repo root (this folder).
+  ROS commands: inside the Docker container (either the shell from run_ros_image.sh
+  or a new terminal with: dbash — or docker exec -it <CONTAINER_ID> /bin/bash).
 
+Design goal: The sim is tuned to reflect real hardware (robot + RealSense D455) in a real arena. Map and nav quality are prioritized so behavior transfers to the real robot.
 
-docker build -t luna_ros:latest .   (build docker container, period is necesarry)
+----------------------------------------------------------------------
+Repo root (align Cursor, terminal, and git)
+----------------------------------------------------------------------
 
-docker build --no-cache -t luna_ros:latest .
+Repo root = this folder (luna_ros with Dockerfile and ros2_ws at top level).
 
-./run_ros_image.sh luna_ros:latest
+Correct workflow:
+  • Cursor:  Open this folder as the workspace (File → Open Folder → luna_ros).
+  • Terminal (host):  cd into this folder, then drun and git:
+        cd ~/luna_ros
+        drun
+  • Git:  Run git clone, git pull, etc. from this folder.
+  • After drun, inside the container you are in /ros2_ws (packages in src/).
 
-cd ros2_ws
+----------------------------------------------------------------------
+Optional: Shell aliases (run once per machine, avoids typing long commands)
+----------------------------------------------------------------------
 
-source /ros2_ws/install/setup.bash
+Add these to ~/.bashrc (nano ~/.bashrc, paste at end, save), then run source ~/.bashrc:
 
-colcon build --symlink-install
+  alias dbld='docker build -t luna_ros:latest .'
+  alias dbld_nc='docker build --no-cache -t luna_ros:latest .'
+  alias drun='./run_ros_image.sh luna_ros:latest'
+  alias dbash='docker exec -it $(docker ps -q -f "ancestor=luna_ros:latest") /bin/bash'
+  alias gitmod='git submodule update --init --recursive'
 
-source install/setup.bash
+After that, use: dbld (build), drun (run container), dbash (new shell in container),
+dbld_nc (clean build), gitmod (update submodules). Replace docker exec ... with dbash.
 
-ros2 launch lunabot_2425 gz_bringup.launch.py
+----------------------------------------------------------------------
+FIRST TIME (once per machine or clone)
+----------------------------------------------------------------------
 
-TO DRIVE: 
-to access docker container in a second terminal: 
-to access docker container: 
-in a new terminal: 
+Host, repo root:
 
-docker ps
-- (from docker ps - find Container ID (i.e. 4cf7939857c5)
+  git clone git@github.com:abcannond/luna_ros.git
+  cd luna_ros
+  gitmod    # or: git submodule update --init --recursive
+  dbld      # or: docker build -t luna_ros:latest .
+  drun      # or: ./run_ros_image.sh luna_ros:latest
 
-Run this for terminal access: 
-docker exec -it <CONTAINER ID> /bin/bash
+Inside container (once per clone or when packages change):
 
-source /ros2_ws/install/setup.bash
+  cd /ros2_ws
+  source /opt/ros/jazzy/setup.bash
+  colcon build --symlink-install
+  source install/setup.bash
 
-This Runs a twist keyboard with the correct topic: 
-- (note to self: Fix the topic permanently later). 
+You can ignore the quad_swerve_controller "not found" message.
+If you see "package 'twist_stamper' not found", build it and re-source:
 
-ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/luna_cont/cmd_vel_unstamped
+  cd /ros2_ws && source /opt/ros/jazzy/setup.bash
+  colcon build --symlink-install --packages-select twist_stamper
+  source install/setup.bash
 
+----------------------------------------------------------------------
+Duplicate package names / CMakeCache path mismatch
+----------------------------------------------------------------------
 
+Core issue: run_ros_image.sh mounts $(pwd)/ros2_ws to /ros2_ws. So where you
+run "drun" from decides what /ros2_ws contains. You must run "drun" from the
+repo root (this folder). If you run from a parent folder, /ros2_ws can contain
+both "src" and "luna_ros/ros2_ws/src" (duplicate packages), and CMake fails.
 
+Fix: Always run "drun" from the repo root (this folder). If you already have
+build/ and install/ from the wrong layout, clean first:
 
+  cd /ros2_ws && rm -rf build install
+  source /opt/ros/jazzy/setup.bash
+  colcon build --symlink-install
+  source install/setup.bash
 
+----------------------------------------------------------------------
+AFTER GIT PULL (required — otherwise RTAB-Map/Nav2 may use old config)
+----------------------------------------------------------------------
 
+Inside container:
 
-Other entrypoint.sh file stuff: 
-# #!/bin/bash
-# set -e
+  cd /ros2_ws && source /opt/ros/jazzy/setup.bash
+  colcon build --symlink-install --packages-select luna_mapping luna_nav lunabot_2425 twist_stamper
+  source install/setup.bash
 
-# # setup ros2 environment
-# source "/opt/ros/$ROS_DISTRO/setup.bash" --
-# source "/ros2_ws/install/setup.bash" --
+Then restart Gazebo (Terminal 1) and RTAB-Map+Nav2 (Terminal 2) if they are running.
 
-# # Enable verbose logging for Gazebo (optional, for debugging)
-# export GZ_SIM_VERBOSE=1
+----------------------------------------------------------------------
+TERMINAL 1: Gazebo (must run first)
+----------------------------------------------------------------------
 
-# # Check OpenGL support
-# if glxinfo | grep -q "OpenGL version"; then
-#   echo "OpenGL support detected."
-# else
-#   echo "Warning: OpenGL support not detected. Gazebo GUI may fail."
-# fi
+Inside container:
 
-# exec "$@"
+  cd /ros2_ws && source install/setup.bash
+  ros2 launch lunabot_2425 gz_bringup.launch.py
 
+Wait until the Gazebo window is up and the robot is spawned.
 
+----------------------------------------------------------------------
+TERMINAL 2: RTAB-Map + Nav2 (run after Gazebo is up)
+----------------------------------------------------------------------
+
+New host terminal:
+
+  dbash     # or: docker exec -it <CONTAINER_ID> /bin/bash
+
+Inside container:
+
+  cd /ros2_ws && source install/setup.bash
+  ros2 launch luna_mapping rtabmap_nav2_sim.launch.py
+
+This starts RTAB-Map (map), depth to scan, depth to pointcloud, and Nav2. Wait until you see RTAB-Map and Nav2 messages.
+
+----------------------------------------------------------------------
+TERMINAL 3 (optional): RViz — visualize and send Nav2 goals
+----------------------------------------------------------------------
+
+  dbash     # or: docker exec -it <CONTAINER_ID> /bin/bash
+  cd /ros2_ws && source install/setup.bash
+  rviz2 -d $(ros2 pkg prefix luna_mapping)/share/luna_mapping/config/rtabmap_nav2.rviz
+
+Use the Nav2 Goal tool in the toolbar to send navigation goals.
+
+  In-depth: what you see in RViz (depth cam, map, costmaps, Nav2 goals,
+  what to look for, troubleshooting) is in LAUNCH_COMMANDS.md under
+  "Using the RViz GUI: depth camera and Nav2 (in depth)".
+
+----------------------------------------------------------------------
+TERMINAL 4 (optional): Drive the robot with the keyboard
+----------------------------------------------------------------------
+
+One terminal, inside container (twist_stamper runs with sim, so drive = just teleop):
+
+  cd /ros2_ws && source install/setup.bash
+  drive
+
+The sim launch includes twist_stamper; drive runs teleop on /cmd_vel.
+Controls: i = forward, comma = backward, j = left, l = right, k = stop.
+
+----------------------------------------------------------------------
+TERMINAL 5 (optional): Diagnostics (run only after Terminals 1 and 2 are up)
+----------------------------------------------------------------------
+
+  dbash     # or: docker exec -it <CONTAINER_ID> /bin/bash
+  cd /ros2_ws && source install/setup.bash
+
+  ros2 topic list
+  ros2 topic hz /map
+  ros2 topic hz /scan
+  ros2 topic hz /odom
+  ros2 run tf2_tools view_frames
+  ros2 run tf2_ros tf2_echo odom base_link
+
+----------------------------------------------------------------------
+Main topics (for reference)
+----------------------------------------------------------------------
+
+  /map                            Occupancy grid (RTAB-Map)
+  /scan                           2D scan from depth (Nav2 obstacle layer)
+  /camera/camera/depth/color/points   Point cloud (Nav2 voxel layer)
+  /camera/camera/color/image_raw  RGB image
+  /odom                           Odometry
+  /cmd_vel                        Velocity commands (Nav2 or teleop)
+  /local_costmap/costmap          Nav2 local costmap
+  /global_costmap/costmap         Nav2 global costmap
+  /plan                           Global path
+  /local_plan                     Local path
+
+----------------------------------------------------------------------
+Troubleshooting: Robot doesn't move when driving (teleop)
+----------------------------------------------------------------------
+
+1. With sim running, in another terminal: ros2 topic list | grep cmd_vel
+   You should see /cmd_vel and several controller topics. The sim launch
+   publishes TwistStamped to all of: /controller_manager/cmd_vel,
+   /controller_manager/luna_cont/cmd_vel,
+   /model/mooncake/controller_manager/luna_cont/cmd_vel.
+
+2. Find the controller's cmd_vel topic (with sim running and robot spawned):
+   ros2 node list
+   ros2 node info /controller_manager
+   (or /model/mooncake/controller_manager or /model/robot/controller_manager)
+   Under "Subscribers:" find the cmd_vel topic — that is the topic to publish to.
+   Or: ros2 topic list -t | grep TwistStamped, then ros2 topic info <topic> --verbose
+   for each; the one with "Subscription count: 1" is the controller's topic.
+
+3. Check that /cmd_vel is published when you press keys (run drive, press i/j/l):
+   ros2 topic echo /cmd_vel
+   You should see geometry_msgs/msg/Twist. Then check one of the controller
+   topics for TwistStamped (e.g. ros2 topic echo /controller_manager/cmd_vel).
+
+4. Ensure luna_cont is active: ros2 control list_controllers -c /controller_manager
+   luna_cont should show "active". If not, restart the sim and wait for
+   "joint_state_broadcaster active — starting luna_cont...".
+
+----------------------------------------------------------------------
+Troubleshooting: "no map received" or "map frame does not exist"
+----------------------------------------------------------------------
+
+1. Gazebo must run first (Terminal 1). RTAB-Map needs camera data from the bridge.
+
+2. After git pull, rebuild: colcon build --symlink-install --packages-select luna_mapping
+   Then source install/setup.bash. Restart Gazebo and RTAB-Map+Nav2.
+
+3. Verify camera topics (with both Gazebo and RTAB-Map+Nav2 running):
+   ros2 topic hz /camera/camera/color/image_raw
+   ros2 topic hz /camera/camera/color/image_raw_fixed
+   ros2 topic hz /camera/camera/depth/image_rect_raw_fixed
+   If *_fixed topics show 0 Hz, the fixers may not be receiving from the bridge.
+
+4. Ensure you are on the branch with the fix (RTAB-Map uses image_raw_fixed topics).
+
+----------------------------------------------------------------------
+Troubleshooting: Costmap looks blocky or fragmented
+----------------------------------------------------------------------
+
+The global costmap combines the static map (/map from RTAB-Map) and the
+obstacle layer (/scan). Blocky or mosaic-like costmap usually means:
+
+1. **TF for map frame** — Obstacles are drawn in map frame. If map→base_link
+   is missing or stale, /scan is projected in the wrong place and you get
+   misaligned patches. Check that RTAB-Map is publishing map→odom:
+     ros2 run tf2_ros tf2_echo map odom
+   You should see a transform. Also: ros2 run tf2_ros tf2_echo map base_link
+
+2. **Gazebo and RTAB-Map+Nav2 both running** — Start Gazebo first (Terminal 1),
+   then RTAB-Map+Nav2 (Terminal 2). If RTAB-Map isn’t running, /map and
+   map→odom won’t exist and the costmap will be wrong.
+
+3. **Black/unmapped areas** — Normal until the robot explores; the static
+   layer only has data where RTAB-Map has built the map.
+
+4. **observation_source_delay** — The global costmap’s scan source uses a
+   small delay (0.2 s) so TF is available when transforming /scan to map;
+   this reduces misaligned obstacle patches.
+
+----------------------------------------------------------------------
+RTAB-Map + Nav2 launch arguments (optional)
+----------------------------------------------------------------------
+
+  use_rtabmap_odom:=true    Use RTAB-Map visual odom instead of Gazebo odom
+  use_fiducial_odom:=true   Enable fiducial marker localization
+  launch_rviz:=true         Start RViz with the stack
+  launch_nav2:=false        Mapping only (no Nav2)
+
+Example:
+  ros2 launch luna_mapping rtabmap_nav2_sim.launch.py use_rtabmap_odom:=true

@@ -1,11 +1,57 @@
+Luna ROS — Simulation and Navigation Stack
+==========================================
 
-# Run Lunabotics robot simulation in Docker
+This repo runs a ROS 2 Jazzy simulation of the WPI Lunabotics robot in Gazebo Harmonic, with RTAB-Map for mapping and Nav2 for navigation. Everything runs inside Docker so you get a consistent environment (tested on Ubuntu 24.04).
 
-This repo is meant to describe the Docker image(s) that are required to run a ROS2 Jazzy / Gazebo Harmonic simulation of the WPI Lunabotics 24-25 drivetrain.
-It includes a Dockerfile to build, and a shell script to run that includes all of the necessary options to successfully run on Linux (tested on Ubuntu 24.04). 
-The script allows GUI apps to run locally via Docker.
+What it does
+------------
 
-## How to run
+1. Gazebo simulates the robot and a depth camera (RealSense D455). The camera publishes RGB images, depth images, and point clouds.
 
-Run the container once you've built an image by using `./run_ros_image.sh [image_id]`.
-This will set up the X host properly, allowing Docker to present a visible GUI.
+2. RTAB-Map uses those images to build a map (SLAM) and publish an occupancy grid on /map.
+
+3. Depth data is turned into a 2D laser-style scan (/scan) and a 3D point cloud so Nav2 can see obstacles.
+
+4. Nav2 uses the map and the scan/point cloud to plan paths and send velocity commands so the robot can drive to a goal you click in RViz.
+
+In short: Gazebo sends camera data into RTAB-Map (which builds the map) and into depth processing (which makes obstacles visible to Nav2). Nav2 then plans and drives the robot.
+
+Quick start
+-----------
+
+First time: clone the repo, init submodules, build the Docker image, then start the container. See LAUNCH_COMMANDS.md for the exact commands.
+
+Every run:
+  1. Start the container if it's not running.
+  2. Terminal 1: Build the workspace once if needed, then launch Gazebo.
+  3. Terminal 2: In a new terminal, exec into the same container and launch RTAB-Map + Nav2.
+  4. Optionally open RViz and use the Nav2 Goal tool to send a navigation goal.
+
+The full step-by-step (what to run in each terminal, what you should see, and troubleshooting) is in LAUNCH_COMMANDS.md. For a minimal list of commands only, see Commands to run and what.txt.
+
+How to run the container
+------------------------
+
+From the repo root, after building the image:
+
+  ./run_ros_image.sh luna_ros:latest
+
+That script sets up X11 so GUIs (Gazebo, RViz) show up on your machine. For Terminals 2 and on, you open new host terminals and run:
+
+  docker exec -it <CONTAINER_ID> /bin/bash
+
+to get another shell in the same container. Use docker ps to see the container ID.
+
+Docs in this repo
+-----------------
+
+  LAUNCH_COMMANDS.md   — Full guide: how it works, what to run in each terminal, options, troubleshooting.
+  Commands to run and what.txt   — Short command list and topic reference.
+  Dockerfile   — Defines the Docker image (ROS 2 Jazzy, Gazebo, Nav2, RTAB-Map, etc.).
+
+Requirements
+------------
+
+  Docker
+  Linux with X11 (e.g. Ubuntu 24.04)
+  Clone, submodules, and docker build as described in LAUNCH_COMMANDS.md

@@ -15,6 +15,11 @@ controller_manager:
 # Controller parameters for luna_cont
 luna_cont:
   ros__parameters:
+    # Subscribe to a known topic so teleop works with a single twist_stamper.
+    command_topic: "/cmd_vel_stamped"
+    # Very large timeout so sim-time stamps are never treated as stale when
+    # controller_manager uses wall clock (gz_ros2_control may not set use_sim_time).
+    cmd_vel_timeout: 1000000.0
 
     publish_rate: 30.0
     base_frame_id: base_link

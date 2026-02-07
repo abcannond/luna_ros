@@ -1,0 +1,76 @@
+# RTAB-Map parameters for simulation with RealSense D455
+# Configured for occupancy grid generation and Nav2 integration
+# Parameters are at top level (not nested) for RTAB-Map nodes
+
+/**:
+  ros__parameters:
+    # Frame configuration
+    frame_id: "base_link"
+    odom_frame_id: "odom"
+    map_frame_id: "map"
+    
+    # Subscription configuration
+    subscribe_depth: true
+    subscribe_rgb: true
+    subscribe_rgbd: false
+    subscribe_scan: false
+    subscribe_scan_cloud: false
+    subscribe_odom_info: false
+    
+    # Synchronization
+    approx_sync: true
+    sync_queue_size: 10
+    
+    # QoS (2 = Best Effort for simulation)
+    qos_image: 2
+    qos_camera_info: 2
+    qos_odom: 2
+    
+    # Database
+    database_path: ""  # Empty = don't save to file
+    
+    # RTAB-Map core parameters (prioritize map accuracy)
+    Rtabmap/DetectionRate: "1.0"
+    Rtabmap/TimeThr: "0.0"
+    Rtabmap/MemoryThr: "0"
+    
+    # Memory management
+    Mem/IncrementalMemory: "true"
+    Mem/InitWMWithAllNodes: "false"
+    Mem/STMSize: "30"
+    
+    # Feature detection (for visual odometry)
+    Vis/FeatureType: "8"  # ORB
+    Vis/MaxFeatures: "1000"
+    Vis/MinInliers: "20"
+    
+    # Odometry
+    Odom/Strategy: "0"  # Frame-to-Map
+    Odom/ResetCountdown: "0"
+    Odom/GuessMotion: "true"
+    
+    # Grid map parameters (occupancy grid for Nav2; finer = more accurate map)
+    Grid/FromDepth: "true"
+    Grid/MaxGroundHeight: "0.05"
+    Grid/MaxObstacleHeight: "2.0"
+    Grid/MinClusterSize: "20"
+    Grid/RayTracing: "true"
+    Grid/3D: "false"
+    Grid/CellSize: "0.05"
+    Grid/RangeMax: "5.0"
+    Grid/RangeMin: "0.3"
+    Grid/DepthDecimation: "4"
+    Grid/NoiseFilteringRadius: "0.1"
+    Grid/NoiseFilteringMinNeighbors: "5"
+    
+    # Optimizer
+    Optimizer/Strategy: "1"  # g2o
+    Optimizer/Iterations: "20"
+    
+    # Loop closure
+    RGBD/NeighborLinkRefining: "true"
+    RGBD/AngularUpdate: "0.1"
+    RGBD/LinearUpdate: "0.1"
+    RGBD/OptimizeFromGraphEnd: "false"
+    RGBD/ProximityBySpace: "true"
+    RGBD/ProximityMaxGraphDepth: "0"

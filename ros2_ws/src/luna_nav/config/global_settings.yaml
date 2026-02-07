@@ -1,0 +1,2 @@
+# luna_nav global settings (e.g. for rs_launch_custom)
+use_lifecycle_node: false
