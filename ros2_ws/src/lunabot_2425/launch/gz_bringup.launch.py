@@ -12,6 +12,7 @@ from launch.actions import (
     LogInfo,
     TimerAction,
 )
+from launch.conditions import LaunchConfigurationEquals
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import LaunchConfiguration, TextSubstitution
@@ -36,11 +37,11 @@ def generate_launch_description():
         pkg_path = pkg_share
         has_worlds_pkg = False
 
-    # World selection: ucf_arena (default) or artemis_arena (from artemis_arenas merge)
+    # Arena selection: pass world:=ucf_arena or world:=artemis_arena on the launch command
     declare_world = DeclareLaunchArgument(
         "world",
         default_value="ucf_arena",
-        description="World basename in luna_ros2_worlds/worlds: ucf_arena or artemis_arena",
+        description="Arena: ucf_arena (default) or artemis_arena",
     )
     world_name = LaunchConfiguration("world", default="ucf_arena")
     # gz_args as Substitutions so launch arg is applied when using luna_ros2_worlds
@@ -87,40 +88,45 @@ def generate_launch_description():
         }.items(),
     )
 
-    # gz_create_robot = Node(
-    #     package="ros_gz_sim",
-    #     executable="create",
-    #     arguments=[
-    #         "-topic", "robot_description",
-    #         "-name", "mooncake",
-    #         "-x", "-1.250",
-    #         "-y", "-3.00",
-    #         "-z", "0.1",
-    #         "-R", "0",           # roll
-    #         "-P", "0",           # pitch
-    #         "-Y", str(math.pi/2) # yaw about Z
-    #     ],
-    #     output="screen",
-    # )
-
-    gz_create_robot = Node(
+    # UCF arena spawn (fiducial_shit before artemis merge)
+    gz_create_robot_ucf = Node(
         package="ros_gz_sim",
         executable="create",
+        condition=LaunchConfigurationEquals("world", "ucf_arena"),
+        arguments=[
+            "-topic", "robot_description",
+            "-name", "mooncake",
+            "-x", "-3.75",
+            "-y", "2.75",
+            "-z", "0.1",
+            "-R", "0",
+            "-P", "0",
+            "-Y", str(-math.pi/2),
+        ],
+        output="screen",
+    )
+    # Artemis arena spawn (exactly from artemis_arenas branch)
+    gz_create_robot_artemis = Node(
+        package="ros_gz_sim",
+        executable="create",
+        condition=LaunchConfigurationEquals("world", "artemis_arena"),
         arguments=[
             "-topic", "robot_description",
             "-name", "mooncake",
             "-x", "-2.750",
             "-y", "-1.750",
             "-z", "0.1",
-            "-R", "0",           # roll
-            "-P", "0",           # pitch
-            "-Y", str(math.pi/2) # yaw about Z
+            "-R", "0",
+            "-P", "0",
+            "-Y", str(math.pi/2),
         ],
         output="screen",
     )
-    # Delay spawn so Gazebo has time to load the world; otherwise create keeps
-    # "Requesting list of world names" and the robot/controllers never start.
-    gz_create_robot_delayed = TimerAction(period=10.0, actions=[gz_create_robot])
+    # Delay spawn so Gazebo has time to load the world
+    gz_create_robot_delayed = TimerAction(
+        period=10.0,
+        actions=[gz_create_robot_ucf, gz_create_robot_artemis],
+    )
 
     # --- GZ BRIDGES ---
     gz_param_bridge = Node(
@@ -177,10 +183,19 @@ def generate_launch_description():
         output="screen"
     )
 
-    # Spawn joint_state_broadcaster AFTER the robot is spawned
-    spawn_jsb_after_robot = RegisterEventHandler(
+    # Spawn joint_state_broadcaster AFTER the robot is spawned (either arena)
+    spawn_jsb_after_robot_ucf = RegisterEventHandler(
         OnProcessExit(
-            target_action=gz_create_robot,
+            target_action=gz_create_robot_ucf,
+            on_exit=[
+                LogInfo(msg="Robot spawned — starting joint_state_broadcaster..."),
+                joint_state_broadcaster_spawner,
+            ]
+        )
+    )
+    spawn_jsb_after_robot_artemis = RegisterEventHandler(
+        OnProcessExit(
+            target_action=gz_create_robot_artemis,
             on_exit=[
                 LogInfo(msg="Robot spawned — starting joint_state_broadcaster..."),
                 joint_state_broadcaster_spawner,
@@ -211,10 +226,19 @@ def generate_launch_description():
         ]
     )
 
-    # Start depth_to_pointcloud AFTER the robot is spawned
-    start_depth_to_pointcloud = RegisterEventHandler(
+    # Start depth_to_pointcloud AFTER the robot is spawned (either arena)
+    start_depth_to_pointcloud_ucf = RegisterEventHandler(
         OnProcessExit(
-            target_action=gz_create_robot,
+            target_action=gz_create_robot_ucf,
+            on_exit=[
+                LogInfo(msg="Robot spawned — starting depth_to_pointcloud node..."),
+                depth_to_pointcloud_node
+            ]
+        )
+    )
+    start_depth_to_pointcloud_artemis = RegisterEventHandler(
+        OnProcessExit(
+            target_action=gz_create_robot_artemis,
             on_exit=[
                 LogInfo(msg="Robot spawned — starting depth_to_pointcloud node..."),
                 depth_to_pointcloud_node
@@ -248,11 +272,13 @@ def generate_launch_description():
         gz_sim,
         gz_create_robot_delayed,
         twist_stamper,
-        spawn_jsb_after_robot,
+        spawn_jsb_after_robot_ucf,
+        spawn_jsb_after_robot_artemis,
         spawn_luna_cont_after_jsb,
         gz_param_bridge,
         gz_image_bridge,
-        start_depth_to_pointcloud,
+        start_depth_to_pointcloud_ucf,
+        start_depth_to_pointcloud_artemis,
         rviz_delayed,
     ])
 

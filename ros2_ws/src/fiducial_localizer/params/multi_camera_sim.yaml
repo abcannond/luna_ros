@@ -1,0 +1,28 @@
+# Multi-camera fiducial localizer (4 wheel-pod cameras) for sim
+# Topics match gz_bridge.config.yaml; frames match robot.urdf.xacro camera_module
+
+multi_camera_marker_localizer:
+  ros__parameters:
+    image_topics:
+      - /fid_cams/front_left_camera/image_raw
+      - /fid_cams/front_right_camera/image_raw
+      - /fid_cams/back_left_camera/image_raw
+      - /fid_cams/back_right_camera/image_raw
+    camera_info_topics:
+      - /fid_cams/front_left_camera/camera_info
+      - /fid_cams/front_right_camera/camera_info
+      - /fid_cams/back_left_camera/camera_info
+      - /fid_cams/back_right_camera/camera_info
+    camera_frames:
+      - front_left_camera_link_optical
+      - front_right_camera_link_optical
+      - back_left_camera_link_optical
+      - back_right_camera_link_optical
+    aruco_dict: "DICT_4X4_50"
+    marker_id: -1
+    marker_size_m: 0.16
+    world_frame: "map"
+    robot_frame: "base_link"
+    # Marker pose in world (set per arena; example for UCF)
+    world_to_marker_xyz: [0.0, 0.0, 0.0]
+    world_to_marker_yaw: 0.0

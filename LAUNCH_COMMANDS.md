@@ -47,17 +47,29 @@ Inside the container (first time, or after you change packages):
 
 You may see: not found: ".../quad_swerve_controller/.../local_setup.bash". That's harmless; you can ignore it. It doesn't affect Gazebo, RTAB-Map, or Nav2.
 
+If you see "package 'twist_stamper' not found", build it: `colcon build --symlink-install --packages-select twist_stamper` then `source install/setup.bash`.
+
+**Duplicate package names / CMakeCache:** `run_ros_image.sh` mounts `$(pwd)/ros2_ws` into the container as `/ros2_ws`. You must run `drun` (or `./run_ros_image.sh`) from the **repo root** (the luna_ros folder). If you run from a parent directory, the mounted workspace can contain the wrong layout (e.g. both `src` and `luna_ros/ros2_ws/src`), leading to duplicate package names and CMake errors. Fix: from inside the container, `cd /ros2_ws && rm -rf build install`, then `source /opt/ros/jazzy/setup.bash && colcon build --symlink-install && source install/setup.bash`. Always run `drun` from repo root.
+
 Terminal 1: Gazebo (simulation)
 -------------------------------
 
-What it does: Starts the Gazebo world and spawns the robot with the depth camera. This has to be running before you start Terminal 2.
+What it does: Starts the Gazebo world and spawns the robot with the depth camera (and optional wheel-pod cameras). This has to be running before you start Terminal 2.
 
 Where to run: In the same shell where you ran ./run_ros_image.sh, or in a new terminal after docker exec -it <CONTAINER_ID> /bin/bash.
 
   cd /ros2_ws
   source install/setup.bash
 
-  ros2 launch lunabot_2425 gz_bringup.launch.py
+  UCF arena (default):
+    ros2 launch lunabot_2425 gz_bringup.launch.py
+  or explicitly:
+    ros2 launch lunabot_2425 gz_bringup.launch.py world:=ucf_arena
+
+  Artemis arena:
+    ros2 launch lunabot_2425 gz_bringup.launch.py world:=artemis_arena
+
+The robot spawn position is different per arena (UCF: near barriers; Artemis: from artemis_arenas branch). If the world fails to load with "model://... could not be resolved", build and install luna_ros2_worlds: `colcon build --symlink-install --packages-select luna_ros2_worlds` then `source install/setup.bash`.
 
 What you should see: A Gazebo window opens with the robot in the world. Log messages about the robot spawning and camera topics being bridged. No errors about missing packages.
 
@@ -213,14 +225,26 @@ You can pass arguments when launching Terminal 2:
   Use RTAB-Map visual odometry instead of Gazebo odom:
   ros2 launch luna_mapping rtabmap_nav2_sim.launch.py use_rtabmap_odom:=true
 
-  Enable fiducial marker localization:
-  ros2 launch luna_mapping rtabmap_nav2_sim.launch.py use_fiducial_odom:=true
 
   Start RViz automatically with the stack:
   ros2 launch luna_mapping rtabmap_nav2_sim.launch.py launch_rviz:=true
 
   Mapping only (no Nav2):
   ros2 launch luna_mapping rtabmap_nav2_sim.launch.py launch_nav2:=false
+
+World selection (Gazebo, Terminal 1)
+------------------------------------
+
+Both arenas use the same launch file; only the world argument changes:
+
+  UCF arena (default):
+  ros2 launch lunabot_2425 gz_bringup.launch.py
+  or: ros2 launch lunabot_2425 gz_bringup.launch.py world:=ucf_arena
+
+  Artemis arena:
+  ros2 launch lunabot_2425 gz_bringup.launch.py world:=artemis_arena
+
+The robot spawn position is different per arena (UCF: near barriers; Artemis: from artemis_arenas branch). If the world fails to load with "model://... could not be resolved", build and install luna_ros2_worlds: colcon build --symlink-install --packages-select luna_ros2_worlds then source install/setup.bash.
 
 Troubleshooting
 ---------------
@@ -238,6 +262,35 @@ RViz: "could not create publisher ... rt/goal_pose with incompatible type"
   Terminal 2 (RTAB-Map + Nav2) isn't running yet, or RTAB-Map hasn't started publishing. Launch Terminal 2 and wait a few seconds before checking topics.
 
 General checks: ros2 topic list, ros2 topic hz <topic_name>, ros2 node list, ros2 node info <node_name>, ros2 run tf2_tools view_frames.
+
+Common bugs and workflow
+-------------------------
+**TF tree (sim):** `map` → `odom` → `base_link`. The sim launch publishes a static odom → base_link (identity) so the tree is connected. map → odom comes from RTAB-Map (SLAM).
+**Robot jerking / Nav2 "Localization inactive":** Check TF: `ros2 run tf2_ros tf2_echo map base_link`. Start Gazebo first, then the stack.
+**Velocity chain:** Nav2 → velocity_smoother → `/cmd_vel` → gz_bridge → Gazebo. Only one source should drive the robot.
+
+
+Troubleshooting (in depth)
+---------------------------
+
+**Robot doesn’t move when driving (teleop)**  
+- `ros2 topic list | grep cmd_vel` — you should see /cmd_vel and controller topics.  
+- Find which topic the controller subscribes to: `ros2 node list`, then `ros2 node info /controller_manager` (or /model/mooncake/controller_manager); under Subscribers, find the cmd_vel topic. Alternatively `ros2 topic list -t | grep TwistStamped` and `ros2 topic info <topic> --verbose` to see which has Subscription count 1.  
+- Confirm /cmd_vel is published when you press keys: `ros2 topic echo /cmd_vel`.  
+- `ros2 control list_controllers -c /controller_manager` — luna_cont should show "active". If not, restart the sim and wait for "joint_state_broadcaster active — starting luna_cont...".
+
+**No map / "map frame does not exist"**  
+- Gazebo (Terminal 1) must run first; RTAB-Map needs camera data from the bridge.  
+- After git pull, rebuild: `colcon build --symlink-install --packages-select luna_mapping`, then `source install/setup.bash`. Restart Gazebo and RTAB-Map+Nav2.  
+- Verify camera topics (both launches running): `ros2 topic hz /camera/camera/color/image_raw`, `.../image_raw_fixed`, `.../depth/image_rect_raw_fixed`. If *_fixed topics show 0 Hz, the fixer nodes may not be receiving from the bridge.
+
+**Blocky or fragmented costmap**  
+- The costmap combines the static map and the obstacle layer (/scan). If map→base_link is missing or stale, /scan is projected in the wrong place. Check: `ros2 run tf2_ros tf2_echo map odom` and `ros2 run tf2_ros tf2_echo map base_link`.  
+- Start Gazebo first, then RTAB-Map+Nav2.  
+- The global costmap uses a small observation_source_delay (e.g. 0.2 s) so TF is available when transforming /scan to map; this can reduce misaligned patches.
+
+**Duplicate nodes**  
+- Run the RTAB-Map+Nav2 launch in **only one** terminal. If you run it twice, you get duplicate nodes and "nodes share an exact name" warnings.
 
 Quick reference (commands only)
 -------------------------------

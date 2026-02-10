@@ -8,8 +8,6 @@ This launch file integrates:
 - Nav2 for navigation and path planning
 - Depth-to-LaserScan for obstacle detection
 - Depth-to-PointCloud for 3D obstacle avoidance
-- Optional fiducial marker localization
-
 Usage:
   ros2 launch luna_mapping rtabmap_nav2_sim.launch.py
 
@@ -22,7 +20,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, GroupAction
 from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PythonExpression
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node, SetRemap
 from launch_ros.descriptions import ParameterFile
 
@@ -35,7 +33,6 @@ def generate_launch_description():
     # Launch arguments
     use_sim_time = LaunchConfiguration('use_sim_time')
     use_rtabmap_odom = LaunchConfiguration('use_rtabmap_odom')
-    use_fiducial_odom = LaunchConfiguration('use_fiducial_odom')
     launch_nav2 = LaunchConfiguration('launch_nav2')
     launch_rviz = LaunchConfiguration('launch_rviz')
     
@@ -49,12 +46,6 @@ def generate_launch_description():
         'use_rtabmap_odom',
         default_value='false',
         description='Use RTAB-Map visual odometry (set false if using Gazebo odom)'
-    )
-    
-    declare_use_fiducial_odom = DeclareLaunchArgument(
-        'use_fiducial_odom',
-        default_value='false',
-        description='Use fiducial marker localization'
     )
     
     declare_launch_nav2 = DeclareLaunchArgument(
@@ -260,26 +251,6 @@ def generate_launch_description():
     )
     
     # ============================================================
-    # Fiducial localization (optional)
-    # ============================================================
-    fiducial_localizer = Node(
-        condition=IfCondition(use_fiducial_odom),
-        package='fiducial_localizer',
-        executable='marker_localizer',
-        name='marker_localizer',
-        output='screen',
-        parameters=[{
-            'use_sim_time': use_sim_time,
-            'image_topic': '/fid_cams/front_left_camera/image_raw',
-            'camera_info_topic': '/fid_cams/front_left_camera/camera_info',
-            'aruco_dict': 'DICT_4X4_50',
-            'marker_size_m': 0.16,
-            'world_frame': 'map',
-            'robot_frame': 'base_link',
-        }],
-    )
-    
-    # ============================================================
     # Nav2 stack
     # ============================================================
     nav2_params_file = os.path.join(luna_nav_dir, 'config', 'nav2_rtabmap_params.yaml')
@@ -398,15 +369,14 @@ def generate_launch_description():
     # ============================================================
     # Static transforms for camera frames and odometry
     # ============================================================
-    
-    # Initial odom -> base_link transform (identity, Gazebo will override once it starts)
-    # This ensures the TF tree is connected immediately
+    # Initial odom -> base_link (identity). Ensures TF tree is connected; in sim
+    # you can also bridge Gazebo "tf" to /tf if you want odom to update from the sim.
     static_tf_odom_base = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
         name='static_tf_odom_base',
         arguments=[
-            '0', '0', '0',  # x, y, z (identity - robot starts at origin)
+            '0', '0', '0',  # x, y, z (identity)
             '0', '0', '0',  # roll, pitch, yaw (identity)
             'odom',  # parent frame
             'base_link'  # child frame
@@ -477,12 +447,11 @@ def generate_launch_description():
         # Launch arguments
         declare_use_sim_time,
         declare_use_rtabmap_odom,
-        declare_use_fiducial_odom,
         declare_launch_nav2,
         declare_launch_rviz,
 
         # Static TF transforms (must come first - RTAB-Map needs these immediately)
-        static_tf_odom_base,  # Initial odom->base_link (Gazebo will override)
+        static_tf_odom_base,
         static_tf_gazebo_rgb,
         static_tf_gazebo_depth,
         static_tf_camera_link,
@@ -502,9 +471,6 @@ def generate_launch_description():
         # Depth processing
         depth_to_laserscan,
         depth_to_pointcloud,
-
-        # Fiducial localization
-        fiducial_localizer,
 
         # Nav2
         nav2_nodes,

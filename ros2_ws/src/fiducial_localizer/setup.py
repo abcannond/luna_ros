@@ -11,7 +11,7 @@ setup(
          ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name + '/launch', ['launch/fiducial_localizer.launch.py']),
-        ('share/' + package_name + '/params', ['params/jetson.yaml']),
+        ('share/' + package_name + '/params', ['params/jetson.yaml', 'params/multi_camera_sim.yaml']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -22,6 +22,8 @@ setup(
     entry_points={
         'console_scripts': [
             'marker_localizer = fiducial_localizer.marker_localizer:main',
+            'multi_camera_marker_localizer = fiducial_localizer.multi_camera_marker_localizer:main',
+            'fiducial_camera_republisher = fiducial_localizer.fiducial_camera_republisher:main',
         ],
     },
 )

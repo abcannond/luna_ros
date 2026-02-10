@@ -6,15 +6,17 @@ This repo runs a ROS 2 Jazzy simulation of the WPI Lunabotics robot in Gazebo Ha
 What it does
 ------------
 
-1. Gazebo simulates the robot and a depth camera (RealSense D455). The camera publishes RGB images, depth images, and point clouds.
+1. Gazebo simulates the robot, a depth camera (RealSense D455), and four fiducial (wheel-pod) cameras. You can run either the UCF arena or the Artemis arena via a launch argument (`world:=ucf_arena` or `world:=artemis_arena`).
 
-2. RTAB-Map uses those images to build a map (SLAM) and publish an occupancy grid on /map.
+2. RTAB-Map uses the depth camera images to build a map (SLAM) and publish an occupancy grid on /map.
 
 3. Depth data is turned into a 2D laser-style scan (/scan) and a 3D point cloud so Nav2 can see obstacles.
 
 4. Nav2 uses the map and the scan/point cloud to plan paths and send velocity commands so the robot can drive to a goal you click in RViz.
 
-In short: Gazebo sends camera data into RTAB-Map (which builds the map) and into depth processing (which makes obstacles visible to Nav2). Nav2 then plans and drives the robot.
+5. Fiducial localization (on by default) uses all four wheel-pod cameras to detect ArUco markers and publish robot pose in the map frame, so at least one marker is visible for continuous pose updates throughout the run.
+
+In short: Gazebo sends camera data into RTAB-Map (which builds the map) and into depth processing (which makes obstacles visible to Nav2). Nav2 then plans and drives the robot. Fiducial localization (4 cameras) runs by default for pose estimation from markers.
 
 Quick start
 -----------
