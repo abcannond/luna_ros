@@ -26,6 +26,18 @@ fi
 HOST_WS=$(pwd)/ros2_ws
 
 docker run -it \
+ --device=/dev/dri \
+    --group-add video \
+    -e DISPLAY \
+    -v /usr/lib/x86_64-linux-gnu/dri:/usr/lib/x86_64-linux-gnu/dri:ro \
+    -v /usr/lib/x86_64-linux-gnu/libdrm.so.2:/usr/lib/x86_64-linux-gnu/libdrm.so.2:ro \
+    -v /usr/lib/x86_64-linux-gnu/libEGL.so.1:/usr/lib/x86_64-linux-gnu/libEGL.so.1:ro \
+    -v /usr/lib/x86_64-linux-gnu/libGL.so.1:/usr/lib/x86_64-linux-gnu/libGL.so.1:ro \
+    -e MESA_LOADER_DRIVER_OVERRIDE=iris \
+    -e GALLIUM_DRIVER=iris \
+    -e LIBGL_ALWAYS_SOFTWARE=0 \
+    -e GZ_RENDER_ENGINE=ogre2 \
+    -e OGRE_RTT_MODE=Copy \
     $GPU_FLAGS \
     --env DISPLAY=$DISPLAY \
     --env QT_X11_NO_MITSHM=1 \
@@ -34,5 +46,6 @@ docker run -it \
     --volume "$HOST_WS":/ros2_ws:rw \
     --network host \
     --privileged \
+    
     $IMAGE_NAME \
     bash
