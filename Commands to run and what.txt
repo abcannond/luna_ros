@@ -1,74 +1,115 @@
-Commands to run and what they do: 
+Commands to run and what they do
+================================
 
-git clone git@github.com:abcannond/luna_ros.git
+Short reference: what to run and in what order. Full details: LAUNCH_COMMANDS.md.
 
-cd luna_ros
+Repo root = this folder (luna_ros; Dockerfile and ros2_ws here). Run git and "drun" from here. After drun you are inside the container in /ros2_ws. Use dbash to open another shell in the same container.
 
-git submodule update --init --recursive
+Where to run:
+  Host (repo root): git clone/pull, docker build, ./run_ros_image.sh (drun), dbash.
+  ROS commands: inside the container (cd /ros2_ws, source install/setup.bash, then launch/topic/node commands).
 
+Worlds (Gazebo):  world:=ucf_arena (default)  |  world:=artemis_arena
+If "model could not be resolved" or "Failed to load world": build and install luna_ros2_worlds, then source install/setup.bash.
 
-docker build -t luna_ros:latest .   (build docker container, period is necesarry)
+----------------------------------------------------------------------
+Optional: Shell aliases (once per machine)
+----------------------------------------------------------------------
 
-docker build --no-cache -t luna_ros:latest .
+Add to ~/.bashrc, then source ~/.bashrc:
 
-(start here)
+  alias dbld='docker build -t luna_ros:latest .'
+  alias dbld_nc='docker build --no-cache -t luna_ros:latest .'
+  alias drun='./run_ros_image.sh luna_ros:latest'
+  alias dbash='docker exec -it $(docker ps -q -f "ancestor=luna_ros:latest") /bin/bash'
+  alias gitmod='git submodule update --init --recursive'
 
-./run_ros_image.sh luna_ros:latest
+Then: dbld (build image), drun (run container), dbash (new shell in container), gitmod (update submodules).
 
-cd ros2_ws
+----------------------------------------------------------------------
+FIRST TIME (once per machine or clone)
+----------------------------------------------------------------------
 
-source /ros2_ws/install/setup.bash
+Host, repo root:
+  git clone <repo> && cd luna_ros
+  git submodule update --init --recursive   # or gitmod
+  docker build -t luna_ros:latest .        # or dbld
+  ./run_ros_image.sh luna_ros:latest       # or drun
 
-colcon build --symlink-install (may need to run twice if fails on quadplex)
+Inside container:
+  cd /ros2_ws
+  source /opt/ros/jazzy/setup.bash
+  colcon build --symlink-install
+  source install/setup.bash
 
-src
+Ignore "quad_swerve_controller not found". If "package twist_stamper not found": colcon build --symlink-install --packages-select twist_stamper then source install/setup.bash.
 
-sim
+Run drun from repo root only; otherwise you can get duplicate package names / CMake errors. Fix and full explanation: LAUNCH_COMMANDS.md (Prerequisites / Duplicate package names).
 
+After git pull: same colcon build + source install/setup.bash; restart Gazebo and RTAB-Map+Nav2 if they are running.
 
+----------------------------------------------------------------------
+SIM: Terminal 1 = Gazebo first. Terminal 2 = RTAB-Map + Nav2 second.
+----------------------------------------------------------------------
 
-TO DRIVE: 
-to access docker container in a second terminal: 
-to access docker container: 
-in a new terminal: 
+TERMINAL 1 — Gazebo (run first)
 
-docker ps
-- (from docker ps - find Container ID (i.e. 4cf7939857c5)
+  UCF arena (default):
 
-Run this for terminal access: 
-docker exec -it <CONTAINER ID> /bin/bash
+  cd /ros2_ws && source install/setup.bash
+  ros2 launch lunabot_2425 gz_bringup.launch.py
 
-source /ros2_ws/install/setup.bash
+  or: ros2 launch lunabot_2425 gz_bringup.launch.py world:=ucf_arena
 
-This Runs a twist keyboard with the correct topic: 
-- (note to self: Fix the topic permanently later). 
-
-drive (ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/luna_cont/cmd_vel_unstamped)
-
-
-
-
-
-
-
-Other entrypoint.sh file stuff: 
-# #!/bin/bash
-# set -e
-
-# # setup ros2 environment
-# source "/opt/ros/$ROS_DISTRO/setup.bash" --
-# source "/ros2_ws/install/setup.bash" --
-
-# # Enable verbose logging for Gazebo (optional, for debugging)
-# export GZ_SIM_VERBOSE=1
-
-# # Check OpenGL support
-# if glxinfo | grep -q "OpenGL version"; then
-#   echo "OpenGL support detected."
-# else
-#   echo "Warning: OpenGL support not detected. Gazebo GUI may fail."
-# fi
-
-# exec "$@"
+  Artemis arena:
+  
+  ros2 launch lunabot_2425 gz_bringup.launch.py world:=artemis_arena
 
 
+TERMINAL 2 — RTAB-Map + Nav2 (run after Gazebo is up)
+  dbash   # or new terminal, then enter container
+  cd /ros2_ws && source install/setup.bash
+  ros2 launch luna_mapping rtabmap_nav2_sim.launch.py
+
+This starts RTAB-Map (SLAM, /map), depth→laserscan and pointcloud, and Nav2. Start Gazebo first or the stack has no camera data and can fail.
+
+TERMINAL 3 — RViz (optional)
+  dbash
+  cd /ros2_ws && source install/setup.bash
+  rviz2 -d $(ros2 pkg prefix luna_mapping)/share/luna_mapping/config/rtabmap_nav2.rviz
+  Use the Nav2 Goal tool to send navigation goals. More in LAUNCH_COMMANDS.md.
+
+TERMINAL 4 — Teleop (optional)
+  dbash
+  cd /ros2_ws && source install/setup.bash && drive
+  i = forward, comma = back, j/l = left/right, k = stop. Publishes to /cmd_vel; sim includes twist_stamper.
+
+----------------------------------------------------------------------
+Main topics
+----------------------------------------------------------------------
+
+  /map                            Occupancy grid (RTAB-Map)
+  /scan                           Depth→laserscan (Nav2 obstacles)
+  /odom                           Odometry
+  /cmd_vel                        Velocity (Nav2 or teleop)
+  /plan, /local_plan              Global and local path
+  /local_costmap/costmap, /global_costmap/costmap
+  /camera/camera/color/image_raw  RGB
+  /fid_cams/<name>/image_raw, camera_info   Wheel-pod cameras (if bridge publishes them)
+
+----------------------------------------------------------------------
+Launch arguments (optional)
+----------------------------------------------------------------------
+
+  use_rtabmap_odom:=true     Use RTAB-Map visual odom instead of Gazebo odom
+  launch_nav2:=false         Mapping only (no Nav2)
+  launch_rviz:=true         Start RViz with the stack
+
+----------------------------------------------------------------------
+Troubleshooting
+----------------------------------------------------------------------
+
+  Robot doesn’t move:  ros2 control list_controllers -c /controller_manager (luna_cont active?). Details: LAUNCH_COMMANDS.md.
+  No map / map frame missing:  Start Gazebo first; rebuild luna_mapping; check camera topics. Details: LAUNCH_COMMANDS.md.
+  Blocky costmap:  Check map→odom and odom→base_link TF; start Gazebo then stack. Details: LAUNCH_COMMANDS.md.
+  Duplicate nodes:  Run RTAB-Map+Nav2 launch in only one terminal. Details: LAUNCH_COMMANDS.md.

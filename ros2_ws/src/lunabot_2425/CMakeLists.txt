@@ -28,4 +28,10 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
+install(
+  DIRECTORY config/
+  DESTINATION share/${PROJECT_NAME}/rviz
+  FILES_MATCHING PATTERN "*.rviz"
+)
+
 ament_package()

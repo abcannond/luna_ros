@@ -135,6 +135,11 @@ luna_controller:
     default_value: true,
     description: "Publish transformation between ``odom_frame_id`` and ``base_frame_id``.",
   }
+  command_topic: {
+    type: string,
+    default_value: "~/cmd_vel",
+    description: "Topic name for TwistStamped velocity commands. Use an absolute topic (e.g. /cmd_vel_stamped) when the controller runs in gz_ros2_control so teleop can publish via a single twist_stamper.",
+  }
   cmd_vel_timeout: {
     type: double,
     default_value: 0.5, # seconds

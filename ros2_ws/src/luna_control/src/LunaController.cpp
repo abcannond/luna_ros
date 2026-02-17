@@ -542,7 +542,7 @@ namespace luna_controller
     left_back_pod_position   = rl_angle;
     right_back_pod_position  = rr_angle;
 
-    left_front_wheel_velocity  = fr_wheel_rad_s; /* careful mapping: set this how your code expects */
+    left_front_wheel_velocity  = fl_wheel_rad_s; /* careful mapping: set this how your code expects */
     left_back_wheel_velocity   = rl_wheel_rad_s;
     right_front_wheel_velocity = fr_wheel_rad_s;
     right_back_wheel_velocity  = rr_wheel_rad_s;
@@ -656,9 +656,9 @@ namespace luna_controller
     previous_commands_.emplace(empty_twist);
     previous_commands_.emplace(empty_twist);
 
-    // initialize command subscriber
+    // initialize command subscriber (topic configurable so gz_ros2_control can use /cmd_vel_stamped)
     velocity_command_subscriber_ = get_node()->create_subscription<Twist>(
-        DEFAULT_COMMAND_TOPIC, rclcpp::SystemDefaultsQoS(),
+        params_.command_topic, rclcpp::SystemDefaultsQoS(),
         [this](const std::shared_ptr<Twist> msg) -> void
         {
           if (!subscriber_is_active_)

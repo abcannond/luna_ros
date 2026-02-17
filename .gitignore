@@ -36,7 +36,6 @@ Makefile
 *.bag
 *.bag.active
 *.db3
-*.yaml
 *.launch.pyc
 
 # Gazebo / Ignition / ros_gz artifacts
