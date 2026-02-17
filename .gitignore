@@ -8,6 +8,7 @@ log/
 ament_cmake_core/
 ament_tools/
 ament_ws/
+colcon_log/
 
 # Python build artifacts
 *.pyc
