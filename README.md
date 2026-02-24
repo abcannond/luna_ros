@@ -1,59 +1,73 @@
-Luna ROS — Simulation and Navigation Stack
-==========================================
+# Luna ROS — Simulation and Navigation Stack
 
-This repo runs a ROS 2 Jazzy simulation of the WPI Lunabotics robot in Gazebo Harmonic, with RTAB-Map for mapping and Nav2 for navigation. Everything runs inside Docker so you get a consistent environment (tested on Ubuntu 24.04).
+ROS 2 Jazzy stack for the WPI Lunabotics robot: **Gazebo Harmonic** simulation, **RTAB-Map** SLAM, **Nav2** navigation, and the same camera pipeline for **real hardware** (Intel RealSense D455 + 4× Nexigo N980P fiducial cams). Runs in Docker for a consistent environment (Ubuntu 24.04; Jetson supported via a separate image).
 
-What it does
-------------
+## What it does
 
-1. Gazebo simulates the robot, a depth camera (RealSense D455), and four fiducial (wheel-pod) cameras. You can run either the UCF arena or the Artemis arena via a launch argument (`world:=ucf_arena` or `world:=artemis_arena`).
+- **Simulation:** Gazebo runs the robot with a simulated RealSense D455 and four fiducial cameras. You can use the UCF or Artemis arena (`world:=ucf_arena` or `world:=artemis_arena`).
+- **Mapping:** RTAB-Map builds an occupancy grid from the depth camera and publishes `/map`.
+- **Navigation:** Depth is converted to a 2D scan and point cloud; Nav2 plans and drives the robot to goals set in RViz.
+- **Fiducials:** Four wheel-pod cameras (sim or real) are used for ArUco-based localization when enabled.
 
-2. RTAB-Map uses the depth camera images to build a map (SLAM) and publish an occupancy grid on /map.
+The same functional camera and mapping code is intended for **real hardware**: one RealSense D455 and four USB webcams (e.g. Nexigo N980P) for fiducial localization, typically on an **NVIDIA Jetson** in the same Docker setup.
 
-3. Depth data is turned into a 2D laser-style scan (/scan) and a 3D point cloud so Nav2 can see obstacles.
+## Quick start (simulation)
 
-4. Nav2 uses the map and the scan/point cloud to plan paths and send velocity commands so the robot can drive to a goal you click in RViz.
+**First time (host):**
 
-5. Fiducial localization (on by default) uses all four wheel-pod cameras to detect ArUco markers and publish robot pose in the map frame, so at least one marker is visible for continuous pose updates throughout the run.
+```bash
+git clone --recurse-submodules <repo_url>
+cd luna_ros
+docker build -t luna_ros:latest .
+./run_ros_image.sh luna_ros:latest
+```
 
-In short: Gazebo sends camera data into RTAB-Map (which builds the map) and into depth processing (which makes obstacles visible to Nav2). Nav2 then plans and drives the robot. Fiducial localization (4 cameras) runs by default for pose estimation from markers.
+**Inside the container:**
 
-Quick start
------------
+```bash
+cd /ros2_ws
+source install/setup.bash
+colcon build --symlink-install
+source install/setup.bash
+```
 
-First time: clone the repo, init submodules, build the Docker image, then start the container. See LAUNCH_COMMANDS.md for the exact commands.
+**Single command (sim):** one launch runs Gazebo, then after ~18 s starts RTAB-Map, Nav2, and RViz. No second terminal needed.
 
-Every run:
-  1. Start the container if it's not running.
-  2. Terminal 1: Build the workspace once if needed, then launch Gazebo.
-  3. Terminal 2: In a new terminal, exec into the same container and launch RTAB-Map + Nav2.
-  4. Optionally open RViz and use the Nav2 Goal tool to send a navigation goal.
+```bash
+ros2 launch lunabot_2425 gz_bringup.launch.py
+```
 
-The full step-by-step (what to run in each terminal, what you should see, and troubleshooting) is in LAUNCH_COMMANDS.md. For a minimal list of commands only, see Commands to run and what.txt.
+Use the **Nav2 Goal** tool in RViz to send navigation goals.
 
-How to run the container
-------------------------
+- **Gazebo only (no mapping):**  
+  `ros2 launch lunabot_2425 gz_bringup.launch.py launch_mapping:=false`
+- **Other arena:**  
+  `ros2 launch lunabot_2425 gz_bringup.launch.py world:=artemis_arena`
 
-From the repo root, after building the image:
+## Quick start (hardware)
 
-  ./run_ros_image.sh luna_ros:latest
+On a Jetson (or host) with a RealSense D455 and four USB fiducial cams:
 
-That script sets up X11 so GUIs (Gazebo, RViz) show up on your machine. For Terminals 2 and on, you open new host terminals and run:
+1. **Terminal 1 — cameras + TF**  
+   `ros2 launch lunabot_2425 hardware_bringup.launch.py`  
+   (Override `fid_*_dev` if your `/dev/video*` devices differ; see [docs/HARDWARE.md](docs/HARDWARE.md).)
 
-  docker exec -it <CONTAINER_ID> /bin/bash
+2. **Terminal 2 — mapping + Nav2**  
+   `ros2 launch luna_mapping rtabmap_nav2_hardware.launch.py`  
 
-to get another shell in the same container. Use docker ps to see the container ID.
+Your robot must publish odometry (`/odom` and `odom` → `base_link` on `/tf`). Full hardware details, device setup, and optional fiducial localizer: **[docs/HARDWARE.md](docs/HARDWARE.md)**.
 
-Docs in this repo
------------------
+## Docs and layout
 
-  LAUNCH_COMMANDS.md   — Full guide: how it works, what to run in each terminal, options, troubleshooting.
-  Commands to run and what.txt   — Short command list and topic reference.
-  Dockerfile   — Defines the Docker image (ROS 2 Jazzy, Gazebo, Nav2, RTAB-Map, etc.).
+| Doc / file | Purpose |
+|------------|--------|
+| [LAUNCH_COMMANDS.md](LAUNCH_COMMANDS.md) | Full sim guide: manual terminals, options, troubleshooting |
+| [docs/HARDWARE.md](docs/HARDWARE.md) | Hardware: Jetson, RealSense D455, 4× Nexigo N980P, Docker |
+| [Commands to run and what.txt](Commands%20to%20run%20and%20what.txt) | Short command and topic reference |
+| `Dockerfile` | Main image (x86_64, Ubuntu 24.04, ROS 2 Jazzy) |
+| `Dockerfile.jetson` | Jetson (ARM64) image template |
 
-Requirements
-------------
+## Requirements
 
-  Docker
-  Linux with X11 (e.g. Ubuntu 24.04)
-  Clone, submodules, and docker build as described in LAUNCH_COMMANDS.md
+- Docker, Linux with X11 (e.g. Ubuntu 24.04)
+- For hardware: RealSense D455, 4× USB webcams (e.g. Nexigo N980P), optional Jetson

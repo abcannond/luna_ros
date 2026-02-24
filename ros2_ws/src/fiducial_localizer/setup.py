@@ -10,7 +10,10 @@ setup(
         ('share/ament_index/resource_index/packages',
          ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name + '/launch', ['launch/fiducial_localizer.launch.py']),
+        ('share/' + package_name + '/launch', [
+            'launch/fiducial_localizer.launch.py',
+            'launch/multi_camera_fiducial.launch.py',
+        ]),
         ('share/' + package_name + '/params', ['params/jetson.yaml', 'params/multi_camera_sim.yaml']),
     ],
     install_requires=['setuptools'],

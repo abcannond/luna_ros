@@ -51,15 +51,15 @@
     
     # Grid map parameters (occupancy grid for Nav2; finer = more accurate map)
     Grid/FromDepth: "true"
-    Grid/MaxGroundHeight: "0.05"
+    Grid/MaxGroundHeight: "0.15"  # More aggressive ground filtering (was 0.05) - reduces trailing
     Grid/MaxObstacleHeight: "2.0"
     Grid/MinClusterSize: "20"
     Grid/RayTracing: "true"
     Grid/3D: "false"
     Grid/CellSize: "0.05"
     Grid/RangeMax: "5.0"
-    Grid/RangeMin: "0.3"
-    Grid/DepthDecimation: "4"
+    Grid/RangeMin: "0.4"  # Ignore very close points (floor/noise) - reduces trailing
+    Grid/DepthDecimation: "6"  # Slightly more decimation to reduce noise artifacts
     Grid/NoiseFilteringRadius: "0.1"
     Grid/NoiseFilteringMinNeighbors: "5"
     

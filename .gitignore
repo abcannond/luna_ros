@@ -53,6 +53,10 @@ gzclient.log
 *.img
 *.log
 
+# Core dumps (crash files; often permission-restricted)
+core
+**/core
+
 # Miscellaneous system files
 .DS_Store
 Thumbs.db

@@ -1,0 +1,49 @@
+# Luna ROS — Jetson (ARM64) image
+# Use this on NVIDIA Jetson boards. Adjust the base image to your JetPack/ROS2 distro.
+# Example bases: dustynv/ros:jazzy-ros-base-l4t-r35.2.1 or nvcr.io/nvidia/l4t-ml:r35.2.1-py3
+
+ARG L4T_VERSION=r35.2.1
+# Option A: ROS2 Jazzy on L4T (if available for your JetPack)
+# FROM dustynv/ros:jazzy-ros-base-l4t-${L4T_VERSION}
+# Option B: L4T ML image — install ROS2 Jazzy and deps manually
+FROM nvcr.io/nvidia/l4t-ml:${L4T_VERSION}-py3
+
+SHELL ["/bin/bash", "-c"]
+
+# Install ROS2 Jazzy (Ubuntu 24.04 / Noble) and project deps.
+# Adapt to your Jetson base if it already has ROS2.
+RUN apt-get update && apt-get upgrade -y && \
+    apt-get install -y \
+    build-essential \
+    cmake \
+    git \
+    python3-colcon-common-extensions \
+    libgl1 \
+    libopencv-dev \
+    dos2unix \
+    && rm -rf /var/lib/apt/lists/*
+
+# If your base does not include ROS2 Jazzy, add the ROS2 repo and:
+# RUN apt-get update && apt-get install -y \
+#     ros-jazzy-ros-base \
+#     ros-jazzy-perception \
+#     ros-jazzy-realsense2-camera \
+#     ros-jazzy-rtabmap-ros ros-jazzy-rtabmap-slam ros-jazzy-rtabmap-odom \
+#     ros-jazzy-navigation2 ros-jazzy-nav2-bringup \
+#     ros-jazzy-depthimage-to-laserscan \
+#     ros-jazzy-depth-image-proc \
+#     ros-jazzy-v4l2-camera \
+#     ros-jazzy-cv-bridge \
+#     && rm -rf /var/lib/apt/lists/*
+
+RUN echo "alias src='source install/setup.bash'" >> /etc/bash.bashrc && \
+    echo "alias cdr='cd /ros2_ws'" >> /etc/bash.bashrc && \
+    echo "alias bld='colcon build --symlink-install'" >> /etc/bash.bashrc
+
+WORKDIR /ros2_ws
+
+COPY entrypoint.sh /entrypoint.sh
+RUN dos2unix /entrypoint.sh && chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["bash"]

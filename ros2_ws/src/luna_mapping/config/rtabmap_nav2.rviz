@@ -81,7 +81,7 @@ Visualization Manager:
         Depth: 1
         Durability Policy: Volatile
         History Policy: Keep Last
-        Reliability Policy: Reliable
+        Reliability Policy: Best Effort
         Value: /local_costmap/costmap
       Alpha: 0.6
       Color Scheme: costmap
@@ -95,34 +95,31 @@ Visualization Manager:
         Depth: 1
         Durability Policy: Volatile
         History Policy: Keep Last
-        Reliability Policy: Reliable
+        Reliability Policy: Best Effort
         Value: /global_costmap/costmap
       Alpha: 0.35
       Color Scheme: raw
       Draw Behind: true
 
     - Class: rviz_default_plugins/Image
-      Name: RGB Image
+      Name: RGB Image (Color Camera POV)
       Enabled: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Best Effort
-        Value: /camera/camera/color/image_raw
+        Value: /camera/camera/color/image_raw_fixed
 
     - Class: rviz_default_plugins/Image
-      Name: Depth Image (may not display - use PointCloud instead)
-      Enabled: false
+      Name: Depth Camera POV (colorized)
+      Enabled: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Best Effort
-        Value: /camera/camera/depth/image_rect_raw_fixed
-      Normalize Range: true
-      Min Value: 0.0
-      Max Value: 5.0
+        Value: /camera/camera/depth/image_colorized
 
     - Class: rviz_default_plugins/PointCloud2
       Name: Depth Point Cloud
