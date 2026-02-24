@@ -230,73 +230,40 @@ namespace luna_controller
     const double wheel_radius = params_.wheel_radius;
     const double wheel_base = params_.wheel_base;
 
-    // Keep track of wheel and pod feedback
-    double left_back_wheel_feedback_mean = 0.0;
-    double left_front_wheel_feedback_mean = 0.0;
-    double right_back_wheel_feedback_mean = 0.0;
-    double right_front_wheel_feedback_mean = 0.0;
-
-    double left_back_pod_feedback_mean = 0.0;
-    double left_front_pod_feedback_mean = 0.0;
-    double right_back_pod_feedback_mean = 0.0;
-    double right_front_pod_feedback_mean = 0.0;
-
     if (params_.open_loop)
     {
       odometry_.updateOpenLoop(linear_command, angular_command, strafe_command, time);
     }
     else
     {
-      for (size_t index = 0; index < static_cast<size_t>(wheels_per_side_); ++index)
-      {
-        const double left_back_wheel_feedback = registered_left_back_wheel_handles_[index].feedback.get().get_value();
-        const double left_front_wheel_feedback = registered_left_front_wheel_handles_[index].feedback.get().get_value();
-        const double right_back_wheel_feedback = registered_right_back_wheel_handles_[index].feedback.get().get_value();
-        const double right_front_wheel_feedback = registered_right_front_wheel_handles_[index].feedback.get().get_value();
+      const double left_back_wheel_feedback =
+      registered_left_back_wheel_handles_[0].feedback.get().get_value();
+      const double left_front_wheel_feedback =
+      registered_left_front_wheel_handles_[0].feedback.get().get_value();
+      const double right_back_wheel_feedback =
+      registered_right_back_wheel_handles_[0].feedback.get().get_value();
+      const double right_front_wheel_feedback =
+      registered_right_front_wheel_handles_[0].feedback.get().get_value();
 
-        if (std::isnan(left_back_wheel_feedback) || std::isnan(left_front_wheel_feedback) || std::isnan(right_back_wheel_feedback) || std::isnan(right_front_wheel_feedback))
-        {
-          RCLCPP_ERROR(
-              logger, "Either the left or right wheel %s is invalid for index [%zu]", HW_IF_VELOCITY,
-              index);
-          return controller_interface::return_type::ERROR;
-        }
+      const double left_back_pod_feedback =
+      registered_left_back_pod_handles_[0].feedback.get().get_value();
+      const double left_front_pod_feedback =
+      registered_left_front_pod_handles_[0].feedback.get().get_value();
+      const double right_back_pod_feedback =
+      registered_right_back_pod_handles_[0].feedback.get().get_value();
+      const double right_front_pod_feedback =
+      registered_right_front_pod_handles_[0].feedback.get().get_value();
 
-        const double left_back_pod_feedback = registered_left_back_pod_handles_[index].feedback.get().get_value();
-        const double left_front_pod_feedback = registered_left_front_pod_handles_[index].feedback.get().get_value();
-        const double right_back_pod_feedback = registered_right_back_pod_handles_[index].feedback.get().get_value();
-        const double right_front_pod_feedback = registered_right_front_pod_handles_[index].feedback.get().get_value();
-
-        if (std::isnan(left_back_pod_feedback) || std::isnan(left_front_pod_feedback) || std::isnan(right_back_pod_feedback) || std::isnan(right_front_pod_feedback))
-        {
-          RCLCPP_ERROR(
-              logger, "Either the left or right pod %s is invalid for index [%zu]", HW_IF_POSITION,
-              index);
-          return controller_interface::return_type::ERROR;
-        }
-
-        left_back_wheel_feedback_mean += left_back_wheel_feedback;
-        left_front_wheel_feedback_mean += left_front_wheel_feedback;
-        right_back_wheel_feedback_mean += right_back_wheel_feedback;
-        right_front_wheel_feedback_mean += right_front_wheel_feedback;
-
-        left_back_pod_feedback_mean += left_back_pod_feedback;
-        left_front_pod_feedback_mean += left_front_pod_feedback;
-        right_back_pod_feedback_mean += right_back_pod_feedback;
-        right_front_pod_feedback_mean += right_front_pod_feedback;
-      }
-
-      left_back_wheel_feedback_mean /= static_cast<double>(wheels_per_side_);
-      left_front_wheel_feedback_mean /= static_cast<double>(wheels_per_side_);
-      right_back_wheel_feedback_mean /= static_cast<double>(wheels_per_side_);
-      right_front_wheel_feedback_mean /= static_cast<double>(wheels_per_side_);
-      left_back_pod_feedback_mean /= static_cast<double>(wheels_per_side_);
-      left_front_pod_feedback_mean /= static_cast<double>(wheels_per_side_);
-      right_back_pod_feedback_mean /= static_cast<double>(wheels_per_side_);
-      right_front_pod_feedback_mean /= static_cast<double>(wheels_per_side_);
-
-      odometry_.update(left_back_pod_feedback_mean, left_front_pod_feedback_mean, right_back_pod_feedback_mean, right_front_pod_feedback_mean,
-                       left_back_wheel_feedback_mean, left_front_wheel_feedback_mean, right_back_wheel_feedback_mean, right_front_wheel_feedback_mean, time);
+      odometry_.update(
+      left_back_pod_feedback,
+      left_front_pod_feedback,
+      right_back_pod_feedback,
+      right_front_pod_feedback,
+      left_back_wheel_feedback,
+      left_front_wheel_feedback,
+      right_back_wheel_feedback,
+      right_front_wheel_feedback,
+      time);
     }
 
     tf2::Quaternion orientation;
@@ -332,6 +299,7 @@ namespace luna_controller
         odometry_message.pose.pose.orientation.w = orientation.w();
         odometry_message.twist.twist.linear.x = odometry_.getLinear();
         odometry_message.twist.twist.angular.z = odometry_.getAngular();
+        odometry_message.twist.twist.linear.y = odometry_.getStrafe();
         realtime_odometry_publisher_->unlockAndPublish();
       }
 
@@ -381,76 +349,6 @@ namespace luna_controller
     double right_back_pod_position = 0.0;
     double right_front_pod_position = 0.0;
 
-    // if (angular_command == 0.0 && linear_command == 0.0 && strafe_command != 0.0) {
-    //   left_back_wheel_velocity = strafe_command / wheel_radius;
-    //   left_front_wheel_velocity = -strafe_command / wheel_radius;
-    //   right_back_wheel_velocity = -strafe_command / wheel_radius;
-    //   right_front_wheel_velocity = strafe_command / wheel_radius;
-
-    //   left_back_pod_position = M_PI_2;
-    //   left_front_pod_position = -M_PI_2;
-    //   right_back_pod_position = -M_PI_2;
-    //   right_front_pod_position = M_PI_2;
-    // }
-    // else if (angular_command == 0.0)
-    // {
-    //   left_back_wheel_velocity = linear_command / wheel_radius;
-    //   left_front_wheel_velocity = linear_command / wheel_radius;
-    //   right_back_wheel_velocity = linear_command / wheel_radius;
-    //   right_front_wheel_velocity = linear_command / wheel_radius;
-    //   left_back_pod_position = 0.0;
-    //   left_front_pod_position = 0.0;
-    //   right_back_pod_position = 0.0;
-    //   right_front_pod_position = 0.0;
-    // }
-    // else if (linear_command == 0.0)
-    // {
-    //   const double theta_L = (M_PI / 2.0) - atan(wheel_track / wheel_base);
-    //   const double theta_R = -((M_PI / 2.0) - atan(wheel_track / wheel_base));
-    //   const double R = sqrt(pow(wheel_track / 2, 2) + pow(wheel_base / 2, 2));
-    //   const double v = angular_command * R / wheel_radius;
-    //   left_back_wheel_velocity = -v;
-    //   left_front_wheel_velocity = -v;
-    //   right_back_wheel_velocity = v;
-    //   right_front_wheel_velocity = v;
-    //   left_back_pod_position = theta_L;
-    //   left_front_pod_position = -theta_L;
-    //   right_back_pod_position = theta_R;
-    //   right_front_pod_position = -theta_R;
-    // }
-    // else
-    // {
-    //   const double icc = linear_command / angular_command;
-
-    //   const double theta_L = -atan((wheel_base / 2) / (icc - (wheel_track / 2)));
-    //   const double theta_R = -atan((wheel_base / 2) / (icc + (wheel_track / 2)));
-    //   const double R_L = pow(pow(wheel_base / 2, 2) + pow(icc - (wheel_track / 2), 2), 0.5);
-    //   const double R_R = pow(pow(wheel_base / 2, 2) + pow(icc + (wheel_track / 2), 2), 0.5);
-
-    //   const double v_L = linear_command * abs(R_L / icc) / wheel_radius;
-    //   const double v_R = linear_command * abs(R_R / icc) / wheel_radius;
-
-    //   left_back_wheel_velocity = v_L;
-    //   left_front_wheel_velocity = v_L;
-    //   right_back_wheel_velocity = v_R;
-    //   right_front_wheel_velocity = v_R;
-    //   left_back_pod_position = theta_L;
-    //   left_front_pod_position = -theta_L;
-    //   right_back_pod_position = theta_R;
-    //   right_front_pod_position = -theta_R;
-    // }
-
-    // const double left_back_pod_delta = abs(left_back_pod_position - left_back_pod_feedback_mean);
-    // const double left_front_pod_delta = abs(left_front_pod_position - left_front_pod_feedback_mean);
-    // const double right_back_pod_delta = abs(right_back_pod_position - right_back_pod_feedback_mean);
-    // const double right_front_pod_delta = abs(right_front_pod_position - right_front_pod_feedback_mean);
-    // const bool allow_wheel_movement = (
-    //   left_back_pod_delta < params_.allowed_steer_pod_driving_angle &&
-    //   left_front_pod_delta < params_.allowed_steer_pod_driving_angle &&
-    //   right_back_pod_delta < params_.allowed_steer_pod_driving_angle &&
-    //   right_front_pod_delta < params_.allowed_steer_pod_driving_angle
-    // );
-
     /* intermediate variables */
     double hx = wheel_base / 2.0;   /* half wheelbase (x offsets)  */
     double hy = wheel_track / 2.0;  /* half track    (y offsets)  */
@@ -498,24 +396,35 @@ namespace luna_controller
     double fr_wheel_rad_s = fr_speed / wheel_radius;
     double rl_wheel_rad_s = rl_speed / wheel_radius;
     double rr_wheel_rad_s = rr_speed / wheel_radius;
+    
+    // Wheel speed normalization
+    double max_wheel_speed = std::max({
+      fabs(fl_wheel_rad_s),
+      fabs(fr_wheel_rad_s),
+      fabs(rl_wheel_rad_s),
+      fabs(rr_wheel_rad_s)
+    });
+
+    if (max_wheel_speed > params_.max_wheel_speed)
+    {
+      double scale = params_.max_wheel_speed / max_wheel_speed;
+      fl_wheel_rad_s *= scale;
+      fr_wheel_rad_s *= scale;
+      rl_wheel_rad_s *= scale;
+      rr_wheel_rad_s *= scale;
+    }
+
+
 
     /* Angle-flip optimization relative to current feedback means:
       If the angle change (target - current) has magnitude > 90deg (pi/2),
       flip desired angle by pi and invert wheel speed so steering travel is smaller.
       We compute signed shortest diff and use it to decide flipping.
     */
-    double fl_diff = shortest_angular_diff(fl_angle, left_front_pod_feedback_mean); /* careful: mapping to your variable naming */
-    double fr_diff = shortest_angular_diff(fr_angle, right_front_pod_feedback_mean);
-    double rl_diff = shortest_angular_diff(rl_angle, left_back_pod_feedback_mean);
-    double rr_diff = shortest_angular_diff(rr_angle, right_back_pod_feedback_mean);
-
-    /* Note: your original code uses different naming (left_back_pod_feedback_mean etc).
-      Make sure the mapping above matches your actual feedback variables:
-        - left_front_pod_feedback_mean -> feedback for left front pod
-        - left_back_pod_feedback_mean  -> feedback for left back pod
-        - right_front_pod_feedback_mean...
-        - right_back_pod_feedback_mean...
-    */
+    double fl_diff = shortest_angular_diff(fl_angle, left_front_pod_feedback);
+    double fr_diff = shortest_angular_diff(fr_angle, right_front_pod_feedback);
+    double rl_diff = shortest_angular_diff(rl_angle, left_back_pod_feedback);
+    double rr_diff = shortest_angular_diff(rr_angle, right_back_pod_feedback);
 
     /* apply optimization (flip if steering delta would exceed 90 degrees) */
     if (fabs(fl_diff) > M_PI_2) {
@@ -546,11 +455,11 @@ namespace luna_controller
     left_back_wheel_velocity   = rl_wheel_rad_s;
     right_front_wheel_velocity = fr_wheel_rad_s;
     right_back_wheel_velocity  = rr_wheel_rad_s;
-
-    double left_back_pod_delta  = fabs(shortest_angular_diff(left_back_pod_position, left_back_pod_feedback_mean));
-    double left_front_pod_delta = fabs(shortest_angular_diff(left_front_pod_position, left_front_pod_feedback_mean));
-    double right_back_pod_delta = fabs(shortest_angular_diff(right_back_pod_position, right_back_pod_feedback_mean));
-    double right_front_pod_delta= fabs(shortest_angular_diff(right_front_pod_position, right_front_pod_feedback_mean));
+    
+    double left_back_pod_delta  = fabs(shortest_angular_diff(left_back_pod_position, left_back_pod_feedback));
+    double left_front_pod_delta = fabs(shortest_angular_diff(left_front_pod_position, left_front_pod_feedback));
+    double right_back_pod_delta = fabs(shortest_angular_diff(right_back_pod_position, right_back_pod_feedback));
+    double right_front_pod_delta= fabs(shortest_angular_diff(right_front_pod_position, right_front_pod_feedback));
 
     bool allow_wheel_movement = (
       left_back_pod_delta  < params_.allowed_steer_pod_driving_angle &&
@@ -560,27 +469,25 @@ namespace luna_controller
     );
 
     // Set wheel / steering pod targets
-    for (size_t index = 0; index < static_cast<size_t>(wheels_per_side_); ++index)
+    if (allow_wheel_movement)
     {
-      if (allow_wheel_movement) 
-      {
-        registered_left_back_wheel_handles_[index].velocity.get().set_value(left_back_wheel_velocity);
-        registered_left_front_wheel_handles_[index].velocity.get().set_value(left_front_wheel_velocity);
-        registered_right_back_wheel_handles_[index].velocity.get().set_value(right_back_wheel_velocity);
-        registered_right_front_wheel_handles_[index].velocity.get().set_value(right_front_wheel_velocity);
-      } else 
-      {
-        registered_left_back_wheel_handles_[index].velocity.get().set_value(0.0);
-        registered_left_front_wheel_handles_[index].velocity.get().set_value(0.0);
-        registered_right_back_wheel_handles_[index].velocity.get().set_value(0.0);
-        registered_right_front_wheel_handles_[index].velocity.get().set_value(0.0);
-      }
-
-      registered_left_back_pod_handles_[index].position.get().set_value(left_back_pod_position);
-      registered_left_front_pod_handles_[index].position.get().set_value(left_front_pod_position);
-      registered_right_back_pod_handles_[index].position.get().set_value(right_back_pod_position);
-      registered_right_front_pod_handles_[index].position.get().set_value(right_front_pod_position);
+      registered_left_back_wheel_handles_[0].velocity.get().set_value(left_back_wheel_velocity);
+      registered_left_front_wheel_handles_[0].velocity.get().set_value(left_front_wheel_velocity);
+      registered_right_back_wheel_handles_[0].velocity.get().set_value(right_back_wheel_velocity);
+      registered_right_front_wheel_handles_[0].velocity.get().set_value(right_front_wheel_velocity);
     }
+    else
+    {
+      registered_left_back_wheel_handles_[0].velocity.get().set_value(0.0);
+      registered_left_front_wheel_handles_[0].velocity.get().set_value(0.0);
+      registered_right_back_wheel_handles_[0].velocity.get().set_value(0.0);
+      registered_right_front_wheel_handles_[0].velocity.get().set_value(0.0);
+    }
+
+    registered_left_back_pod_handles_[0].position.get().set_value(left_back_pod_position);
+    registered_left_front_pod_handles_[0].position.get().set_value(left_front_pod_position);
+    registered_right_back_pod_handles_[0].position.get().set_value(right_back_pod_position);
+    registered_right_front_pod_handles_[0].position.get().set_value(right_front_pod_position);
 
     return controller_interface::return_type::OK;
   }
@@ -638,8 +545,14 @@ namespace luna_controller
       return controller_interface::CallbackReturn::ERROR;
     }
 
-    // left and right sides are both equal at this point
-    wheels_per_side_ = static_cast<int>(params_.left_back_wheel_names.size());
+    if (params_.left_back_wheel_names.size() != 1 ||
+    params_.left_front_wheel_names.size() != 1 ||
+    params_.right_back_wheel_names.size() != 1 ||
+    params_.right_front_wheel_names.size() != 1)
+    {
+      RCLCPP_ERROR(logger, "Quad swerve requires exactly 1 wheel per module.");
+      return controller_interface::CallbackReturn::ERROR;
+    }
 
     if (publish_limited_velocity_)
     {
@@ -897,7 +810,10 @@ namespace luna_controller
     {
       for (const auto &pod_handle : pod_handles)
       {
-        pod_handle.position.get().set_value(0.0);
+        //freeze at current instead of halting at 0,0
+        pod_handle.position.get().set_value(
+        pod_handle.feedback.get().get_value()
+);
       }
     };
 
