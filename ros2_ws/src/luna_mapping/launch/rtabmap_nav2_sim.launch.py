@@ -60,6 +60,13 @@ def generate_launch_description():
         description='Launch RViz (set false if already running from gz_bringup)'
     )
 
+    declare_sim = DeclareLaunchArgument(
+        'sim',
+        default_value='true',
+        description='If true, add sim-only static TFs (odom, Gazebo camera frames). Set false for hardware.'
+    )
+    sim = LaunchConfiguration('sim', default='true')
+
     # ============================================================
     # RTAB-Map configuration
     # ============================================================
@@ -101,8 +108,8 @@ def generate_launch_description():
             {'Grid/RayTracing': 'true'},
             {'Grid/CellSize': '0.05'},
             {'Grid/RangeMax': '5.0'},
-            {'Grid/RangeMin': '0.3'},
-            {'Grid/MaxGroundHeight': '0.05'},
+            {'Grid/RangeMin': '0.4'},
+            {'Grid/MaxGroundHeight': '0.15'},
             {'Grid/MaxObstacleHeight': '2.0'},
             # Publish occupancy grid
             {'Rtabmap/DetectionRate': '1.0'},
@@ -135,6 +142,40 @@ def generate_launch_description():
         ]
     )
     
+    # ============================================================
+    # Depth to RGB (colorized for RViz display)
+    # ============================================================
+    depth_to_rgb = Node(
+        package='luna_mapping',
+        executable='depth_to_rgb',
+        name='depth_to_rgb',
+        output='log',
+        parameters=[{
+            'input_topic': '/camera/camera/depth/image_rect_raw',
+            'output_topic': '/camera/camera/depth/image_colorized',
+            'max_range': 5.0,
+        }]
+    )
+
+    # ============================================================
+    # Depth static mask: zero fixed regions (fiducials, self-obstacles).
+    # Format: "x,y,w,h;x,y,w,h" normalized 0-1 (top-left + size).
+    # Identify regions from depth image - fiducials appear at same pixels.
+    # Example: "0.75,0,0.25,0.35" = right 25%, top 35%.
+    # ============================================================
+    depth_fov_filter = Node(
+        package='luna_mapping',
+        executable='depth_fov_filter',
+        name='depth_fov_filter',
+        output='screen',
+        parameters=[{
+            'input_topic': '/camera/camera/depth/image_rect_raw',
+            'output_topic': '/camera/camera/depth/image_rect_raw_filtered',
+            'mask_regions': '',  # Add regions: "x,y,w,h;x,y,w,h" (normalized 0-1)
+            'ground_crop_bottom': 0.0,  # No FOV crop - use mask only
+        }]
+    )
+
     # ============================================================
     # Camera info and image frame_id fixers
     # ============================================================
@@ -180,11 +221,11 @@ def generate_launch_description():
         }]
     )
     
-    # Fix depth image frame_id for laserscan (uses depth optical frame)
-    image_frame_fixer_depth_laserscan = Node(
+    # Fix depth image frame_id for RTAB-Map (uses raw depth - RTAB-Map needs reliable input)
+    image_frame_fixer_depth_rtabmap = Node(
         package='luna_mapping',
         executable='image_frame_fixer',
-        name='image_frame_fixer_depth_laserscan',
+        name='image_frame_fixer_depth_rtabmap',
         output='screen',
         parameters=[{
             'input_topic': '/camera/camera/depth/image_rect_raw',
@@ -192,16 +233,28 @@ def generate_launch_description():
             'output_frame_id': 'camera_depth_optical_frame',
         }]
     )
-    
+
+    # Fix depth image frame_id for laserscan (filtered depth - right crop removes trailing)
+    image_frame_fixer_depth_laserscan = Node(
+        package='luna_mapping',
+        executable='image_frame_fixer',
+        name='image_frame_fixer_depth_laserscan',
+        output='screen',
+        parameters=[{
+            'input_topic': '/camera/camera/depth/image_rect_raw_filtered',
+            'output_topic': '/camera/camera/depth/image_rect_raw_fixed_for_scan',
+            'output_frame_id': 'camera_depth_optical_frame',
+        }]
+    )
+
     # Fix depth image frame_id to match RGB (for point cloud alignment)
-    # depth_image_proc expects both images to have the same frame_id when aligning
     image_frame_fixer_depth_pointcloud = Node(
         package='luna_mapping',
         executable='image_frame_fixer',
         name='image_frame_fixer_depth_pointcloud',
         output='screen',
         parameters=[{
-            'input_topic': '/camera/camera/depth/image_rect_raw',
+            'input_topic': '/camera/camera/depth/image_rect_raw_filtered',
             'output_topic': '/camera/camera/depth/image_rect_raw_aligned',
             'output_frame_id': 'camera_color_optical_frame',  # Match RGB for alignment
         }]
@@ -220,14 +273,14 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'use_sim_time': use_sim_time,
-            'scan_height': 10,  # Number of rows to use from depth image
+            'scan_height': 30,  # Taller band to capture rocks (lower rows) and walls
             'scan_time': 0.033,
-            'range_min': 0.3,
+            'range_min': 0.5,  # Ignore robot body (camera ~0.3m in front, wheel pods ~0.4m to sides)
             'range_max': 3.5,   # Cap long rays to avoid white bar in costmap (match obstacle_max_range)
             'output_frame_id': 'camera_depth_optical_frame',
         }],
         remappings=[
-            ('depth', '/camera/camera/depth/image_rect_raw_fixed'),  # Use fixed frame_id
+            ('depth', '/camera/camera/depth/image_rect_raw_fixed'),  # Raw depth (same as RTAB-Map) - filtered was too aggressive, no obstacles
             ('depth_camera_info', '/camera/camera/depth/camera_info_fixed'),
             ('scan', '/scan'),  # Standard Nav2 input topic
         ]
@@ -369,9 +422,9 @@ def generate_launch_description():
     # ============================================================
     # Static transforms for camera frames and odometry
     # ============================================================
-    # Initial odom -> base_link (identity). Ensures TF tree is connected; in sim
-    # you can also bridge Gazebo "tf" to /tf if you want odom to update from the sim.
+    # Initial odom -> base_link (identity). Sim only; on hardware the robot driver provides odom.
     static_tf_odom_base = Node(
+        condition=IfCondition(sim),
         package='tf2_ros',
         executable='static_transform_publisher',
         name='static_tf_odom_base',
@@ -384,10 +437,9 @@ def generate_launch_description():
         output='screen'
     )
     
-    # Transform from base_link to Gazebo RGB camera frame
-    # Position/orientation from URDF: depth_camera_joint (0.3, 0.1, 0.65, rpy=0,1,0)
-    # Plus optical frame rotation (-1.5708, 0, -1.5708)
+    # Transform from base_link to Gazebo RGB camera frame (sim only).
     static_tf_gazebo_rgb = Node(
+        condition=IfCondition(sim),
         package='tf2_ros',
         executable='static_transform_publisher',
         name='static_tf_base_to_gazebo_rgb',
@@ -400,8 +452,9 @@ def generate_launch_description():
         output='screen'
     )
     
-    # Transform from base_link to Gazebo depth camera frame
+    # Transform from base_link to Gazebo depth camera frame (sim only).
     static_tf_gazebo_depth = Node(
+        condition=IfCondition(sim),
         package='tf2_ros',
         executable='static_transform_publisher',
         name='static_tf_base_to_gazebo_depth',
@@ -414,8 +467,9 @@ def generate_launch_description():
         output='screen'
     )
     
-    # Also ensure camera_link exists (from URDF)
+    # Ensure camera_link exists (sim only; hardware_bringup publishes base_link->camera_link).
     static_tf_camera_link = Node(
+        condition=IfCondition(sim),
         package='tf2_ros',
         executable='static_transform_publisher',
         name='static_tf_camera_link',
@@ -428,9 +482,9 @@ def generate_launch_description():
         output='screen'
     )
     
-    # camera_depth_frame: used by Gazebo ros_gz_bridge for depth point clouds.
-    # Without this, Nav2 voxel_layer drops messages with "timestamp earlier than transform cache".
+    # camera_depth_frame: used by Gazebo bridge (sim only).
     static_tf_camera_depth_frame = Node(
+        condition=IfCondition(sim),
         package='tf2_ros',
         executable='static_transform_publisher',
         name='static_tf_camera_depth_frame',
@@ -449,18 +503,22 @@ def generate_launch_description():
         declare_use_rtabmap_odom,
         declare_launch_nav2,
         declare_launch_rviz,
+        declare_sim,
 
-        # Static TF transforms (must come first - RTAB-Map needs these immediately)
+        # Static TF transforms (sim only; hardware uses robot + hardware_bringup TFs)
         static_tf_odom_base,
         static_tf_gazebo_rgb,
         static_tf_gazebo_depth,
         static_tf_camera_link,
         static_tf_camera_depth_frame,  # Nav2 voxel_layer needs this for point cloud frame_id
 
-        # Camera info and image fixers (must come before RTAB-Map and depth processing)
+        depth_to_rgb,
+        # Depth FOV filter (narrows FOV to exclude fiducial cams) then fixers
+        depth_fov_filter,
         camera_info_fixer_color,
         camera_info_fixer_depth,
         image_frame_fixer_rgb,
+        image_frame_fixer_depth_rtabmap,
         image_frame_fixer_depth_laserscan,
         image_frame_fixer_depth_pointcloud,
 

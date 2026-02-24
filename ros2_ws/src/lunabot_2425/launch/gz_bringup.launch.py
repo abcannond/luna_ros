@@ -12,7 +12,7 @@ from launch.actions import (
     LogInfo,
     TimerAction,
 )
-from launch.conditions import LaunchConfigurationEquals
+from launch.conditions import LaunchConfigurationEquals, IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import LaunchConfiguration, TextSubstitution
@@ -44,6 +44,14 @@ def generate_launch_description():
         description="Arena: ucf_arena (default) or artemis_arena",
     )
     world_name = LaunchConfiguration("world", default="ucf_arena")
+
+    # When true (default), start RTAB-Map + Nav2 + RViz after Gazebo is up (single-command sim).
+    declare_launch_mapping = DeclareLaunchArgument(
+        "launch_mapping",
+        default_value="true",
+        description="If true, launch RTAB-Map, Nav2, and RViz after ~18 s (single terminal). If false, Gazebo + fid cam RViz only.",
+    )
+    launch_mapping = LaunchConfiguration("launch_mapping", default="true")
     # gz_args as Substitutions so launch arg is applied when using luna_ros2_worlds
     if has_worlds_pkg:
         gz_args_parts = [
@@ -247,13 +255,12 @@ def generate_launch_description():
     )
 
 
-    # --- RVIZ ---
+    # --- RVIZ (only when NOT launching mapping: depth + fid cams view) ---
     rviz_config_file = os.path.join(
         get_package_share_directory(package_name),
-        "rviz",
+        "config",
         "depth_and_fid_cams_view.rviz"
     )
-
     rviz_node = Node(
         package="rviz2",
         executable="rviz2",
@@ -262,11 +269,33 @@ def generate_launch_description():
         output="screen",
         parameters=[{"use_sim_time": True}],
     )
-    # Start RViz after sim and /clock are running so it uses sim time for TF (avoids TF_OLD_DATA).
     rviz_delayed = TimerAction(period=5.0, actions=[rviz_node])
+
+    # --- RTAB-Map + Nav2 (when launch_mapping true: single-command sim) ---
+    rtabmap_nav2_source = PythonLaunchDescriptionSource(
+        os.path.join(
+            get_package_share_directory("luna_mapping"),
+            "launch",
+            "rtabmap_nav2_sim.launch.py",
+        )
+    )
+    rtabmap_nav2_include = IncludeLaunchDescription(
+        rtabmap_nav2_source,
+        launch_arguments={
+            "use_sim_time": "true",
+            "launch_rviz": "true",
+            "launch_nav2": "true",
+        }.items(),
+    )
+    rtabmap_nav2_delayed = TimerAction(
+        period=18.0,
+        actions=[rtabmap_nav2_include],
+        condition=IfCondition(launch_mapping),
+    )
 
     return LaunchDescription([
         declare_world,
+        declare_launch_mapping,
         rsp,
         gz_sim_resource,
         gz_sim,
@@ -279,7 +308,9 @@ def generate_launch_description():
         gz_image_bridge,
         start_depth_to_pointcloud_ucf,
         start_depth_to_pointcloud_artemis,
-        rviz_delayed,
+        rtabmap_nav2_delayed,
+        # RViz (depth + fid cams) only when mapping is disabled
+        TimerAction(period=5.0, actions=[rviz_node], condition=UnlessCondition(launch_mapping)),
     ])
 
 

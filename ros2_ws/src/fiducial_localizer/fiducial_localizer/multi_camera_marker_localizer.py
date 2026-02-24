@@ -8,6 +8,7 @@ visible for continuous localization.
 import math
 import time
 from functools import partial
+
 from typing import List, Optional
 
 import numpy as np
@@ -61,6 +62,9 @@ class MultiCameraMarkerLocalizer(Node):
         self.declare_parameter("robot_frame", "base_link")
         self.declare_parameter("world_to_marker_xyz", [0.0, 0.0, 0.0])
         self.declare_parameter("world_to_marker_yaw", 0.0)
+        self.declare_parameter("republish_map_odom_rate_hz", 10.0)
+        self.declare_parameter("max_map_odom_translation_jump_m", 0.5)
+        self.declare_parameter("max_map_odom_rotation_jump_rad", 0.5)
 
         image_topics = self.get_parameter("image_topics").get_parameter_value().string_array_value
         camera_info_topics = self.get_parameter("camera_info_topics").get_parameter_value().string_array_value
@@ -78,6 +82,11 @@ class MultiCameraMarkerLocalizer(Node):
             self.get_parameter("world_to_marker_xyz").get_parameter_value().double_array_value
         )
         self.world_to_marker_yaw = self.get_parameter("world_to_marker_yaw").get_parameter_value().double_value
+        self.republish_rate_hz = self.get_parameter("republish_map_odom_rate_hz").get_parameter_value().double_value
+        self.max_translation_jump = self.get_parameter("max_map_odom_translation_jump_m").get_parameter_value().double_value
+        self.max_rotation_jump = self.get_parameter("max_map_odom_rotation_jump_rad").get_parameter_value().double_value
+        # Last map->odom for republishing when no marker seen (keeps TF tree connected)
+        self._last_tf_map_odom: Optional[TransformStamped] = None
         # ArUco
         dict_name = self.get_parameter("aruco_dict").get_parameter_value().string_value
         if not hasattr(cv2, "aruco"):
@@ -96,8 +105,7 @@ class MultiCameraMarkerLocalizer(Node):
                 img, self.aruco_dict, parameters=self.aruco_params
             )
 
-        # Per-camera intrinsics (index = camera index)
-        self.cam_info: List[Optional[tuple]] = [None] * n  # (fx, fy, cx, cy) or None
+        self.cam_info: List[Optional[tuple]] = [None] * n
         self.bridge = CvBridge()
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
@@ -105,7 +113,6 @@ class MultiCameraMarkerLocalizer(Node):
         self.tf_broadcaster = TransformBroadcaster(self)
         self.static_tf_broadcaster = StaticTransformBroadcaster(self)
 
-        # World -> marker (static)
         R_wm = rotz(self.world_to_marker_yaw)
         self.T_w_m = tvec_R_to_T(self.world_to_marker_xyz, R_wm)
         self.publish_static_marker()
@@ -117,7 +124,6 @@ class MultiCameraMarkerLocalizer(Node):
             history=HistoryPolicy.KEEP_LAST,
             durability=DurabilityPolicy.VOLATILE,
         )
-        # CameraInfo: reliable so we get calibration even if bridge uses reliable
         qos_camera_info = QoSProfile(
             depth=10,
             reliability=ReliabilityPolicy.RELIABLE,
@@ -145,6 +151,11 @@ class MultiCameraMarkerLocalizer(Node):
             )
 
         self.last_log_per_cam: List[float] = [0.0] * n
+
+        if self.republish_rate_hz > 0:
+            period = 1.0 / self.republish_rate_hz
+            self.create_timer(period, self._republish_map_odom_cb)
+
         self.get_logger().info(
             f"[fiducial] READY: {n} cameras. Topics: {self.image_topics[0]} ... "
             "(waiting for camera_info then looking for ArUco; will log when marker detected)"
@@ -290,19 +301,54 @@ class MultiCameraMarkerLocalizer(Node):
             )
             T_odom_base = self._transform_to_matrix(t_odom_base)
             T_map_odom = T_w_r @ invert_T(T_odom_base)
-            tf_map_odom = TransformStamped()
-            tf_map_odom.header.stamp = p.header.stamp
-            tf_map_odom.header.frame_id = self.world_frame
-            tf_map_odom.child_frame_id = "odom"
-            tf_map_odom.transform.translation.x = float(T_map_odom[0, 3])
-            tf_map_odom.transform.translation.y = float(T_map_odom[1, 3])
-            tf_map_odom.transform.translation.z = float(T_map_odom[2, 3])
-            qo = quat_from_R(T_map_odom[:3, :3])
-            tf_map_odom.transform.rotation.x = float(qo[0])
-            tf_map_odom.transform.rotation.y = float(qo[1])
-            tf_map_odom.transform.rotation.z = float(qo[2])
-            tf_map_odom.transform.rotation.w = float(qo[3])
-            self.tf_broadcaster.sendTransform(tf_map_odom)
+            if self._last_tf_map_odom is not None:
+                tx_last = self._last_tf_map_odom.transform.translation
+                trans_jump = np.sqrt(
+                    (T_map_odom[0, 3] - tx_last.x) ** 2
+                    + (T_map_odom[1, 3] - tx_last.y) ** 2
+                    + (T_map_odom[2, 3] - tx_last.z) ** 2
+                )
+                R_last = self._quat_to_rot(self._last_tf_map_odom.transform.rotation)
+                R_rel = T_map_odom[:3, :3] @ R_last.T
+                trace_r = np.trace(R_rel)
+                rot_jump = math.acos(np.clip((trace_r - 1) / 2, -1, 1))
+                if trans_jump > self.max_translation_jump or rot_jump > self.max_rotation_jump:
+                    if now - self.last_log_per_cam[camera_idx] > 2.0:
+                        self.get_logger().warn(
+                            f"Fiducial: rejecting map->odom jump trans={trans_jump:.2f}m rot={rot_jump:.2f}rad"
+                        )
+                        self.last_log_per_cam[camera_idx] = now
+                    pass
+                else:
+                    tf_map_odom = TransformStamped()
+                    tf_map_odom.header.stamp = p.header.stamp
+                    tf_map_odom.header.frame_id = self.world_frame
+                    tf_map_odom.child_frame_id = "odom"
+                    tf_map_odom.transform.translation.x = float(T_map_odom[0, 3])
+                    tf_map_odom.transform.translation.y = float(T_map_odom[1, 3])
+                    tf_map_odom.transform.translation.z = float(T_map_odom[2, 3])
+                    qo = quat_from_R(T_map_odom[:3, :3])
+                    tf_map_odom.transform.rotation.x = float(qo[0])
+                    tf_map_odom.transform.rotation.y = float(qo[1])
+                    tf_map_odom.transform.rotation.z = float(qo[2])
+                    tf_map_odom.transform.rotation.w = float(qo[3])
+                    self.tf_broadcaster.sendTransform(tf_map_odom)
+                    self._last_tf_map_odom = tf_map_odom
+            else:
+                tf_map_odom = TransformStamped()
+                tf_map_odom.header.stamp = p.header.stamp
+                tf_map_odom.header.frame_id = self.world_frame
+                tf_map_odom.child_frame_id = "odom"
+                tf_map_odom.transform.translation.x = float(T_map_odom[0, 3])
+                tf_map_odom.transform.translation.y = float(T_map_odom[1, 3])
+                tf_map_odom.transform.translation.z = float(T_map_odom[2, 3])
+                qo = quat_from_R(T_map_odom[:3, :3])
+                tf_map_odom.transform.rotation.x = float(qo[0])
+                tf_map_odom.transform.rotation.y = float(qo[1])
+                tf_map_odom.transform.rotation.z = float(qo[2])
+                tf_map_odom.transform.rotation.w = float(qo[3])
+                self.tf_broadcaster.sendTransform(tf_map_odom)
+                self._last_tf_map_odom = tf_map_odom
         except TransformException:
             pass  # odom->base_link not available yet; skip this TF update
 
@@ -313,8 +359,32 @@ class MultiCameraMarkerLocalizer(Node):
             )
             self.last_log_per_cam[camera_idx] = now
 
+    def _republish_map_odom_cb(self) -> None:
+        """Republish last map->odom or identity so Nav2 has map->odom->base_link."""
+        stamp = self.get_clock().now().to_msg()
+        if self._last_tf_map_odom is not None:
+            tf = TransformStamped()
+            tf.header.stamp = stamp
+            tf.header.frame_id = self._last_tf_map_odom.header.frame_id
+            tf.child_frame_id = self._last_tf_map_odom.child_frame_id
+            tf.transform = self._last_tf_map_odom.transform
+            self.tf_broadcaster.sendTransform(tf)
+        else:
+            # Fallback: publish identity map->odom until first marker seen (connects TF tree for Nav2)
+            tf = TransformStamped()
+            tf.header.stamp = stamp
+            tf.header.frame_id = self.world_frame
+            tf.child_frame_id = "odom"
+            tf.transform.translation.x = 0.0
+            tf.transform.translation.y = 0.0
+            tf.transform.translation.z = 0.0
+            tf.transform.rotation.x = 0.0
+            tf.transform.rotation.y = 0.0
+            tf.transform.rotation.z = 0.0
+            tf.transform.rotation.w = 1.0
+            self.tf_broadcaster.sendTransform(tf)
+
     def _transform_to_matrix(self, t: TransformStamped) -> np.ndarray:
-        """Convert TransformStamped to 4x4 T matrix."""
         tx = t.transform.translation.x
         ty = t.transform.translation.y
         tz = t.transform.translation.z

@@ -33,6 +33,8 @@ setup(
             'camera_info_fixer = luna_mapping.camera_info_fixer:main',
             'tf_relay = luna_mapping.tf_relay:main',
             'image_frame_fixer = luna_mapping.image_frame_fixer:main',
+            'depth_fov_filter = luna_mapping.depth_fov_filter:main',
+            'depth_to_rgb = luna_mapping.depth_to_rgb:main',
         ],
     },
 )

@@ -49,37 +49,28 @@ Run drun from repo root only; otherwise you can get duplicate package names / CM
 After git pull: same colcon build + source install/setup.bash; restart Gazebo and RTAB-Map+Nav2 if they are running.
 
 ----------------------------------------------------------------------
-SIM: Terminal 1 = Gazebo first. Terminal 2 = RTAB-Map + Nav2 second.
+SIM: Single command (gazebo brings up RTAB-Map + Nav2 automatically)
 ----------------------------------------------------------------------
-
-TERMINAL 1 — Gazebo (run first)
-
-  UCF arena (default):
 
   cd /ros2_ws && source install/setup.bash
   ros2 launch lunabot_2425 gz_bringup.launch.py
 
-  or: ros2 launch lunabot_2425 gz_bringup.launch.py world:=ucf_arena
+  Starts Gazebo, waits ~18 s for the simulation to load, then automatically
+  starts RTAB-Map, Nav2, and RViz (with Nav2 plugin, map, costmaps, planner).
+  One terminal — no separate launch for mapping.
 
-  Artemis arena:
-  
-  ros2 launch lunabot_2425 gz_bringup.launch.py world:=artemis_arena
+  Artemis arena:      ros2 launch lunabot_2425 gz_bringup.launch.py world:=artemis_arena
+  Gazebo only:        ros2 launch lunabot_2425 gz_bringup.launch.py launch_mapping:=false
+  Fiducial off (visual odom only): ros2 launch lunabot_2425 gz_bringup.launch.py launch_fiducial_localization:=false
 
+----------------------------------------------------------------------
+Optional: run RTAB-Map + Nav2 separately (e.g. if Gazebo already running)
+----------------------------------------------------------------------
 
-TERMINAL 2 — RTAB-Map + Nav2 (run after Gazebo is up)
-  dbash   # or new terminal, then enter container
-  cd /ros2_ws && source install/setup.bash
-  ros2 launch luna_mapping rtabmap_nav2_sim.launch.py
+  ros2 launch luna_mapping rtabmap_nav2_sim.launch.py launch_rviz:=true
 
-This starts RTAB-Map (SLAM, /map), depth→laserscan and pointcloud, and Nav2. Start Gazebo first or the stack has no camera data and can fail.
-
-TERMINAL 3 — RViz (optional)
-  dbash
-  cd /ros2_ws && source install/setup.bash
-  rviz2 -d $(ros2 pkg prefix luna_mapping)/share/luna_mapping/config/rtabmap_nav2.rviz
-  Use the Nav2 Goal tool to send navigation goals. More in LAUNCH_COMMANDS.md.
-
-TERMINAL 4 — Teleop (optional)
+----------------------------------------------------------------------
+Teleop (optional)
   dbash
   cd /ros2_ws && source install/setup.bash && drive
   i = forward, comma = back, j/l = left/right, k = stop. Publishes to /cmd_vel; sim includes twist_stamper.
@@ -103,7 +94,10 @@ Launch arguments (optional)
 
   use_rtabmap_odom:=true     Use RTAB-Map visual odom instead of Gazebo odom
   launch_nav2:=false         Mapping only (no Nav2)
-  launch_rviz:=true         Start RViz with the stack
+  launch_mapping:=true           Auto-start RTAB-Map+Nav2 after Gazebo (gz_bringup, default)
+  launch_mapping:=false          Gazebo only (no mapping)
+  launch_fiducial_localization:=true   (default) Fiducial map->odom + Gazebo wheel odom for costmap accuracy
+  launch_fiducial_localization:=false  RTAB-Map visual odom instead (can drift)
 
 ----------------------------------------------------------------------
 Troubleshooting
@@ -113,3 +107,5 @@ Troubleshooting
   No map / map frame missing:  Start Gazebo first; rebuild luna_mapping; check camera topics. Details: LAUNCH_COMMANDS.md.
   Blocky costmap:  Check map→odom and odom→base_link TF; start Gazebo then stack. Details: LAUNCH_COMMANDS.md.
   Duplicate nodes:  Run RTAB-Map+Nav2 launch in only one terminal. Details: LAUNCH_COMMANDS.md.
+  "Localization inactive" in Nav2 panel:  Expected with RTAB-Map SLAM (no AMCL). Localization comes from map→odom TF; can be ignored.
+  Robot out of arena / map drift:  Ensure fiducial sees marker at startup (face marker or drive toward it). Use launch_fiducial_localization:=true (default) for wheel odom + fiducial map→odom. Grid/ProbHit/ProbMiss tuned for more stable map.

@@ -14,9 +14,9 @@ How it works (big picture)
 
 4. Nav2 uses /map and the scan/point cloud to build costmaps, plan paths, and send velocity commands on /cmd_vel so the robot drives to a goal.
 
-baically: Gazebo sends camera data into RTAB-Map (map) and depth processing (obstacles), then Nav2 plans and drives the robot.
+Basically: Gazebo sends camera data into RTAB-Map (map) and depth processing (obstacles), then Nav2 plans and drives the robot.
 
-You run two main things: Terminal 1 = Gazebo, Terminal 2 = RTAB-Map + Nav2. After that you can optionally open RViz to visualize and send goals, or run teleop to drive manually.
+**Single command:** Run `ros2 launch lunabot_2425 gz_bringup.launch.py` — it starts Gazebo, waits ~18 s for the simulation to load, then automatically starts RTAB-Map, Nav2, and RViz (with Nav2 plugin, map, costmaps, and planner). No need for a second terminal. To run Gazebo only without mapping, use `launch_mapping:=false`.
 
 **Design goal: sim reflects real hardware and arena.** The end goal is to run this stack on real hardware (robot + RealSense D455) in a real arena. The simulation is tuned to mirror that as closely as possible: same sensor model (D455), same topic names and pipeline (RTAB-Map + Nav2), same map resolution and Nav2 params, and an arena-style world (ucf_arena). Map and navigation quality are prioritized over sim runtime so that behavior in sim transfers reliably to the real robot.
 
@@ -51,7 +51,25 @@ If you see "package 'twist_stamper' not found", build it: `colcon build --symlin
 
 **Duplicate package names / CMakeCache:** `run_ros_image.sh` mounts `$(pwd)/ros2_ws` into the container as `/ros2_ws`. You must run `drun` (or `./run_ros_image.sh`) from the **repo root** (the luna_ros folder). If you run from a parent directory, the mounted workspace can contain the wrong layout (e.g. both `src` and `luna_ros/ros2_ws/src`), leading to duplicate package names and CMake errors. Fix: from inside the container, `cd /ros2_ws && rm -rf build install`, then `source /opt/ros/jazzy/setup.bash && colcon build --symlink-install && source install/setup.bash`. Always run `drun` from repo root.
 
-Terminal 1: Gazebo (simulation)
+Single command: sim (Gazebo + RTAB-Map + Nav2 + RViz)
+-----------------------------------------------------
+
+**What it does:** Starts everything in one launch: Gazebo (robot, world, bridges), waits ~18 seconds for the simulation to load, then automatically starts RTAB-Map, Nav2, and RViz with the Nav2 plugin, occupancy grid, costmaps, and planner displays. One terminal only.
+
+  cd /ros2_ws
+  source install/setup.bash
+
+  ros2 launch lunabot_2425 gz_bringup.launch.py
+
+  # Artemis arena:
+  ros2 launch lunabot_2425 gz_bringup.launch.py world:=artemis_arena
+
+  # Gazebo only (no mapping, no RTAB-Map/Nav2):
+  ros2 launch lunabot_2425 gz_bringup.launch.py launch_mapping:=false
+
+Use the Nav2 Goal tool in RViz to send navigation goals.
+
+Manual: Terminal 1 — Gazebo (simulation)
 -------------------------------
 
 What it does: Starts the Gazebo world and spawns the robot with the depth camera (and optional wheel-pod cameras). This has to be running before you start Terminal 2.
@@ -75,7 +93,7 @@ What you should see: A Gazebo window opens with the robot in the world. Log mess
 
 Leave this terminal running. Then move on to Terminal 2.
 
-Terminal 2: RTAB-Map + Nav2 (mapping and navigation)
+Manual: Terminal 2 — RTAB-Map + Nav2 (mapping and navigation)
 ----------------------------------------------------
 
 What it does: Starts RTAB-Map (builds the map from the depth camera), depth-to-scan and depth-to-pointcloud, and the full Nav2 stack (costmaps, planner, controller). After this is up, you have a map and the robot can navigate to goals.
@@ -92,7 +110,7 @@ Inside the container:
   cd /ros2_ws
   source install/setup.bash
 
-  ros2 launch luna_mapping rtabmap_nav2_sim.launch.py
+  ros2 launch luna_mapping rtabmap_nav2_sim.launch.py launch_rviz:=true
 
 What you should see: Lines like rtabmap (X): Rate=1.00s... (RTAB-Map is processing frames). No "Could not convert rgb/depth msgs" errors. Nav2 nodes and camera/depth processing nodes starting.
 
@@ -211,9 +229,12 @@ view_frames creates a PDF in the current directory. Ctrl+C to stop the hz comman
 Launch order summary
 --------------------
 
+**Single command:** `ros2 launch lunabot_2425 gz_bringup.launch.py` — does steps 1–3 automatically.
+
+**Manual (run mapping separately):**
 1. Terminal 1: Gazebo — wait until the world and robot are up.
-2. Terminal 2: RTAB-Map + Nav2 — wait until you see RTAB-Map and Nav2 running.
-3. Terminal 3 (optional): RViz — visualize and send Nav2 goals.
+2. Terminal 2: RTAB-Map + Nav2 (launch_rviz:=true) — wait until you see RTAB-Map and Nav2 running.
+3. Terminal 3 (optional): RViz only — if you used launch_rviz:=false in step 2.
 4. Terminal 4 (optional): Teleop — drive manually.
 5. Terminal 5 (optional): Diagnostics — only after 1 and 2 are running.
 
@@ -266,7 +287,7 @@ General checks: ros2 topic list, ros2 topic hz <topic_name>, ros2 node list, ros
 Common bugs and workflow
 -------------------------
 **TF tree (sim):** `map` → `odom` → `base_link`. The sim launch publishes a static odom → base_link (identity) so the tree is connected. map → odom comes from RTAB-Map (SLAM).
-**Robot jerking / Nav2 "Localization inactive":** Check TF: `ros2 run tf2_ros tf2_echo map base_link`. Start Gazebo first, then the stack.
+**Robot jerking / Nav2 "Localization inactive":** With RTAB-Map SLAM, the Nav2 panel shows "Localization inactive" because we don't run AMCL or lifecycle_manager_localization—localization comes from RTAB-Map (map→odom TF). That indicator can be ignored; Nav2 uses the TF chain (map→odom→base_link) for pose. If the robot jerks or doesn't follow goals, check TF: `ros2 run tf2_ros tf2_echo map base_link`. Start Gazebo first, then the stack.
 **Velocity chain:** Nav2 → velocity_smoother → `/cmd_vel` → gz_bridge → Gazebo. Only one source should drive the robot.
 
 
@@ -295,8 +316,11 @@ Troubleshooting (in depth)
 Quick reference (commands only)
 -------------------------------
 
+Single command: ros2 launch lunabot_2425 gz_bringup.launch.py
+
+Manual (separate mapping):
 Terminal 1: ros2 launch lunabot_2425 gz_bringup.launch.py
-Terminal 2: ros2 launch luna_mapping rtabmap_nav2_sim.launch.py
+Terminal 2: ros2 launch luna_mapping rtabmap_nav2_sim.launch.py launch_rviz:=true
 Terminal 3: rviz2 -d $(ros2 pkg prefix luna_mapping)/share/luna_mapping/config/rtabmap_nav2.rviz
 Terminal 4: dbash, then cd /ros2_ws && source install/setup.bash, then drive
 Terminal 5: ros2 topic hz /map (and other diagnostics above)
