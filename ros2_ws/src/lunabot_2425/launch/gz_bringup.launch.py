@@ -287,9 +287,16 @@ def generate_launch_description():
             "launch_nav2": "true",
         }.items(),
     )
+    # Fixed delay: wait for sim to build and robot to spawn (25 s), then start RTAB-Map/Nav2
+    sim_ready_msg = LogInfo(msg="Sim is ready! Starting RTAB-Map/Nav2...")
     rtabmap_nav2_delayed = TimerAction(
-        period=18.0,
-        actions=[rtabmap_nav2_include],
+        period=25.0,
+        actions=[sim_ready_msg, rtabmap_nav2_include],
+        condition=IfCondition(launch_mapping),
+    )
+    nav2_up_msg = TimerAction(
+        period=37.0,
+        actions=[LogInfo(msg="Nav2 is up!")],
         condition=IfCondition(launch_mapping),
     )
 
@@ -309,6 +316,7 @@ def generate_launch_description():
         start_depth_to_pointcloud_ucf,
         start_depth_to_pointcloud_artemis,
         rtabmap_nav2_delayed,
+        nav2_up_msg,
         # RViz (depth + fid cams) only when mapping is disabled
         TimerAction(period=5.0, actions=[rviz_node], condition=UnlessCondition(launch_mapping)),
     ])

@@ -30,7 +30,7 @@
     database_path: ""  # Empty = don't save to file
     
     # RTAB-Map core parameters (prioritize map accuracy)
-    Rtabmap/DetectionRate: "1.0"
+    Rtabmap/DetectionRate: "2.0"  # 2 Hz map→odom updates; reduces cost "trail" when turning
     Rtabmap/TimeThr: "0.0"
     Rtabmap/MemoryThr: "0"
     
@@ -51,17 +51,17 @@
     
     # Grid map parameters (occupancy grid for Nav2; finer = more accurate map)
     Grid/FromDepth: "true"
-    Grid/MaxGroundHeight: "0.15"  # More aggressive ground filtering (was 0.05) - reduces trailing
+    Grid/MaxGroundHeight: "0.20"  # Treat more as ground; depth_fov_filter also crops floor
     Grid/MaxObstacleHeight: "2.0"
-    Grid/MinClusterSize: "20"
+    Grid/MinClusterSize: "10"  # Allow smaller clusters so distant/small rocks aren't dropped (was 20)
     Grid/RayTracing: "true"
     Grid/3D: "false"
     Grid/CellSize: "0.05"
     Grid/RangeMax: "5.0"
-    Grid/RangeMin: "0.4"  # Ignore very close points (floor/noise) - reduces trailing
-    Grid/DepthDecimation: "6"  # Slightly more decimation to reduce noise artifacts
+    Grid/RangeMin: "0.5"  # Ignore very close points (floor/noise) - reduces trailing
+    Grid/DepthDecimation: "5"  # Valid for 1280x720; 6 is invalid for this resolution
     Grid/NoiseFilteringRadius: "0.1"
-    Grid/NoiseFilteringMinNeighbors: "5"
+    Grid/NoiseFilteringMinNeighbors: "6"  # Slightly stricter so single noisy points don't become obstacles
     
     # Optimizer
     Optimizer/Strategy: "1"  # g2o

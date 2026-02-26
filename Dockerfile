@@ -46,6 +46,7 @@ RUN apt-get update && apt-get upgrade -y && \
     ros-jazzy-depthimage-to-laserscan \
     ros-jazzy-pointcloud-to-laserscan \
     ros-jazzy-v4l2-camera \
+    ros-jazzy-usb-cam \
     && rm -rf /var/lib/apt/lists/*
 
 RUN echo "alias src='source install/setup.bash'" >> /etc/bash.bashrc

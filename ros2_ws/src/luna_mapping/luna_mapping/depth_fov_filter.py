@@ -36,16 +36,17 @@ class DepthFovFilter(Node):
 
         self.declare_parameter('input_topic', '/camera/camera/depth/image_rect_raw')
         self.declare_parameter('output_topic', '/camera/camera/depth/image_rect_raw_filtered')
-        # Static mask: "x,y,w,h;x,y,w,h" normalized 0-1 (top-left + size). Zero these regions.
         self.declare_parameter('mask_regions', '')
-        # Optional ground crop (0 = none). Minimal value if needed for floor.
         self.declare_parameter('ground_crop_bottom', 0.0)
 
         input_topic = self.get_parameter('input_topic').value
         output_topic = self.get_parameter('output_topic').value
         mask_str = str(self.get_parameter('mask_regions').value or '')
         self.mask_regions = parse_mask_regions(mask_str)
-        self.ground_crop_bottom = self.get_parameter('ground_crop_bottom').value
+        try:
+            self.ground_crop_bottom = max(0.0, min(1.0, float(self.get_parameter('ground_crop_bottom').value)))
+        except (TypeError, ValueError, AttributeError):
+            self.ground_crop_bottom = 0.0
 
         self.publisher_ = self.create_publisher(Image, output_topic, 10)
         self.subscription = self.create_subscription(
@@ -68,29 +69,31 @@ class DepthFovFilter(Node):
         out.encoding = msg.encoding
         out.is_bigendian = msg.is_bigendian
         out.step = msg.step
-        out.data = bytearray(msg.data)
 
+        # Work in a bytearray to avoid array.array slice-assignment issues; assign once at end
+        buf = bytearray(msg.data)
         h, w = msg.height, msg.width
 
-        # Bytes per pixel
         if msg.encoding in ('16UC1', 'mono16'):
             bpp = 2
         elif msg.encoding in ('32FC1',):
             bpp = 4
         else:
-            self.get_logger().warn_once(f'Unhandled encoding {msg.encoding}')
+            self.get_logger().warn(f'Unhandled encoding {msg.encoding}')
+            return
+
+        if msg.step <= 0 or len(buf) < h * msg.step:
             return
 
         bottom_rows = int(h * self.ground_crop_bottom) if self.ground_crop_bottom > 0 else 0
 
         for row in range(h):
             base = row * msg.step
-            # Optional ground crop
+            # Ground crop: zero bottom fraction of image
             if row >= h - bottom_rows and bottom_rows > 0:
-                out.data[base : base + msg.step] = b'\x00' * msg.step
+                buf[base : base + msg.step] = b'\x00' * msg.step
                 continue
-
-            # Apply static mask regions (normalized -> pixel)
+            # Static mask regions
             for (nx, ny, nw, nh) in self.mask_regions:
                 y0 = int(ny * h)
                 y1 = int((ny + nh) * h)
@@ -104,8 +107,9 @@ class DepthFovFilter(Node):
                     continue
                 left_byte = x0 * bpp
                 right_byte = x1 * bpp
-                out.data[base + left_byte : base + right_byte] = b'\x00' * (right_byte - left_byte)
+                buf[base + left_byte : base + right_byte] = b'\x00' * (right_byte - left_byte)
 
+        out.data = bytes(buf)
         self.publisher_.publish(out)
 
 

@@ -14,7 +14,11 @@ setup(
             'launch/fiducial_localizer.launch.py',
             'launch/multi_camera_fiducial.launch.py',
         ]),
-        ('share/' + package_name + '/params', ['params/jetson.yaml', 'params/multi_camera_sim.yaml']),
+        ('share/' + package_name + '/params', [
+            'params/jetson.yaml',
+            'params/multi_camera_sim.yaml',
+            'params/multi_camera_hardware.yaml',
+        ]),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

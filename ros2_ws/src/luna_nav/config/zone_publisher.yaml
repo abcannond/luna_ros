@@ -1,0 +1,13 @@
+# Zone publisher parameters (luna_nav)
+# Override per arena: ros2 run luna_nav zone_publisher --ros-args --params-file <this_file>
+# Bounds in meters: [x_min, x_max, y_min, y_max]. First match: origin → starting → excavation → obstacle → construction → outside bounds.
+
+zone_publisher:
+  ros__parameters:
+    odom_topic: "/odom"
+    origin_tolerance_m: 0.01
+    zone.starting_zone: [0.0, 2.0, 0.0, 2.0]
+    zone.excavation_zone: [0.0, 2.5, 0.0, 11.0]
+    zone.obstacle_zone_main: [4.38, 6.38, 0.0, 11.0]
+    zone.obstacle_zone_exclude: [4.38, 6.88, 0.0, 1.5]
+    zone.construction_zone: [7.0, 12.0, 0.0, 11.0]

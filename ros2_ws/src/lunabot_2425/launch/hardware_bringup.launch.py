@@ -2,6 +2,8 @@
 """
 Hardware bringup: Intel RealSense D455 + 4× Nexigo N980P webcams (fiducial).
 
+Uses usb_cam for the Nexigo cameras (MJPEG decode) to fit within USB 2.0 bandwidth.
+
 Publishes topics matching simulation so the same mapping/nav stack can be used:
   - /camera/camera/color/*, /camera/camera/depth/*  (RealSense)
   - /fid_cams/front_left_camera/*, /fid_cams/front_right_camera/*, etc.
@@ -30,22 +32,22 @@ def generate_launch_description():
     # Device paths for 4 Nexigo N980P (adjust for your USB layout; use v4l2-ctl --list-devices)
     declare_fl_dev = DeclareLaunchArgument(
         "fid_front_left_dev",
-        default_value="/dev/video2",
+        default_value="/dev/video0",
         description="V4L2 device for front-left fiducial camera",
     )
     declare_fr_dev = DeclareLaunchArgument(
         "fid_front_right_dev",
-        default_value="/dev/video4",
+        default_value="/dev/video2",
         description="V4L2 device for front-right fiducial camera",
     )
     declare_bl_dev = DeclareLaunchArgument(
         "fid_back_left_dev",
-        default_value="/dev/video6",
+        default_value="/dev/video4",
         description="V4L2 device for back-left fiducial camera",
     )
     declare_br_dev = DeclareLaunchArgument(
         "fid_back_right_dev",
-        default_value="/dev/video8",
+        default_value="/dev/video6",
         description="V4L2 device for back-right fiducial camera",
     )
 
@@ -81,17 +83,23 @@ def generate_launch_description():
         output="screen",
     )
 
-    # ----- 4× Nexigo N980P (v4l2_camera) -----
-    def fid_cam_node(name: str, device: LaunchConfiguration, ns: str):
+    # ----- 4× Nexigo N980P (usb_cam) -----
+    # Uses usb_cam instead of v4l2_camera so MJPEG decoding is handled internally,
+    # keeping USB 2.0 bandwidth at ~2-5 MB/s per camera instead of ~18 MB/s (YUYV).
+    def fid_cam_node(name: str, device: LaunchConfiguration, ns: str, optical_frame: str):
         return Node(
-            package="v4l2_camera",
-            executable="v4l2_camera_node",
+            package="usb_cam",
+            executable="usb_cam_node_exe",
             name=name,
             namespace=ns,
             parameters=[
                 {"video_device": device},
-                {"image_size": [640, 480]},
-                {"use_sim_time": use_sim_time},
+                {"image_width": 640},
+                {"image_height": 480},
+                {"framerate": 30.0},
+                {"pixel_format": "mjpeg2rgb"},
+                {"camera_frame_id": optical_frame},
+                {"camera_name": name},
             ],
             output="screen",
         )
@@ -100,22 +108,42 @@ def generate_launch_description():
         "front_left_camera",
         LaunchConfiguration("fid_front_left_dev"),
         "fid_cams/front_left_camera",
+        "front_left_camera_link_optical",
     )
     front_right = fid_cam_node(
         "front_right_camera",
         LaunchConfiguration("fid_front_right_dev"),
         "fid_cams/front_right_camera",
+        "front_right_camera_link_optical",
     )
     back_left = fid_cam_node(
         "back_left_camera",
         LaunchConfiguration("fid_back_left_dev"),
         "fid_cams/back_left_camera",
+        "back_left_camera_link_optical",
     )
     back_right = fid_cam_node(
         "back_right_camera",
         LaunchConfiguration("fid_back_right_dev"),
         "fid_cams/back_right_camera",
+        "back_right_camera_link_optical",
     )
+
+    # Static TF: base_link -> each fiducial camera optical frame (required for multi_camera_marker_localizer).
+    # Measure and tune xyz/rpy for your robot; these are placeholders for a typical 4-cam layout.
+    def static_tf_fid_cam(child_frame: str, x: str, y: str, z: str, yaw: str = "0"):
+        return Node(
+            package="tf2_ros",
+            executable="static_transform_publisher",
+            name=f"base_to_{child_frame}",
+            arguments=[x, y, z, yaw, "0", "0", "base_link", child_frame],
+            output="screen",
+        )
+
+    static_tf_fid_fl = static_tf_fid_cam("front_left_camera_link_optical", "0.25", "0.20", "0.15", "0")
+    static_tf_fid_fr = static_tf_fid_cam("front_right_camera_link_optical", "0.25", "-0.20", "0.15", "0")
+    static_tf_fid_bl = static_tf_fid_cam("back_left_camera_link_optical", "-0.25", "0.20", "0.15", "3.14159")
+    static_tf_fid_br = static_tf_fid_cam("back_right_camera_link_optical", "-0.25", "-0.20", "0.15", "3.14159")
 
     return LaunchDescription([
         DeclareLaunchArgument("use_sim_time", default_value="false", description="Use sim time"),
@@ -129,4 +157,8 @@ def generate_launch_description():
         front_right,
         back_left,
         back_right,
+        static_tf_fid_fl,
+        static_tf_fid_fr,
+        static_tf_fid_bl,
+        static_tf_fid_br,
     ])

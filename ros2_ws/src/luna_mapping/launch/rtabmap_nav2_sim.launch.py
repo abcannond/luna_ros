@@ -17,10 +17,10 @@ This should be launched AFTER gz_bringup.launch.py is running.
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, GroupAction
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription, GroupAction, TimerAction
 from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node, SetRemap
 from launch_ros.descriptions import ParameterFile
 
@@ -67,6 +67,13 @@ def generate_launch_description():
     )
     sim = LaunchConfiguration('sim', default='true')
 
+    declare_clear_costmap_on_start = DeclareLaunchArgument(
+        'clear_costmap_on_start',
+        default_value='true',
+        description='If true, clear local and global costmaps once after Nav2 is up (fresh run).'
+    )
+    clear_costmap_on_start = LaunchConfiguration('clear_costmap_on_start', default='true')
+
     # ============================================================
     # RTAB-Map configuration
     # ============================================================
@@ -108,11 +115,11 @@ def generate_launch_description():
             {'Grid/RayTracing': 'true'},
             {'Grid/CellSize': '0.05'},
             {'Grid/RangeMax': '5.0'},
-            {'Grid/RangeMin': '0.4'},
-            {'Grid/MaxGroundHeight': '0.15'},
+            {'Grid/RangeMin': '0.5'},
+            {'Grid/MaxGroundHeight': '0.20'},
             {'Grid/MaxObstacleHeight': '2.0'},
             # Publish occupancy grid
-            {'Rtabmap/DetectionRate': '1.0'},
+            {'Rtabmap/DetectionRate': '2.0'},
         ],
         remappings=rtabmap_remappings,
         arguments=['--delete_db_on_start']
@@ -171,8 +178,8 @@ def generate_launch_description():
         parameters=[{
             'input_topic': '/camera/camera/depth/image_rect_raw',
             'output_topic': '/camera/camera/depth/image_rect_raw_filtered',
-            'mask_regions': '',  # Add regions: "x,y,w,h;x,y,w,h" (normalized 0-1)
-            'ground_crop_bottom': 0.0,  # No FOV crop - use mask only
+            'mask_regions': '',
+            'ground_crop_bottom': 0.06,
         }]
     )
 
@@ -407,7 +414,7 @@ def generate_launch_description():
     # ============================================================
     # RViz (optional)
     # ============================================================
-    rviz_config = os.path.join(luna_mapping_dir, 'config', 'rtabmap_nav2.rviz')
+    rviz_config = os.path.join(luna_mapping_dir, 'config', 'rtabmap_nav2_with_fid_cams.rviz')
     
     rviz_node = Node(
         condition=IfCondition(launch_rviz),
@@ -504,6 +511,7 @@ def generate_launch_description():
         declare_launch_nav2,
         declare_launch_rviz,
         declare_sim,
+        declare_clear_costmap_on_start,
 
         # Static TF transforms (sim only; hardware uses robot + hardware_bringup TFs)
         static_tf_odom_base,
@@ -532,6 +540,28 @@ def generate_launch_description():
 
         # Nav2
         nav2_nodes,
+
+        # Clear costmap once after Nav2 is up (so each run starts with a clean costmap)
+        TimerAction(
+            period=18.0,
+            actions=[
+                ExecuteProcess(
+                    name='clear_costmap_once',
+                    cmd=[
+                        'bash', '-c',
+                        'sleep 2; '
+                        'for i in $(seq 1 15); do '
+                        'ros2 service call /local_costmap/clear_entirely_local_costmap nav2_msgs/srv/ClearEntireCostmap "{}" 2>/dev/null && '
+                        'ros2 service call /global_costmap/clear_entirely_global_costmap nav2_msgs/srv/ClearEntireCostmap "{}" 2>/dev/null && break; '
+                        'sleep 2; done'
+                    ],
+                    output='log',
+                )
+            ],
+            condition=IfCondition(
+                PythonExpression(["'", launch_nav2, "' == 'true' and '", clear_costmap_on_start, "' == 'true'"])
+            ),
+        ),
 
         # RViz
         rviz_node,
