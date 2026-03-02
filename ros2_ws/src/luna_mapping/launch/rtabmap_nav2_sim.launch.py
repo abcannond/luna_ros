@@ -8,6 +8,7 @@ This launch file integrates:
 - Nav2 for navigation and path planning
 - Depth-to-LaserScan for obstacle detection
 - Depth-to-PointCloud for 3D obstacle avoidance
+
 Usage:
   ros2 launch luna_mapping rtabmap_nav2_sim.launch.py
 
@@ -26,62 +27,41 @@ from launch_ros.descriptions import ParameterFile
 
 
 def generate_launch_description():
-    # Package directories
     luna_mapping_dir = get_package_share_directory('luna_mapping')
     luna_nav_dir = get_package_share_directory('luna_nav')
-    
-    # Launch arguments
+
     use_sim_time = LaunchConfiguration('use_sim_time')
     use_rtabmap_odom = LaunchConfiguration('use_rtabmap_odom')
     launch_nav2 = LaunchConfiguration('launch_nav2')
     launch_rviz = LaunchConfiguration('launch_rviz')
-    
+
     declare_use_sim_time = DeclareLaunchArgument(
-        'use_sim_time',
-        default_value='true',
-        description='Use simulation time'
-    )
-    
+        'use_sim_time', default_value='true',
+        description='Use simulation time')
     declare_use_rtabmap_odom = DeclareLaunchArgument(
-        'use_rtabmap_odom',
-        default_value='false',
-        description='Use RTAB-Map visual odometry (set false if using Gazebo odom)'
-    )
-    
+        'use_rtabmap_odom', default_value='false',
+        description='Use RTAB-Map visual odometry instead of wheel/Gazebo odom')
     declare_launch_nav2 = DeclareLaunchArgument(
-        'launch_nav2',
-        default_value='true',
-        description='Launch Nav2 stack'
-    )
-    
+        'launch_nav2', default_value='true',
+        description='Launch Nav2 stack')
     declare_launch_rviz = DeclareLaunchArgument(
-        'launch_rviz',
-        default_value='false',
-        description='Launch RViz (set false if already running from gz_bringup)'
-    )
-
+        'launch_rviz', default_value='false',
+        description='Launch RViz')
     declare_sim = DeclareLaunchArgument(
-        'sim',
-        default_value='true',
-        description='If true, add sim-only static TFs (odom, Gazebo camera frames). Set false for hardware.'
-    )
+        'sim', default_value='true',
+        description='If true, publish sim-only Gazebo<->ROS frame aliases. Set false for hardware.')
     sim = LaunchConfiguration('sim', default='true')
-
     declare_clear_costmap_on_start = DeclareLaunchArgument(
-        'clear_costmap_on_start',
-        default_value='true',
-        description='If true, clear local and global costmaps once after Nav2 is up (fresh run).'
-    )
+        'clear_costmap_on_start', default_value='true',
+        description='Clear local and global costmaps once after Nav2 is up.')
     clear_costmap_on_start = LaunchConfiguration('clear_costmap_on_start', default='true')
 
     # ============================================================
-    # RTAB-Map configuration
+    # RTAB-Map SLAM
     # ============================================================
     rtabmap_params_file = os.path.join(luna_mapping_dir, 'config', 'rtabmap_sim.yaml')
-    
-    # Topic remappings for RTAB-Map
-    # Use _fixed image topics so frame_id matches camera_info (both ROS frames).
-    # Raw bridge topics have Gazebo frame_ids; RTAB-Map needs consistent frame_ids to sync.
+
+    # RTAB-Map subscribes to frame-fixed topics so frame_ids match the URDF TF tree
     rtabmap_remappings = [
         ('rgb/image', '/camera/camera/color/image_raw_fixed'),
         ('rgb/camera_info', '/camera/camera/color/camera_info_fixed'),
@@ -92,7 +72,6 @@ def generate_launch_description():
         ('grid_map', '/map'),
     ]
 
-    # RTAB-Map SLAM node
     rtabmap_slam = Node(
         package='rtabmap_slam',
         executable='rtabmap',
@@ -108,24 +87,30 @@ def generate_launch_description():
             {'odom_frame_id': 'odom'},
             {'map_frame_id': 'map'},
             {'approx_sync': True},
+            {'approx_sync_max_interval': 0.02},
             {'qos_image': 2},
             {'qos_camera_info': 2},
-            # Grid map (occupancy grid) parameters
+            # Occupancy grid from depth
             {'Grid/FromDepth': 'true'},
             {'Grid/RayTracing': 'true'},
             {'Grid/CellSize': '0.05'},
             {'Grid/RangeMax': '5.0'},
-            {'Grid/RangeMin': '0.5'},
-            {'Grid/MaxGroundHeight': '0.20'},
+            {'Grid/RangeMin': '0.4'},
+            {'Grid/MaxGroundHeight': '0.15'},
             {'Grid/MaxObstacleHeight': '2.0'},
-            # Publish occupancy grid
+            {'Grid/NormalsSegmentation': 'true'},
+            {'Grid/MaxGroundAngle': '30'},
+            {'Grid/FlatObstacleDetected': 'false'},
+            {'Grid/FootprintLength': '0.65'},
+            {'Grid/FootprintWidth': '0.53'},
+            {'Grid/FootprintHeight': '0.40'},
             {'Rtabmap/DetectionRate': '2.0'},
         ],
         remappings=rtabmap_remappings,
         arguments=['--delete_db_on_start']
     )
-    
-    # RTAB-Map visual odometry (optional, disabled by default since Gazebo provides odom)
+
+    # RTAB-Map visual odometry (optional - for when wheel odom is unreliable)
     rtabmap_odom = Node(
         condition=IfCondition(use_rtabmap_odom),
         package='rtabmap_odom',
@@ -138,8 +123,17 @@ def generate_launch_description():
             {'frame_id': 'base_link'},
             {'odom_frame_id': 'odom'},
             {'publish_tf': True},
+            {'wait_for_transform': 0.2},
             {'approx_sync': True},
+            {'approx_sync_max_interval': 0.02},
             {'qos': 2},
+            {'Odom/Strategy': '0'},
+            {'Odom/GuessMotion': 'true'},
+            {'Odom/ResetCountdown': '0'},
+            {'Vis/FeatureType': '8'},
+            {'Vis/MaxFeatures': '1500'},
+            {'Vis/MinInliers': '15'},
+            {'Vis/CorType': '0'},
         ],
         remappings=[
             ('rgb/image', '/camera/camera/color/image_raw_fixed'),
@@ -148,9 +142,9 @@ def generate_launch_description():
             ('depth/camera_info', '/camera/camera/depth/camera_info_fixed'),
         ]
     )
-    
+
     # ============================================================
-    # Depth to RGB (colorized for RViz display)
+    # Depth visualization (colorized for RViz)
     # ============================================================
     depth_to_rgb = Node(
         package='luna_mapping',
@@ -165,10 +159,7 @@ def generate_launch_description():
     )
 
     # ============================================================
-    # Depth static mask: zero fixed regions (fiducials, self-obstacles).
-    # Format: "x,y,w,h;x,y,w,h" normalized 0-1 (top-left + size).
-    # Identify regions from depth image - fiducials appear at same pixels.
-    # Example: "0.75,0,0.25,0.35" = right 25%, top 35%.
+    # Depth FOV filter (ground crop + mask regions for costmap)
     # ============================================================
     depth_fov_filter = Node(
         package='luna_mapping',
@@ -179,18 +170,16 @@ def generate_launch_description():
             'input_topic': '/camera/camera/depth/image_rect_raw',
             'output_topic': '/camera/camera/depth/image_rect_raw_filtered',
             'mask_regions': '',
-            'ground_crop_bottom': 0.06,
+            'ground_crop_bottom': 0.05,
         }]
     )
 
     # ============================================================
-    # Camera info and image frame_id fixers
+    # Frame ID fixers
+    # Gazebo bridge uses internal frame names (e.g. mooncake/base_link/d455_rgb_camera).
+    # RTAB-Map and Nav2 need standard optical frame names that exist in the URDF TF tree.
+    # These nodes republish with corrected frame_id on *_fixed topics.
     # ============================================================
-    # Gazebo's ros_gz_bridge sets camera_info and image frame_id to Gazebo sensor names
-    # (e.g., "mooncake/base_link/d455_rgb_camera"), but RTAB-Map expects
-    # standard ROS frame names (e.g., "camera_color_optical_frame").
-    # These nodes republish messages with corrected frame_id.
-    
     camera_info_fixer_color = Node(
         package='luna_mapping',
         executable='camera_info_fixer',
@@ -202,7 +191,7 @@ def generate_launch_description():
             'output_frame_id': 'camera_color_optical_frame',
         }]
     )
-    
+
     camera_info_fixer_depth = Node(
         package='luna_mapping',
         executable='camera_info_fixer',
@@ -214,8 +203,7 @@ def generate_launch_description():
             'output_frame_id': 'camera_depth_optical_frame',
         }]
     )
-    
-    # Fix RGB image frame_id (for point cloud alignment)
+
     image_frame_fixer_rgb = Node(
         package='luna_mapping',
         executable='image_frame_fixer',
@@ -227,8 +215,8 @@ def generate_launch_description():
             'output_frame_id': 'camera_color_optical_frame',
         }]
     )
-    
-    # Fix depth image frame_id for RTAB-Map (uses raw depth - RTAB-Map needs reliable input)
+
+    # Raw depth -> fixed frame for RTAB-Map (unfiltered for best map quality)
     image_frame_fixer_depth_rtabmap = Node(
         package='luna_mapping',
         executable='image_frame_fixer',
@@ -241,7 +229,7 @@ def generate_launch_description():
         }]
     )
 
-    # Fix depth image frame_id for laserscan (filtered depth - right crop removes trailing)
+    # Filtered depth -> fixed frame for laserscan (ground-cropped)
     image_frame_fixer_depth_laserscan = Node(
         package='luna_mapping',
         executable='image_frame_fixer',
@@ -254,7 +242,7 @@ def generate_launch_description():
         }]
     )
 
-    # Fix depth image frame_id to match RGB (for point cloud alignment)
+    # Filtered depth -> color optical frame for point cloud alignment
     image_frame_fixer_depth_pointcloud = Node(
         package='luna_mapping',
         executable='image_frame_fixer',
@@ -263,16 +251,14 @@ def generate_launch_description():
         parameters=[{
             'input_topic': '/camera/camera/depth/image_rect_raw_filtered',
             'output_topic': '/camera/camera/depth/image_rect_raw_aligned',
-            'output_frame_id': 'camera_color_optical_frame',  # Match RGB for alignment
+            'output_frame_id': 'camera_color_optical_frame',
         }]
     )
-    
+
     # ============================================================
-    # Depth image processing
+    # Depth to LaserScan (2D obstacle detection)
+    # Uses FILTERED depth so ground returns don't appear as obstacles.
     # ============================================================
-    
-    # Depth to LaserScan for Nav2 obstacle layer
-    # Output: /scan (2D "fake lidar" scan derived from depth)
     depth_to_laserscan = Node(
         package='depthimage_to_laserscan',
         executable='depthimage_to_laserscan_node',
@@ -280,22 +266,21 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'use_sim_time': use_sim_time,
-            'scan_height': 30,  # Taller band to capture rocks (lower rows) and walls
+            'scan_height': 40,
             'scan_time': 0.033,
-            'range_min': 0.5,  # Ignore robot body (camera ~0.3m in front, wheel pods ~0.4m to sides)
-            'range_max': 3.5,   # Cap long rays to avoid white bar in costmap (match obstacle_max_range)
+            'range_min': 0.4,
+            'range_max': 4.0,
             'output_frame_id': 'camera_depth_optical_frame',
         }],
         remappings=[
-            ('depth', '/camera/camera/depth/image_rect_raw_fixed'),  # Raw depth (same as RTAB-Map) - filtered was too aggressive, no obstacles
+            ('depth', '/camera/camera/depth/image_rect_raw_fixed_for_scan'),
             ('depth_camera_info', '/camera/camera/depth/camera_info_fixed'),
-            ('scan', '/scan'),  # Standard Nav2 input topic
+            ('scan', '/scan'),
         ]
     )
-    
-    # Depth to PointCloud2 for voxel layer (if not using Gazebo's point cloud)
-    # Output: /camera/camera/depth/color/points (aligned to color)
-    # Uses fixed image topics with matching frame_ids
+
+    # Depth to PointCloud2 (3D voxel layer input)
+    # Uses filtered depth aligned to color frame for proper XYZRGB point cloud
     depth_to_pointcloud = Node(
         package='depth_image_proc',
         executable='point_cloud_xyzrgb_node',
@@ -309,17 +294,32 @@ def generate_launch_description():
             ('points', '/camera/camera/depth/color/points'),
         ]
     )
-    
+
+    # Height-based ground filter: remove points below min_height in base_link.
+    # Keeps rocks and crates (above ground), avoids blind band from image crop.
+    height_filter_pointcloud = Node(
+        package='luna_mapping',
+        executable='height_filter_pointcloud',
+        name='height_filter_pointcloud',
+        output='log',
+        parameters=[{
+            'use_sim_time': use_sim_time,
+            'input_topic': '/camera/camera/depth/color/points',
+            'output_topic': '/camera/camera/depth/color/points_ground_filtered',
+            'target_frame': 'base_link',
+            'min_height': 0.02,
+            'max_height': 2.0,
+        }],
+    )
+
     # ============================================================
     # Nav2 stack
     # ============================================================
     nav2_params_file = os.path.join(luna_nav_dir, 'config', 'nav2_rtabmap_params.yaml')
-    
-    # Nav2 lifecycle nodes
+
     nav2_nodes = GroupAction(
         condition=IfCondition(launch_nav2),
         actions=[
-            # Controller server (outputs to cmd_vel_nav for velocity smoother)
             Node(
                 package='nav2_controller',
                 executable='controller_server',
@@ -328,8 +328,6 @@ def generate_launch_description():
                 parameters=[nav2_params_file, {'use_sim_time': use_sim_time}],
                 remappings=[('cmd_vel', 'cmd_vel_nav')]
             ),
-            
-            # Planner server
             Node(
                 package='nav2_planner',
                 executable='planner_server',
@@ -337,8 +335,6 @@ def generate_launch_description():
                 output='screen',
                 parameters=[nav2_params_file, {'use_sim_time': use_sim_time}]
             ),
-            
-            # Behavior server (outputs to cmd_vel_nav for velocity smoother)
             Node(
                 package='nav2_behaviors',
                 executable='behavior_server',
@@ -347,8 +343,6 @@ def generate_launch_description():
                 parameters=[nav2_params_file, {'use_sim_time': use_sim_time}],
                 remappings=[('cmd_vel', 'cmd_vel_nav')]
             ),
-            
-            # BT Navigator
             Node(
                 package='nav2_bt_navigator',
                 executable='bt_navigator',
@@ -356,8 +350,6 @@ def generate_launch_description():
                 output='screen',
                 parameters=[nav2_params_file, {'use_sim_time': use_sim_time}]
             ),
-            
-            # Waypoint follower
             Node(
                 package='nav2_waypoint_follower',
                 executable='waypoint_follower',
@@ -365,8 +357,6 @@ def generate_launch_description():
                 output='screen',
                 parameters=[nav2_params_file, {'use_sim_time': use_sim_time}]
             ),
-            
-            # Smoother server
             Node(
                 package='nav2_smoother',
                 executable='smoother_server',
@@ -374,8 +364,6 @@ def generate_launch_description():
                 output='screen',
                 parameters=[nav2_params_file, {'use_sim_time': use_sim_time}]
             ),
-            
-            # Velocity smoother
             Node(
                 package='nav2_velocity_smoother',
                 executable='velocity_smoother',
@@ -383,12 +371,10 @@ def generate_launch_description():
                 output='screen',
                 parameters=[nav2_params_file, {'use_sim_time': use_sim_time}],
                 remappings=[
-                    ('cmd_vel', 'cmd_vel_nav'),  # Input from Nav2
-                    ('cmd_vel_smoothed', 'cmd_vel'),  # Output to robot base
+                    ('cmd_vel', 'cmd_vel_nav'),
+                    ('cmd_vel_smoothed', 'cmd_vel'),
                 ]
             ),
-            
-            # Lifecycle manager
             Node(
                 package='nav2_lifecycle_manager',
                 executable='lifecycle_manager',
@@ -410,12 +396,12 @@ def generate_launch_description():
             ),
         ]
     )
-    
+
     # ============================================================
-    # RViz (optional)
+    # RViz
     # ============================================================
     rviz_config = os.path.join(luna_mapping_dir, 'config', 'rtabmap_nav2_with_fid_cams.rviz')
-    
+
     rviz_node = Node(
         condition=IfCondition(launch_rviz),
         package='rviz2',
@@ -425,87 +411,37 @@ def generate_launch_description():
         arguments=['-d', rviz_config] if os.path.exists(rviz_config) else [],
         parameters=[{'use_sim_time': use_sim_time}]
     )
-    
+
     # ============================================================
-    # Static transforms for camera frames and odometry
+    # Static transforms (sim-only: Gazebo frame aliases)
+    #
+    # NOTE: odom->base_link is NOT published here.
+    # In sim, LunaController publishes dynamic odom->base_link from wheel odom.
+    # On hardware, the robot driver provides it.
+    #
+    # RSP (robot_state_publisher) already publishes the full URDF chain:
+    #   base_link -> depth_camera_link -> camera_color_optical_frame
+    #   base_link -> depth_camera_link -> camera_depth_optical_frame
+    #   base_link -> depth_camera_link -> camera_link
+    # These sim-only TFs are ONLY for Gazebo-internal frame name aliases
+    # that appear in un-fixed topics (not used by the pipeline, but avoids
+    # "frame not found" warnings in rviz/diagnostics).
     # ============================================================
-    # Initial odom -> base_link (identity). Sim only; on hardware the robot driver provides odom.
-    static_tf_odom_base = Node(
-        condition=IfCondition(sim),
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='static_tf_odom_base',
-        arguments=[
-            '0', '0', '0',  # x, y, z (identity)
-            '0', '0', '0',  # roll, pitch, yaw (identity)
-            'odom',  # parent frame
-            'base_link'  # child frame
-        ],
-        output='screen'
-    )
-    
-    # Transform from base_link to Gazebo RGB camera frame (sim only).
-    static_tf_gazebo_rgb = Node(
-        condition=IfCondition(sim),
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='static_tf_base_to_gazebo_rgb',
-        arguments=[
-            '0.3', '0.1', '0.65',  # x, y, z (from URDF: depth_camera_joint)
-            '-1.5708', '1', '-1.5708',  # roll, pitch, yaw (URDF + optical rotation)
-            'base_link',  # parent frame
-            'mooncake/base_link/d455_rgb_camera'  # Gazebo frame (from camera_info)
-        ],
-        output='screen'
-    )
-    
-    # Transform from base_link to Gazebo depth camera frame (sim only).
-    static_tf_gazebo_depth = Node(
-        condition=IfCondition(sim),
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='static_tf_base_to_gazebo_depth',
-        arguments=[
-            '0.3', '0.1', '0.65',  # x, y, z (from URDF)
-            '-1.5708', '1', '-1.5708',  # roll, pitch, yaw (URDF + optical rotation)
-            'base_link',  # parent frame
-            'mooncake/base_link/d455_depth_camera'  # Gazebo frame
-        ],
-        output='screen'
-    )
-    
-    # Ensure camera_link exists (sim only; hardware_bringup publishes base_link->camera_link).
-    static_tf_camera_link = Node(
-        condition=IfCondition(sim),
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='static_tf_camera_link',
-        arguments=[
-            '0.3', '0.1', '0.65',  # x, y, z (from URDF: depth_camera_joint)
-            '0', '1', '0',  # roll, pitch, yaw (from URDF)
-            'base_link',  # parent frame
-            'camera_link'  # child frame
-        ],
-        output='screen'
-    )
-    
-    # camera_depth_frame: used by Gazebo bridge (sim only).
     static_tf_camera_depth_frame = Node(
         condition=IfCondition(sim),
         package='tf2_ros',
         executable='static_transform_publisher',
         name='static_tf_camera_depth_frame',
         arguments=[
-            '0', '0', '0',  # identity (same as camera_depth_optical_frame)
             '0', '0', '0',
-            'camera_depth_optical_frame',  # parent
-            'camera_depth_frame'  # child - frame_id from Gazebo bridge
+            '0', '0', '0',
+            'camera_depth_optical_frame',
+            'camera_depth_frame'
         ],
         output='screen'
     )
 
     return LaunchDescription([
-        # Launch arguments
         declare_use_sim_time,
         declare_use_rtabmap_odom,
         declare_launch_nav2,
@@ -513,16 +449,14 @@ def generate_launch_description():
         declare_sim,
         declare_clear_costmap_on_start,
 
-        # Static TF transforms (sim only; hardware uses robot + hardware_bringup TFs)
-        static_tf_odom_base,
-        static_tf_gazebo_rgb,
-        static_tf_gazebo_depth,
-        static_tf_camera_link,
-        static_tf_camera_depth_frame,  # Nav2 voxel_layer needs this for point cloud frame_id
+        # Sim-only TF alias (RSP provides the actual camera chain from URDF)
+        static_tf_camera_depth_frame,
 
+        # Depth processing
         depth_to_rgb,
-        # Depth FOV filter (narrows FOV to exclude fiducial cams) then fixers
         depth_fov_filter,
+
+        # Frame fixers
         camera_info_fixer_color,
         camera_info_fixer_depth,
         image_frame_fixer_rgb,
@@ -534,14 +468,15 @@ def generate_launch_description():
         rtabmap_slam,
         rtabmap_odom,
 
-        # Depth processing
+        # Depth to scan + point cloud + height filter
         depth_to_laserscan,
         depth_to_pointcloud,
+        height_filter_pointcloud,
 
         # Nav2
         nav2_nodes,
 
-        # Clear costmap once after Nav2 is up (so each run starts with a clean costmap)
+        # One-time costmap clear after Nav2 initializes
         TimerAction(
             period=18.0,
             actions=[
@@ -563,6 +498,5 @@ def generate_launch_description():
             ),
         ),
 
-        # RViz
         rviz_node,
     ])

@@ -69,12 +69,12 @@ def main(args=None):
     finally:
         try:
             node.destroy_node()
-        except:
+        except Exception:
             pass
         try:
             rclpy.shutdown()
-        except:
-            pass  # Ignore shutdown errors - launch handles cleanup
+        except Exception:
+            pass
 
 
 if __name__ == '__main__':

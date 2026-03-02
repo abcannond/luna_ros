@@ -16,10 +16,10 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='root',
-    maintainer_email='root@todo.todo',
-    description='Luna navigation package (Nav2, zone publisher)',
-    license='TODO: License declaration',
+    maintainer='lunabot',
+    maintainer_email='the.sam.rooney@gmail.com',
+    description='Nav2 integration and arena zone publisher for WPI Lunabotics',
+    license='MIT',
     entry_points={
         'console_scripts': [
             'zone_publisher = luna_nav.zone_publisher:main',

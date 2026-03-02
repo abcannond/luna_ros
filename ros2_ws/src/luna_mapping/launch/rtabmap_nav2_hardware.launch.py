@@ -34,6 +34,11 @@ def generate_launch_description():
             default_value="true",
             description="If true, run multi-camera fiducial localizer (all 4 cams) for pose.",
         ),
+        DeclareLaunchArgument(
+            "use_rtabmap_odom",
+            default_value="true",
+            description="Use RTAB-Map visual odometry (set false if robot driver publishes /odom).",
+        ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 os.path.join(luna_mapping_dir, "launch", "rtabmap_nav2_sim.launch.py")
@@ -41,6 +46,7 @@ def generate_launch_description():
             launch_arguments={
                 "use_sim_time": "false",
                 "sim": "false",
+                "use_rtabmap_odom": LaunchConfiguration("use_rtabmap_odom", default="true"),
                 "launch_rviz": "true",
                 "launch_nav2": "true",
             }.items(),

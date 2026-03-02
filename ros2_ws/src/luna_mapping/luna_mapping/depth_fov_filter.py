@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 Static mask for depth image: zero out fixed pixel regions.
-Use for fiducial cameras and other self-obstacles that are static in camera view.
-Format: "x,y,w,h;x,y,w,h" in normalized coords (0-1). x,y = top-left, w,h = size.
-Example: "0.75,0,0.25,0.35" = right 25%, top 35% (one fiducial).
+- crop_left / crop_right: zero out this fraction of width on left/right (horizontal FOV crop).
+- mask_regions: "x,y,w,h;..." for fiducials/self-obstacles.
+- ground_crop_bottom: zero out this fraction of height at bottom.
 """
 
 import rclpy
@@ -38,6 +38,8 @@ class DepthFovFilter(Node):
         self.declare_parameter('output_topic', '/camera/camera/depth/image_rect_raw_filtered')
         self.declare_parameter('mask_regions', '')
         self.declare_parameter('ground_crop_bottom', 0.0)
+        self.declare_parameter('crop_left', 0.0)
+        self.declare_parameter('crop_right', 0.0)
 
         input_topic = self.get_parameter('input_topic').value
         output_topic = self.get_parameter('output_topic').value
@@ -47,6 +49,14 @@ class DepthFovFilter(Node):
             self.ground_crop_bottom = max(0.0, min(1.0, float(self.get_parameter('ground_crop_bottom').value)))
         except (TypeError, ValueError, AttributeError):
             self.ground_crop_bottom = 0.0
+        try:
+            self.crop_left = max(0.0, min(0.5, float(self.get_parameter('crop_left').value)))
+        except (TypeError, ValueError, AttributeError):
+            self.crop_left = 0.0
+        try:
+            self.crop_right = max(0.0, min(0.5, float(self.get_parameter('crop_right').value)))
+        except (TypeError, ValueError, AttributeError):
+            self.crop_right = 0.0
 
         self.publisher_ = self.create_publisher(Image, output_topic, 10)
         self.subscription = self.create_subscription(
@@ -58,6 +68,7 @@ class DepthFovFilter(Node):
 
         self.get_logger().info(
             f'DepthFovFilter: {input_topic} -> {output_topic}, '
+            f'crop_left={self.crop_left}, crop_right={self.crop_right}, '
             f'mask_regions={len(self.mask_regions)}, ground_crop={self.ground_crop_bottom}'
         )
 
@@ -86,6 +97,10 @@ class DepthFovFilter(Node):
             return
 
         bottom_rows = int(h * self.ground_crop_bottom) if self.ground_crop_bottom > 0 else 0
+        left_cols = int(w * self.crop_left) if self.crop_left > 0 else 0
+        right_cols = int(w * self.crop_right) if self.crop_right > 0 else 0
+        if left_cols + right_cols > w:
+            right_cols = max(0, w - left_cols)
 
         for row in range(h):
             base = row * msg.step
@@ -93,6 +108,12 @@ class DepthFovFilter(Node):
             if row >= h - bottom_rows and bottom_rows > 0:
                 buf[base : base + msg.step] = b'\x00' * msg.step
                 continue
+            # Horizontal FOV crop: zero left and right columns
+            if left_cols > 0:
+                buf[base : base + left_cols * bpp] = b'\x00' * (left_cols * bpp)
+            if right_cols > 0:
+                right_byte = (w - right_cols) * bpp
+                buf[base + right_byte : base + msg.step] = b'\x00' * (right_cols * bpp)
             # Static mask regions
             for (nx, ny, nw, nh) in self.mask_regions:
                 y0 = int(ny * h)

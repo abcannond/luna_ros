@@ -149,12 +149,11 @@ The filter can mask regions (e.g. to exclude fiducial camera views) and applies 
 
 **Role:** Turn depth into the 2D and 3D representations Nav2 expects.
 
-Two nodes run from the launch:
+- **depthimage_to_laserscan** produces `/scan` (2D slice). Nav2 uses it for the obstacle layer.
+- **depth_image_proc** (point_cloud_xyzrgb) produces `/camera/camera/depth/color/points`.
+- **height_filter_pointcloud** subscribes to that cloud, transforms to `base_link`, and drops points with `z` below `min_height` (default 0.02 m) or above `max_height` (default 2.0 m). It publishes `/camera/camera/depth/color/points_ground_filtered`. Nav2’s local costmap **voxel layer** uses this filtered topic.
 
-- **depthimage_to_laserscan** produces `/scan` — a 2D slice in the depth optical frame. Nav2 uses it like a lidar for obstacle layers.
-- **depth_image_proc** (point_cloud_xyzrgb) produces `/camera/camera/depth/color/points` — a 3D point cloud aligned to the color frame. Nav2’s local costmap uses this in the voxel layer.
-
-Both subscribe to the fixed/filtered depth and camera_info topics from the launch, so frame_ids and FOV are consistent.
+Height-based filtering removes floor in 3D instead of cropping image rows, so low obstacles (rocks, crates) that sit above the ground plane are kept. Tune `min_height` / `max_height` in the launch (height_filter_pointcloud params) if needed.
 
 ### RTAB-Map
 
@@ -232,7 +231,7 @@ Each subsection states the problem, cause (where it helps), and what to do. Conf
 **What we did:**
 
 - **Costmap:** Set `transform_tolerance: 1.0` so the costmap doesn’t drop updates when TF is briefly late.
-- **Voxel layer:** Use `mark_threshold: 2` (a cell is marked only if it has at least 2 points), shorter range (`obstacle_max_range: 2.5`), and short observation persistence/delay so old observations don’t stick. Feed the voxel layer from the *ground-cropped* point cloud so the floor doesn’t create a trail.
+- **Voxel layer:** Use `mark_threshold: 2`, shorter range (`obstacle_max_range: 2.5`), and `observation_persistence: 0.2`. Feed the voxel layer from the *height-filtered* point cloud (`/camera/camera/depth/color/points_ground_filtered`) so the floor is removed in 3D (points with z &lt; min_height in base_link are dropped) and rocks/crates are kept. A small image crop (`ground_crop_bottom: 0.05`) still runs before the point cloud for the bottom strip.
 - **RTAB-Map:** Set `Rtabmap/DetectionRate: 2.0` so map (and thus map→odom) updates more often when turning.
 - **Noise:** In the costmap, `mark_threshold: 2` filters single-point voxels. In RTAB-Map’s grid, `Grid/RangeMin: 0.5`, `NoiseFilteringMinNeighbors: 6`, and `MinClusterSize: 10` keep the map clean while retaining real obstacles.
 
@@ -334,7 +333,6 @@ Other options: rely on loop closures for global map consistency (they don’t fi
 
 ### Build / workspace
 
-- **quad_swerve_controller “not found”:** Harmless. The workspace may reference an ignored package; it doesn’t affect Gazebo, RTAB-Map, or Nav2.
 - **twist_stamper not found:** Run `colcon build --symlink-install --packages-select twist_stamper`, then `source install/setup.bash`.
 - **Duplicate package names / CMake errors:** Run `drun` (or `run_ros_image.sh`) from the **repo root** (the `luna_ros` directory). If the workspace mount was wrong and the layout is broken, from inside the container run: `cd /ros2_ws && rm -rf build install`, then `source /opt/ros/jazzy/setup.bash && colcon build --symlink-install && source install/setup.bash`.
 

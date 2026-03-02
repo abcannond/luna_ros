@@ -1,19 +1,30 @@
 # Luna ROS
 
-ROS 2 Jazzy stack for the WPI Lunabotics robot: **Gazebo Harmonic** sim, **RTAB-Map** SLAM, **Nav2**, and the same pipeline on **real hardware** (RealSense D455 + 4× Nexigo N980P). Runs in Docker (Ubuntu 24.04; Jetson via separate image).
+ROS 2 Jazzy autonomy stack for the **WPI Lunabotics** robot. Provides SLAM, navigation, and fiducial-based localization for the Lunabotics competition arena.
+
+**Sensors:** Intel RealSense D455 (depth + RGB) and 4x Nexigo N980P (ArUco fiducial localization).
+
+**Stack:** Gazebo Harmonic simulation, RTAB-Map visual SLAM, Nav2 autonomous navigation, quad-swerve drivetrain controller via ros2_control. Runs in Docker on Ubuntu 24.04 (x86) or Jetson (ARM64).
 
 ---
 
-## What it does
+## Packages
 
-- **Sim:** Gazebo + simulated RealSense D455 (UCF or Artemis arena). RTAB-Map builds `/map`; depth → scan + point cloud; Nav2 plans and drives to goals in RViz.
-- **Hardware:** Same camera and mapping stack on Jetson with RealSense D455 and four USB fiducial cams.
+| Package | Description |
+|---------|-------------|
+| `lunabot_2425` | Robot URDF, launch files, sim/hardware bringup |
+| `luna_control` | Quad-swerve ros2_control controller (steer + drive) |
+| `luna_mapping` | RTAB-Map SLAM, depth processing, Nav2 integration |
+| `luna_nav` | Nav2 config, arena zone publisher |
+| `fiducial_localizer` | Multi-camera ArUco pose estimation (map->odom) |
+| `depth_to_pointcloud` | Depth image to PointCloud2 conversion |
+| `luna_ros2_worlds` | Gazebo arena worlds (UCF, Artemis) and models |
 
 ---
 
 ## Quick start — simulation
 
-**First time:** [INSTALL.md](INSTALL.md) (clone, Docker, build).
+**First time:** See [INSTALL.md](INSTALL.md) for clone, Docker build, and workspace setup.
 
 Inside the container:
 
@@ -22,19 +33,30 @@ cd /ros2_ws && source install/setup.bash
 ros2 launch lunabot_2425 gz_bringup.launch.py
 ```
 
-One launch runs Gazebo, then RTAB-Map, Nav2, and RViz. Use the **Nav2 Goal** tool in RViz.
+One command launches Gazebo, RTAB-Map, Nav2, and RViz. Use the **Nav2 Goal** tool in RViz to navigate.
 
-- Gazebo only: `launch_mapping:=false`
-- Other arena: `world:=artemis_arena`
+| Variant | Command |
+|---------|---------|
+| Gazebo only (no mapping) | `gz_bringup.launch.py launch_mapping:=false` |
+| Artemis arena | `gz_bringup.launch.py world:=artemis_arena` |
 
 ---
 
 ## Quick start — hardware
 
-1. **Terminal 1:** `ros2 launch lunabot_2425 hardware_bringup.launch.py`
-2. **Terminal 2:** `ros2 launch luna_mapping rtabmap_nav2_hardware.launch.py`
+**Terminal 1** — cameras and TF:
 
-Robot must publish `/odom` and `odom`→`base_link`. Details: [docs/HARDWARE.md](docs/HARDWARE.md).
+```bash
+ros2 launch lunabot_2425 hardware_bringup.launch.py
+```
+
+**Terminal 2** — RTAB-Map + Nav2:
+
+```bash
+ros2 launch luna_mapping rtabmap_nav2_hardware.launch.py
+```
+
+Your robot driver must publish `/odom` and the `odom` -> `base_link` transform.
 
 ---
 
@@ -42,14 +64,28 @@ Robot must publish `/odom` and `odom`→`base_link`. Details: [docs/HARDWARE.md]
 
 | Doc | Purpose |
 |-----|---------|
-| [INSTALL.md](INSTALL.md) | Install, build, Docker |
-| [docs/STACK_GUIDE.md](docs/STACK_GUIDE.md) | Launching sim, features, design, troubleshooting |
-| [docs/HARDWARE.md](docs/HARDWARE.md) | Hardware (Jetson, RealSense, fiducial cams) |
-| [docs/STACK_REVIEW_LUNABOTICS.md](docs/STACK_REVIEW_LUNABOTICS.md) | Competition fit, ground crop, risks, compute |
+| [INSTALL.md](INSTALL.md) | Clone, build, Docker setup |
+| [docs/STACK_GUIDE.md](docs/STACK_GUIDE.md) | Pipeline details, features, tuning, troubleshooting |
+| [docs/HARDWARE.md](docs/HARDWARE.md) | Hardware setup (Jetson, RealSense, fiducial cams) |
+| [docs/STACK_REVIEW_LUNABOTICS.md](docs/STACK_REVIEW_LUNABOTICS.md) | Competition fit analysis, risks, compute limits |
+
+---
+
+## Architecture
+
+```
+Camera (D455) ──> RTAB-Map (SLAM) ──> /map (occupancy grid)
+     │                                      │
+     ├──> Depth FOV Filter ──> Point Cloud ──> Nav2 Costmaps ──> Path Planning
+     │                    └──> LaserScan                              │
+     │                                                               v
+4x Nexigo ──> Fiducial Localizer ──> map->odom TF          /cmd_vel -> Robot
+```
 
 ---
 
 ## Requirements
 
-- Docker, Linux with X11 (e.g. Ubuntu 24.04)
-- Hardware: RealSense D455, 4× USB webcams (e.g. Nexigo N980P), optional Jetson
+- Docker, Linux with X11 (Ubuntu 24.04 recommended)
+- GPU recommended (for Gazebo rendering)
+- **Hardware:** Intel RealSense D455, 4x USB webcams (Nexigo N980P), optional NVIDIA Jetson

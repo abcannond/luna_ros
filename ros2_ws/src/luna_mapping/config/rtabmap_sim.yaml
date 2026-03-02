@@ -1,76 +1,92 @@
-# RTAB-Map parameters for simulation with RealSense D455
-# Configured for occupancy grid generation and Nav2 integration
-# Parameters are at top level (not nested) for RTAB-Map nodes
+# RTAB-Map parameters for Lunabotics (sim + hardware)
+# Optimized for accurate occupancy grid generation and reliable visual SLAM
 
 /**:
   ros__parameters:
-    # Frame configuration
     frame_id: "base_link"
     odom_frame_id: "odom"
     map_frame_id: "map"
-    
-    # Subscription configuration
+
     subscribe_depth: true
     subscribe_rgb: true
     subscribe_rgbd: false
     subscribe_scan: false
     subscribe_scan_cloud: false
     subscribe_odom_info: false
-    
-    # Synchronization
+
     approx_sync: true
     sync_queue_size: 10
-    
-    # QoS (2 = Best Effort for simulation)
+
+    # QoS (2 = Best Effort for Gazebo bridge)
     qos_image: 2
     qos_camera_info: 2
     qos_odom: 2
-    
-    # Database
-    database_path: ""  # Empty = don't save to file
-    
-    # RTAB-Map core parameters (prioritize map accuracy)
-    Rtabmap/DetectionRate: "2.0"  # 2 Hz map→odom updates; reduces cost "trail" when turning
+
+    database_path: ""
+
+    # --- SLAM core ---
+    Rtabmap/DetectionRate: "2.0"
     Rtabmap/TimeThr: "0.0"
     Rtabmap/MemoryThr: "0"
-    
-    # Memory management
+
+    # Memory
     Mem/IncrementalMemory: "true"
     Mem/InitWMWithAllNodes: "false"
     Mem/STMSize: "30"
-    
-    # Feature detection (for visual odometry)
-    Vis/FeatureType: "8"  # ORB
-    Vis/MaxFeatures: "1000"
-    Vis/MinInliers: "20"
-    
+
+    # Feature detection (ORB is fast and works well for textured lunar terrain)
+    Vis/FeatureType: "8"
+    Vis/MaxFeatures: "1500"
+    Vis/MinInliers: "15"
+    Vis/CorType: "0"
+
+    # Registration (visual registration for loop closures)
+    Reg/Strategy: "0"
+    Reg/Force3DoF: "true"
+
     # Odometry
-    Odom/Strategy: "0"  # Frame-to-Map
+    Odom/Strategy: "0"
     Odom/ResetCountdown: "0"
     Odom/GuessMotion: "true"
-    
-    # Grid map parameters (occupancy grid for Nav2; finer = more accurate map)
+
+    # --- Occupancy grid ---
     Grid/FromDepth: "true"
-    Grid/MaxGroundHeight: "0.20"  # Treat more as ground; depth_fov_filter also crops floor
-    Grid/MaxObstacleHeight: "2.0"
-    Grid/MinClusterSize: "10"  # Allow smaller clusters so distant/small rocks aren't dropped (was 20)
     Grid/RayTracing: "true"
     Grid/3D: "false"
     Grid/CellSize: "0.05"
     Grid/RangeMax: "5.0"
-    Grid/RangeMin: "0.5"  # Ignore very close points (floor/noise) - reduces trailing
-    Grid/DepthDecimation: "5"  # Valid for 1280x720; 6 is invalid for this resolution
+    Grid/RangeMin: "0.5"
+
+    # Ground segmentation using surface normals (much more accurate than height-only)
+    Grid/NormalsSegmentation: "true"
+    Grid/MaxGroundAngle: "30"
+    Grid/MaxGroundHeight: "0.15"
+    Grid/MaxObstacleHeight: "2.0"
+    Grid/FlatObstacleDetected: "false"
+
+    # Robot footprint for grid clearing under the robot
+    Grid/FootprintLength: "0.65"
+    Grid/FootprintWidth: "0.53"
+    Grid/FootprintHeight: "0.40"
+
+    # Clustering (small enough to catch individual rocks)
+    Grid/MinClusterSize: "10"
+    Grid/ClusterRadius: "0.1"
+
+    # Noise filtering
     Grid/NoiseFilteringRadius: "0.1"
-    Grid/NoiseFilteringMinNeighbors: "6"  # Slightly stricter so single noisy points don't become obstacles
-    
+    Grid/NoiseFilteringMinNeighbors: "5"
+    Grid/DepthDecimation: "4"
+
     # Optimizer
-    Optimizer/Strategy: "1"  # g2o
+    Optimizer/Strategy: "1"
     Optimizer/Iterations: "20"
-    
-    # Loop closure
+
+    # Loop closure and proximity
     RGBD/NeighborLinkRefining: "true"
     RGBD/AngularUpdate: "0.1"
     RGBD/LinearUpdate: "0.1"
     RGBD/OptimizeFromGraphEnd: "false"
     RGBD/ProximityBySpace: "true"
+    RGBD/ProximityByTime: "false"
     RGBD/ProximityMaxGraphDepth: "0"

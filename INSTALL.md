@@ -1,78 +1,70 @@
 # Installation & Setup
 
 ## Overview
-This file contains everything required to install, build, and update the luna_ros
-environment. Runtime launch commands are intentionally excluded.
+
+All ROS 2 commands run inside a Docker container. Git and Docker commands run on the host.
+
+| Where | What |
+|-------|------|
+| **Host** (repo root: `luna_ros`) | Git, Docker build/run |
+| **Inside container** | `colcon build`, `ros2 launch`, etc. |
 
 ---
 
-## Where You Run Things
+## Optional: Shell aliases
 
-Host (repo root: luna_ros):
-- Git
-- Docker
+Add to `~/.bashrc` (then `source ~/.bashrc`):
 
-Inside Docker container:
-- ROS commands
-- Either:
-  - the shell from run_ros_image.sh, or
-  - a new terminal via dbash or:
-    docker exec -it <CONTAINER_ID> /bin/bash
-
----
-
-## Optional: Shell Aliases
-(Run once per machine — avoids typing long commands)
-
-Add these to ~/.bashrc (nano ~/.bashrc, paste at end, save), then run:
-  source ~/.bashrc
-
-Aliases:
-  alias dbld='docker build -t luna_ros:latest .'
-  alias dbld_nc='docker build --no-cache -t luna_ros:latest .'
-  alias drun='./run_ros_image.sh luna_ros:latest'
-  alias dbash='docker exec -it $(docker ps -q -f "ancestor=luna_ros:latest") /bin/bash'
-  alias gitmod='git submodule update --init --recursive'
-
-After that, you can use:
-  dbld      build
-  dbld_nc  clean build
-  drun      run container
-  dbash     new shell in container
-  gitmod    update submodules
+```bash
+alias dbld='docker build -t luna_ros:latest .'
+alias dbld_nc='docker build --no-cache -t luna_ros:latest .'
+alias drun='./run_ros_image.sh luna_ros:latest'
+alias dbash='docker exec -it $(docker ps -q -f "ancestor=luna_ros:latest") /bin/bash'
+alias gitmod='git submodule update --init --recursive'
+```
 
 ---
 
-## FIRST TIME
-(Once per machine or fresh clone)
+## First time setup
 
-Host, repo root:
+On the host, from any directory:
 
-  git clone git@github.com:abcannond/luna_ros.git
-  cd luna_ros
-  gitmod
-  dbld
-  drun
+```bash
+git clone git@github.com:abcannond/luna_ros.git
+cd luna_ros
+git submodule update --init --recursive
+docker build -t luna_ros:latest .
+./run_ros_image.sh luna_ros:latest
+```
 
----
+Inside the container:
 
-## Inside Container
-(Once per clone or when packages change)
-
-  cd /ros2_ws
-  source /opt/ros/jazzy/setup.bash
-  colcon build --symlink-install
-  source install/setup.bash
-
-You can ignore the quad_swerve_controller "not found" message.
+```bash
+cd /ros2_ws
+source /opt/ros/jazzy/setup.bash
+colcon build --symlink-install
+source install/setup.bash
+```
 
 ---
 
-## AFTER git pull
-(Required — otherwise RTAB-Map / Nav2 may use old config)
+## After `git pull`
 
-Inside container:
+Inside the container (rebuild changed packages so configs and launch files are current):
 
-  cd /ros2_ws && source /opt/ros/jazzy/setup.bash
-  colcon build --symlink-install --packages-select luna_mapping luna_nav lunabot_2425
-  source install/setup.bash
+```bash
+cd /ros2_ws && source /opt/ros/jazzy/setup.bash
+colcon build --symlink-install --packages-select luna_mapping luna_nav lunabot_2425 luna_control fiducial_localizer depth_to_pointcloud
+source install/setup.bash
+```
+
+---
+
+## Jetson (ARM64)
+
+```bash
+docker build -f Dockerfile.jetson -t luna_ros:jetson .
+./run_ros_image.sh luna_ros:jetson
+```
+
+See [docs/HARDWARE.md](docs/HARDWARE.md) for hardware-specific steps.

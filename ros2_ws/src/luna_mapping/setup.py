@@ -23,10 +23,10 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='root',
-    maintainer_email='root@todo.todo',
-    description='Visual SLAM mapping stack (D455 + RTAB-Map)',
-    license='TODO: License declaration',
+    maintainer='lunabot',
+    maintainer_email='the.sam.rooney@gmail.com',
+    description='Visual SLAM mapping stack (D455 + RTAB-Map) for WPI Lunabotics',
+    license='MIT',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
@@ -35,6 +35,7 @@ setup(
             'image_frame_fixer = luna_mapping.image_frame_fixer:main',
             'depth_fov_filter = luna_mapping.depth_fov_filter:main',
             'depth_to_rgb = luna_mapping.depth_to_rgb:main',
+            'height_filter_pointcloud = luna_mapping.height_filter_pointcloud:main',
         ],
     },
 )

@@ -105,6 +105,6 @@ namespace luna_controller
     double max_jerk_;
   };
 
-} // namespace diff_drive_controller
+} // namespace luna_controller
 
 #endif // LUNA_CONTROL__SPEED_LIMITER_HPP_
