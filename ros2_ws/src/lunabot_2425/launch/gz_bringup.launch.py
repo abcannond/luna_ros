@@ -96,7 +96,10 @@ def generate_launch_description():
         }.items(),
     )
 
-    # UCF arena spawn (fiducial_shit before artemis merge)
+    # UCF arena spawn
+    # NOTE: spawn a bit deeper into the corner so the initial pose is not
+    # hugging the start-zone poles. This gives Nav2 more free space to plan
+    # a path before interacting with the pole cost.
     gz_create_robot_ucf = Node(
         package="ros_gz_sim",
         executable="create",
@@ -104,8 +107,8 @@ def generate_launch_description():
         arguments=[
             "-topic", "robot_description",
             "-name", "mooncake",
-            "-x", "-3.75",
-            "-y", "2.75",
+            "-x", "-3.80",
+            "-y", "3.10",
             "-z", "0.1",
             "-R", "0",
             "-P", "0",
