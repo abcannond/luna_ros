@@ -58,6 +58,10 @@ gzclient.log
 core
 **/core
 
+# Luis Personal Files
+.thoughts/
+.cursor/
+
 # Miscellaneous system files
 .DS_Store
 Thumbs.db
