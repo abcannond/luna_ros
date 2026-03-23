@@ -1,0 +1,21 @@
+# Luna controller teleop — holonomic + deadman (no input = no motion)
+# Params MUST be under teleop_twist_joy_node (/** alone often does not apply).
+# Xbox-style axes. Adjust if your controller differs; see docs/CONTROLLER_MAP.md
+
+teleop_twist_joy_node:
+  ros__parameters:
+    axis_linear:
+      x: 1   # Left stick Y — forward/backward
+      y: 0   # Left stick X — strafe (holonomic)
+    axis_angular:
+      yaw: 3 # Right stick X — rotate
+
+    scale_linear:
+      x: 0.5
+      y: 0.5
+    scale_angular:
+      yaw: 0.5
+
+    require_enable_button: true
+    enable_button: 0       # A / X — hold while driving
+    enable_turbo_button: -1 # -1 = turbo disabled (set to 1 for B as turbo)
