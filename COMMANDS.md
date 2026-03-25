@@ -62,7 +62,7 @@ Installation and build steps are documented separately in INSTALL.md.
 
 ## TERMINAL 4 (Optional): Teleop — Keyboard or Controller
 
-Choose one. Do not run both at once (both publish to `/cmd_vel`).
+Choose one. Do not run both at once (both publish to `/cmd_vel_teleop`).
 
 ### Keyboard
 
@@ -72,10 +72,6 @@ Inside container:
 
   cd /ros2_ws && source install/setup.bash
   drive
-
-The drive alias starts:
-- twist_stamper (background)
-- teleop (foreground)
 
 Controls:
   i = forward
@@ -101,8 +97,6 @@ Inside container:
 Terminal prints controller input by default (`joy_echo`). To silence printouts:
 
   ros2 launch lunabot_2425 joy_teleop.launch.py joy_echo:=false
-
-**Important — robot only moves while you hold A (enable).** Move left stick + right stick while A is held. If nothing moves, check terminal for `[JoyEcho]` lines; if none after ~3s, see `ls /dev/input/js*` and `ros2 topic echo /joy`.
 
 - Left stick: forward/back + strafe (holonomic)
 - Right stick X: rotate

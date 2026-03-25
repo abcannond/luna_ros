@@ -164,6 +164,26 @@ def generate_launch_description():
         arguments=["/camera/image_raw"]
     )
 
+    # Multiplex Nav2 (/cmd_vel_navigation) and teleop (/cmd_vel_teleop) into one /cmd_vel.
+    twist_mux_yaml = os.path.join(
+        get_package_share_directory(package_name),
+        "config",
+        "twist_mux.yaml",
+    )
+    twist_mux_node = Node(
+        package="twist_mux",
+        executable="twist_mux",
+        name="twist_mux",
+        output="screen",
+        parameters=[
+            {"use_sim_time": True},
+            twist_mux_yaml,
+        ],
+        remappings=[
+            ("cmd_vel_out", "/cmd_vel"),
+        ],
+    )
+
     # Relay /cmd_vel (Twist) -> /cmd_vel_stamped (TwistStamped). LunaController subscribes to
     # /cmd_vel_stamped via robot_controllers.yaml command_topic so we don't depend on gz_ros2_control namespace.
     twist_stamper = Node(
@@ -308,6 +328,7 @@ def generate_launch_description():
         gz_sim_resource,
         gz_sim,
         gz_create_robot_delayed,
+        twist_mux_node,
         twist_stamper,
         spawn_jsb_after_robot_ucf,
         spawn_jsb_after_robot_artemis,

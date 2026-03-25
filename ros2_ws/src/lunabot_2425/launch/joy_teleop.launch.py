@@ -1,4 +1,7 @@
-"""Launch joy_node + teleop_twist_joy for controller teleop. Holonomic + deadman."""
+"""Launch joy_node + teleop_twist_joy for controller teleop. Holonomic + deadman.
+
+Publishes Twist on /cmd_vel_teleop; gz_bringup twist_mux merges with Nav2 -> /cmd_vel.
+"""
 import os
 
 from ament_index_python.packages import get_package_share_directory
@@ -25,6 +28,7 @@ def generate_launch_description():
         executable="joy_node",
         name="joy_node",
         parameters=[{"use_sim_time": True}],
+        remappings=[("joy", "/joy")],
         output="screen",
     )
 
@@ -33,7 +37,11 @@ def generate_launch_description():
         executable="teleop_node",
         name="teleop_twist_joy_node",
         parameters=[config_path, {"use_sim_time": True}],
-        remappings=[("cmd_vel", "/cmd_vel")],
+        remappings=[
+            ("joy", "/joy"),
+            ("cmd_vel", "/cmd_vel_teleop"),
+            ("/cmd_vel", "/cmd_vel_teleop"),
+        ],
         output="screen",
     )
 

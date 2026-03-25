@@ -4,6 +4,7 @@ Subscribes to /joy and prints human-readable feedback when axes/buttons change.
 """
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import QoSProfile
 from sensor_msgs.msg import Joy
 
 
@@ -41,7 +42,10 @@ class JoyEcho(Node):
         self.prev_axes = []
         self.prev_buttons = []
         self._first = True
-        self.sub = self.create_subscription(Joy, topic, self.callback, 10)
+        # Same depth as joy_node / teleop_twist_joy (rclcpp::QoS(10)).
+        self.sub = self.create_subscription(
+            Joy, topic, self.callback, QoSProfile(depth=10)
+        )
         self._warn_timer = self.create_timer(3.0, self._warn_if_no_joy)
         self.get_logger().info(
             f"JoyEcho: listening on {topic} (threshold={self.threshold}). "
