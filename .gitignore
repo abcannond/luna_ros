@@ -25,6 +25,7 @@ Makefile
 
 # IDE and editor files
 .vscode/
+.cursor/
 .idea/
 *.swp
 *.swo
@@ -36,7 +37,6 @@ Makefile
 *.bag
 *.bag.active
 *.db3
-*.yaml
 *.launch.pyc
 
 # Gazebo / Ignition / ros_gz artifacts
@@ -53,6 +53,10 @@ gzclient.log
 *.tar
 *.img
 *.log
+
+# Core dumps (crash files; often permission-restricted)
+core
+**/core
 
 # Miscellaneous system files
 .DS_Store

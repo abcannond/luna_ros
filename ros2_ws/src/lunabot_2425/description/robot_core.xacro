@@ -182,9 +182,6 @@
     <origin xyz="${brx} -${bry} ${brz}" rpy="${deg90} 0 0"/>
   </joint>
 
-
-
-
   <!-- FRONT LEFT WHEEL POD -->
   <!-- FRONT LEFT KNUCKLE -->
   <link name="front_left_knuckle">
@@ -224,6 +221,15 @@
       <geometry>
         <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
         <cylinder radius="${whee_rad}" length="${whee_len}"/>
+        <!-- <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/> -->
+      </geometry>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
+    </visual>
+    <visual>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
+        <!-- <cylinder radius="${whee_rad}" length="${whee_len}"/> -->
+        <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
       </geometry>
       <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
       <material name="red"/>
@@ -240,6 +246,15 @@
       <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
       <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
     </inertial>
+    <gazebo reference="front_left_wheel">
+      <mu1>0.9</mu1>
+      <mu2>0.9</mu2>
+      <kp>100000</kp>
+      <kd>1</kd>
+      <fdir1>1 0 0</fdir1>
+      <rolling_friction>0.02</rolling_friction>
+      <spinning_friction>0.02</spinning_friction>
+    </gazebo>
   </link>
 
   <!-- FRONT LEFT DRIVE JOINT -->
@@ -249,9 +264,6 @@
     <origin xyz="${kwx} ${kwy} ${kwz}" rpy="${deg90} 0 ${deg180}"/>
     <axis xyz="0 0 1"/>
   </joint>
-
-
-
 
   <!-- FRONT RIGHT WHEEL POD -->
   <!-- FRONT RIGHT KNUCKLE -->
@@ -292,6 +304,15 @@
       <geometry>
         <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
         <cylinder radius="${whee_rad}" length="${whee_len}"/>
+        <!-- <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/> -->
+      </geometry>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
+    </visual>
+    <visual>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
+        <!-- <cylinder radius="${whee_rad}" length="${whee_len}"/> -->
+        <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
       </geometry>
       <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
       <material name="red"/>
@@ -308,6 +329,15 @@
       <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
       <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
     </inertial>
+    <gazebo reference="front_right_wheel">
+      <mu1>0.9</mu1>
+      <mu2>0.9</mu2>
+      <kp>100000</kp>
+      <kd>1</kd>
+      <fdir1>1 0 0</fdir1>
+      <rolling_friction>0.02</rolling_friction>
+      <spinning_friction>0.02</spinning_friction>
+    </gazebo>
   </link>
 
   <!-- FRONT RIGHT DRIVE JOINT -->
@@ -357,6 +387,15 @@
       <geometry>
         <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
         <cylinder radius="${whee_rad}" length="${whee_len}"/>
+        <!-- <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/> -->
+      </geometry>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
+    </visual>
+    <visual>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
+        <!-- <cylinder radius="${whee_rad}" length="${whee_len}"/> -->
+        <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
       </geometry>
       <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
       <material name="red"/>
@@ -373,6 +412,15 @@
       <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
       <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
     </inertial>
+    <gazebo reference="back_left_wheel">
+      <mu1>0.9</mu1>
+      <mu2>0.9</mu2>
+      <kp>100000</kp>
+      <kd>1</kd>
+      <fdir1>1 0 0</fdir1>
+      <rolling_friction>0.02</rolling_friction>
+      <spinning_friction>0.02</spinning_friction>
+    </gazebo>
   </link>
 
   <!-- BACK LEFT DRIVE JOINT -->
@@ -382,9 +430,6 @@
     <origin xyz="${kwx} ${kwy} ${kwz}" rpy="${deg90} 0 ${deg180}"/>
     <axis xyz="0 0 1"/>
   </joint>
-
-
-
 
   <!-- BACK RIGHT WHEEL POD -->
   <!-- BACK RIGHT KNUCKLE -->
@@ -425,6 +470,15 @@
       <geometry>
         <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
         <cylinder radius="${whee_rad}" length="${whee_len}"/>
+        <!-- <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/> -->
+      </geometry>
+      <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
+    </visual>
+    <visual>
+      <geometry>
+        <!-- <mesh filename="package://lunabot_2425/stl/wheel_mo.stl"/> -->
+        <!-- <cylinder radius="${whee_rad}" length="${whee_len}"/> -->
+        <box size="${nuck_sx} ${nuck_sy} ${nuck_sz}"/>
       </geometry>
       <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
       <material name="red"/>
@@ -441,6 +495,15 @@
       <origin xyz="${whee_px} ${whee_py} ${whee_pz}" rpy="0 0 0"/>
       <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
     </inertial>
+    <gazebo reference="back_right_wheel">
+      <mu1>0.9</mu1>
+      <mu2>0.9</mu2>
+      <kp>100000</kp>
+      <kd>1</kd>
+      <fdir1>1 0 0</fdir1>
+      <rolling_friction>0.02</rolling_friction>
+      <spinning_friction>0.02</spinning_friction>
+    </gazebo>
   </link>
 
   <!-- BACK RIGHT DRIVE JOINT -->
@@ -448,6 +511,6 @@
     <parent link="back_right_knuckle"/>
     <child link="back_right_wheel"/>
     <origin xyz="${kwx} ${kwy} ${kwz}" rpy="${deg90} 0 ${deg180}"/>
-    <axis xyz="0 0 1"/>
+    <axis xyz="0 0 -1"/>
   </joint>
 </robot>
