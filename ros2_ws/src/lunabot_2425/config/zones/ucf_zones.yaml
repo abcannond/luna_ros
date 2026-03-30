@@ -1,0 +1,39 @@
+# UCF Exolith Arena zone definitions (Gazebo world frame = map frame)
+#
+# Arena: ~7.4 m x ~4.9 m (2025 Guidebook Section 3.1)
+# Robot spawn: x=-3.80, y=3.30, yaw=-pi/2 (facing -Y)
+# Fiducial tags near (-4.75, 2.75) and (-3.75, 4.25)
+#
+# Bounds are [x_min, x_max, y_min, y_max] in meters.
+# Adjust after visual verification in Gazebo / RViz.
+#
+# Reference: 2025 Lunabotics Guidebook, Sections 3.1, 5.4, 5.5
+# https://fsi.ucf.edu/wp-content/uploads/sites/4/2025/01/lunaboticsguidebook-2025-1.pdf
+
+frame_id: map
+
+zones:
+  starting_zone:
+    bounds: [-5.0, -2.0, 1.5, 5.0]
+    color: [0.0, 1.0, 0.0, 0.25]
+    description: "Robot start position and fiducial localization area"
+
+  obstacle_field:
+    bounds: [-2.0, 2.0, -4.0, 5.0]
+    color: [1.0, 0.5, 0.0, 0.25]
+    description: "Rocks and craters between start and construction sides"
+
+  excavation_zone:
+    bounds: [2.0, 5.0, -4.0, 0.5]
+    color: [0.6, 0.3, 0.0, 0.25]
+    description: "Regolith excavation area"
+
+  construction_zone:
+    bounds: [2.0, 5.0, 0.5, 5.0]
+    color: [0.0, 0.5, 1.0, 0.25]
+    description: "Berm construction target area"
+
+waypoints:
+  excavation_entry: [-0.5, -1.5, 0.0]
+  construction_entry: [3.0, 2.0, 1.57]
+  return_to_start: [-3.5, 3.0, -1.57]

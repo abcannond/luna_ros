@@ -1,4 +1,9 @@
-# Fiducial localizer sim (4 wheel-pod cams). Topics/frames match gz_bridge and robot.urdf.xacro.
+# Fiducial localizer sim parameters (4 wheel-pod cameras).
+# Topics/frames match gz_bridge and robot.urdf.xacro.
+#
+# ArUco marker positions must match the SDF world files:
+#   UCF:     aruco_marker_0 at (-4.75, 2.75, 1.0), rotated to face +X
+#   Artemis: TODO -- add ArUco marker model to artemis_arena.sdf
 
 multi_camera_marker_localizer:
   ros__parameters:
@@ -22,8 +27,11 @@ multi_camera_marker_localizer:
     marker_size_m: 0.16
     world_frame: "map"
     robot_frame: "base_link"
-    world_to_marker_xyz: [-1.0, 0.0, 1.0]  # UCF arena: marker at (-1,0,1) in map
-    world_to_marker_yaw: 0.0
+    world_to_marker_xyz: [-4.75, 2.75, 1.0]
+    world_to_marker_yaw: 1.5708
     republish_map_odom_rate_hz: 10.0
     max_map_odom_translation_jump_m: 0.5
     max_map_odom_rotation_jump_rad: 0.5
+    publish_debug_images: false
+    status_marker_topic: /fiducial_status
+    status_marker_rate_hz: 2.0

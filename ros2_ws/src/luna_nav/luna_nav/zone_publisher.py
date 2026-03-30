@@ -1,120 +1,213 @@
 #!/usr/bin/env python3
 """
-Zone Publisher: subscribes to odom (x,y in meters), maps position to a named zone,
-and publishes the zone string to /current_zone. Zone bounds are rectangular.
+Zone Publisher: classifies robot position into named arena zones.
 
-Odom topic and zone bounds are configurable via ROS parameters so the same node
-works with controller odom, RTAB-Map visual odom, or different arenas (UCF, Artemis).
+Loads zone rectangles from a YAML file, looks up the robot pose via TF
+(map -> base_link), and publishes the current zone name plus RViz
+MarkerArray overlays for each zone boundary.
+
+Parameters:
+  zones_file    -- path to YAML with zone definitions (see config/zones/)
+  rate_hz       -- TF lookup / publish rate (default 5.0)
+  hysteresis_n  -- consecutive samples in a new zone before switching (default 3)
 """
 
+import json
+
 import rclpy
+import yaml
 from rclpy.node import Node
-from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPolicy
-from nav_msgs.msg import Odometry
+from rclpy.duration import Duration
 from std_msgs.msg import String
+from visualization_msgs.msg import Marker, MarkerArray
+from builtin_interfaces.msg import Duration as DurationMsg
+
+import tf2_ros
 
 
-# Default zone bounds in meters (x_min, x_max, y_min, y_max). Override via parameters.
-DEFAULT_ZONE_BOUNDS = {
-    'starting_zone': [0.0, 2.0, 0.0, 2.0],
-    'excavation_zone': [0.0, 2.5, 0.0, 11.0],
-    'obstacle_zone_main': [4.38, 6.38, 0.0, 11.0],
-    'obstacle_zone_exclude': [4.38, 6.88, 0.0, 1.5],
-    'construction_zone': [7.0, 12.0, 0.0, 11.0],
-}
-
-
-def point_in_rectangle(x, y, x_min, x_max, y_min, y_max):
-    """True if (x, y) is inside the axis-aligned rectangle."""
-    return x_min <= x <= x_max and y_min <= y <= y_max
-
-
-def get_zone_name(x, y, zone_config, origin_tolerance):
-    """Return zone string for (x, y). Priority: origin → starting → excavation → obstacle → construction → outside bounds."""
-    if abs(x) <= origin_tolerance and abs(y) <= origin_tolerance:
-        return 'starting zone'
-    s = zone_config['starting_zone']
-    if point_in_rectangle(x, y, s[0], s[1], s[2], s[3]):
-        return 'starting zone'
-    e = zone_config['excavation_zone']
-    if point_in_rectangle(x, y, e[0], e[1], e[2], e[3]):
-        return 'excavation zone'
-    om = zone_config['obstacle_zone_main']
-    oe = zone_config['obstacle_zone_exclude']
-    if point_in_rectangle(x, y, om[0], om[1], om[2], om[3]) and not point_in_rectangle(
-        x, y, oe[0], oe[1], oe[2], oe[3]
-    ):
-        return 'obstacle zone'
-    c = zone_config['construction_zone']
-    if point_in_rectangle(x, y, c[0], c[1], c[2], c[3]):
-        return 'construction zone'
-    return 'outside bounds'
-
-
-def _parse_bounds(param_value, default):
-    """Parse parameter to list of 4 floats. Accepts list or string 'x_min,x_max,y_min,y_max'."""
-    if param_value is None:
-        return default
-    if isinstance(param_value, (list, tuple)) and len(param_value) >= 4:
-        return [float(param_value[0]), float(param_value[1]), float(param_value[2]), float(param_value[3])]
-    if isinstance(param_value, str):
-        parts = [p.strip() for p in param_value.split(',')]
-        if len(parts) >= 4:
-            return [float(parts[0]), float(parts[1]), float(parts[2]), float(parts[3])]
-    return default
+def _point_in_rect(x, y, bounds):
+    return bounds[0] <= x <= bounds[1] and bounds[2] <= y <= bounds[3]
 
 
 class ZonePublisherNode(Node):
-    """Subscribes to odom; publishes current zone to /current_zone on every message."""
 
     def __init__(self):
         super().__init__('zone_publisher')
 
-        # Odom topic: use /odom by default so it works with controller or RTAB-Map visual odom (remap as needed).
-        self.declare_parameter('odom_topic', '/odom')
-        self.declare_parameter('origin_tolerance_m', 0.01)
-        for key in DEFAULT_ZONE_BOUNDS:
-            self.declare_parameter(f'zone.{key}', DEFAULT_ZONE_BOUNDS[key])
+        self.declare_parameter('zones_file', '')
+        self.declare_parameter('rate_hz', 5.0)
+        self.declare_parameter('hysteresis_n', 3)
 
-        odom_topic = self.get_parameter('odom_topic').value
-        if isinstance(odom_topic, str):
-            odom_topic = odom_topic.strip() or '/odom'
+        zones_file = self.get_parameter('zones_file').value
+        rate = float(self.get_parameter('rate_hz').value or 5.0)
+        self._hysteresis_n = int(self.get_parameter('hysteresis_n').value or 3)
+
+        self._zones = {}
+        self._zone_colors = {}
+        self._frame_id = 'map'
+        self._waypoints = {}
+
+        if zones_file:
+            self._load_yaml(zones_file)
         else:
-            odom_topic = '/odom'
+            self.get_logger().warn(
+                'No zones_file parameter set; using empty zone config. '
+                'Set zones_file:=<path> to load arena zones.'
+            )
 
-        self._zone_config = {}
-        for key in DEFAULT_ZONE_BOUNDS:
-            default = DEFAULT_ZONE_BOUNDS[key]
-            val = self.get_parameter(f'zone.{key}').value
-            self._zone_config[key] = _parse_bounds(val, default)
+        self._tf_buffer = tf2_ros.Buffer()
+        self._tf_listener = tf2_ros.TransformListener(self._tf_buffer, self)
 
-        self._origin_tolerance = float(self.get_parameter('origin_tolerance_m').value)
+        self._zone_pub = self.create_publisher(String, '/current_zone', 10)
+        self._dashboard_pub = self.create_publisher(String, '/zone_dashboard', 10)
+        self._marker_pub = self.create_publisher(MarkerArray, '/zone_markers', 10)
 
-        self._zone_pub = self.create_publisher(String, 'current_zone', 10)
-        qos = QoSProfile(
-            reliability=ReliabilityPolicy.BEST_EFFORT,
-            durability=DurabilityPolicy.VOLATILE,
-            history=HistoryPolicy.KEEP_LAST,
-            depth=10,
-        )
-        self._odom_sub = self.create_subscription(
-            Odometry, odom_topic, self._on_odom, qos
-        )
-        self._last_zone = None
+        self._current_zone = 'unknown'
+        self._candidate_zone = 'unknown'
+        self._candidate_count = 0
+
+        self._timer = self.create_timer(1.0 / rate, self._tick)
+        self._marker_timer = self.create_timer(2.0, self._publish_markers)
+
         self.get_logger().info(
-            f'zone_publisher: odom_topic={odom_topic}, zones from params (edit YAML or launch to override)'
+            f'zone_publisher: zones_file={zones_file}, '
+            f'rate={rate} Hz, hysteresis={self._hysteresis_n}'
         )
 
-    def _on_odom(self, msg):
-        x = msg.pose.pose.position.x
-        y = msg.pose.pose.position.y
-        zone = get_zone_name(x, y, self._zone_config, self._origin_tolerance)
-        if zone != self._last_zone:
-            self.get_logger().info(f"zone: ({x:.2f}, {y:.2f}) -> \"{zone}\"")
-            self._last_zone = zone
-        out = String()
-        out.data = zone
-        self._zone_pub.publish(out)
+    def _load_yaml(self, path):
+        try:
+            with open(path, 'r') as f:
+                data = yaml.safe_load(f)
+        except Exception as e:
+            self.get_logger().error(f'Failed to load zones YAML: {e}')
+            return
+
+        self._frame_id = data.get('frame_id', 'map')
+        zones_data = data.get('zones', {})
+        for name, info in zones_data.items():
+            bounds = info.get('bounds', [])
+            if len(bounds) == 4:
+                self._zones[name] = [float(b) for b in bounds]
+                color = info.get('color', [0.5, 0.5, 0.5, 0.2])
+                self._zones[name] = [float(b) for b in bounds]
+                self._zone_colors[name] = [float(c) for c in color]
+            else:
+                self.get_logger().warn(f'Zone "{name}" has invalid bounds: {bounds}')
+
+        self._waypoints = data.get('waypoints', {})
+        self.get_logger().info(
+            f'Loaded {len(self._zones)} zones from {path}: '
+            f'{list(self._zones.keys())}'
+        )
+
+    def _classify(self, x, y):
+        """Return zone name for (x,y). Priority order matches YAML key order."""
+        for name, bounds in self._zones.items():
+            if _point_in_rect(x, y, bounds):
+                return name
+        return 'outside_bounds'
+
+    def _tick(self):
+        try:
+            t = self._tf_buffer.lookup_transform(
+                self._frame_id, 'base_link', rclpy.time.Time(),
+                timeout=Duration(seconds=0.1),
+            )
+        except (tf2_ros.LookupException,
+                tf2_ros.ConnectivityException,
+                tf2_ros.ExtrapolationException):
+            return
+
+        x = t.transform.translation.x
+        y = t.transform.translation.y
+        raw_zone = self._classify(x, y)
+
+        if raw_zone == self._candidate_zone:
+            self._candidate_count += 1
+        else:
+            self._candidate_zone = raw_zone
+            self._candidate_count = 1
+
+        if (self._candidate_count >= self._hysteresis_n
+                and self._candidate_zone != self._current_zone):
+            old = self._current_zone
+            self._current_zone = self._candidate_zone
+            self.get_logger().info(
+                f'Zone transition: "{old}" -> "{self._current_zone}" '
+                f'at ({x:.2f}, {y:.2f})'
+            )
+
+        zone_msg = String()
+        zone_msg.data = self._current_zone
+        self._zone_pub.publish(zone_msg)
+
+        dashboard = {
+            'zone': self._current_zone,
+            'x': round(x, 3),
+            'y': round(y, 3),
+            'candidate': self._candidate_zone,
+            'candidate_count': self._candidate_count,
+        }
+        dash_msg = String()
+        dash_msg.data = json.dumps(dashboard)
+        self._dashboard_pub.publish(dash_msg)
+
+    def _publish_markers(self):
+        if not self._zones:
+            return
+
+        ma = MarkerArray()
+        for i, (name, bounds) in enumerate(self._zones.items()):
+            xmin, xmax, ymin, ymax = bounds
+            cx = (xmin + xmax) / 2.0
+            cy = (ymin + ymax) / 2.0
+            sx = xmax - xmin
+            sy = ymax - ymin
+
+            m = Marker()
+            m.header.frame_id = self._frame_id
+            m.header.stamp = self.get_clock().now().to_msg()
+            m.ns = 'zone_bounds'
+            m.id = i
+            m.type = Marker.CUBE
+            m.action = Marker.ADD
+            m.pose.position.x = cx
+            m.pose.position.y = cy
+            m.pose.position.z = 0.01
+            m.scale.x = sx
+            m.scale.y = sy
+            m.scale.z = 0.02
+            color = self._zone_colors.get(name, [0.5, 0.5, 0.5, 0.2])
+            m.color.r = color[0]
+            m.color.g = color[1]
+            m.color.b = color[2]
+            m.color.a = color[3]
+            m.lifetime = DurationMsg(sec=5, nanosec=0)
+            ma.markers.append(m)
+
+            label = Marker()
+            label.header.frame_id = self._frame_id
+            label.header.stamp = m.header.stamp
+            label.ns = 'zone_labels'
+            label.id = i
+            label.type = Marker.TEXT_VIEW_FACING
+            label.action = Marker.ADD
+            label.pose.position.x = cx
+            label.pose.position.y = cy
+            label.pose.position.z = 0.5
+            label.scale.z = 0.4
+            label.color.r = 1.0
+            label.color.g = 1.0
+            label.color.b = 1.0
+            label.color.a = 0.9
+            display_name = name.replace('_', ' ').title()
+            if name == self._current_zone:
+                display_name = f'>> {display_name} <<'
+            label.text = display_name
+            label.lifetime = DurationMsg(sec=5, nanosec=0)
+            ma.markers.append(label)
+
+        self._marker_pub.publish(ma)
 
 
 def main(args=None):

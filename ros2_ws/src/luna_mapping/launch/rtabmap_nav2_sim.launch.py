@@ -16,7 +16,7 @@ This should be launched AFTER gz_bringup.launch.py is running.
 """
 
 import os
-from ament_index_python.packages import get_package_share_directory
+from ament_index_python.packages import get_package_share_directory, PackageNotFoundError
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription, GroupAction, TimerAction
 from launch.conditions import IfCondition, UnlessCondition
@@ -55,6 +55,11 @@ def generate_launch_description():
         'clear_costmap_on_start', default_value='true',
         description='Clear local and global costmaps once after Nav2 is up.')
     clear_costmap_on_start = LaunchConfiguration('clear_costmap_on_start', default='true')
+
+    declare_launch_fiducials = DeclareLaunchArgument(
+        'launch_fiducials', default_value='false',
+        description='Launch multi-camera fiducial localizer for ArUco detection.')
+    launch_fiducials = LaunchConfiguration('launch_fiducials', default='false')
 
     # ============================================================
     # RTAB-Map SLAM
@@ -441,6 +446,26 @@ def generate_launch_description():
         output='screen'
     )
 
+    # --- Fiducial localizer (optional) ---
+    fiducial_launch_actions = []
+    try:
+        fid_pkg = get_package_share_directory('fiducial_localizer')
+        fid_launch_source = PythonLaunchDescriptionSource(
+            os.path.join(fid_pkg, 'launch', 'multi_camera_fiducial.launch.py')
+        )
+        fid_params = os.path.join(fid_pkg, 'params', 'multi_camera_sim.yaml')
+        fiducial_include = IncludeLaunchDescription(
+            fid_launch_source,
+            condition=IfCondition(launch_fiducials),
+            launch_arguments={
+                'params_file': fid_params,
+                'use_sim_time': use_sim_time,
+            }.items(),
+        )
+        fiducial_launch_actions.append(fiducial_include)
+    except PackageNotFoundError:
+        pass
+
     return LaunchDescription([
         declare_use_sim_time,
         declare_use_rtabmap_odom,
@@ -448,6 +473,7 @@ def generate_launch_description():
         declare_launch_rviz,
         declare_sim,
         declare_clear_costmap_on_start,
+        declare_launch_fiducials,
 
         # Sim-only TF alias (RSP provides the actual camera chain from URDF)
         static_tf_camera_depth_frame,
@@ -499,4 +525,4 @@ def generate_launch_description():
         ),
 
         rviz_node,
-    ])
+    ] + fiducial_launch_actions)
