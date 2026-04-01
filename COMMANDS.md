@@ -1,28 +1,25 @@
 COMMANDS.md
 ================================
 
-## Overview
+**Overview**
 This file contains commands for launching Gazebo, RTAB-Map, Nav2, RViz,
 teleoperation, and diagnostics.
 
 Installation and build steps are documented separately in INSTALL.md.
 
----
-
-## TERMINAL 1: Gazebo (Must run first)
-
-  colcon build
-  source /opt/ros/jazzy/setup.bash
-  dbld
-  drun
-
-  Inside container:
-    cd /ros2_ws && source install/setup.bash
-    ros2 launch lunabot_2425 gz_bringup.launch.py
-
-  Wait until Gazebo is fully up and the robot is spawned.
-
----
+**TERMINAL 1: Gazebo (Must run first)**
+  ```bash
+    colcon build
+    source /opt/ros/jazzy/setup.bash
+    dbld
+    drun
+  ```
+*Inside container:*
+  ```bash
+      cd /ros2_ws && source install/setup.bash
+      ros2 launch lunabot_2425 gz_bringup.launch.py
+  ```
+*Wait until Gazebo is fully up and the robot is spawned.*
 
 ## TERMINAL 2: RTAB-Map + Nav2 (Run only after Gazebo is up)
 

@@ -23,6 +23,7 @@ setup(
     entry_points={
         'console_scripts': [
             'zone_publisher = luna_nav.zone_publisher:main',
+            'arena_grid_publisher = luna_nav.arena_grid_publisher:main',
         ],
     },
 )
