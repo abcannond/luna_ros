@@ -449,13 +449,21 @@ class MissionSupervisorNode(Node):
                     )
                     # #endregion
                 return
-            self._cmd_vel_pub.publish(Twist())
+            # Do not publish Twist() here: Nav2 will command /cmd_vel; extra zeros race
+            # with the controller and twist_stamper.
             wp = self._waypoints.get('excavation_entry')
             if wp:
-                self._send_nav_goal(wp)
+                if self._send_nav_goal(wp):
+                    self._transition(MissionPhase.TRAVERSING_TO_EXCAVATION)
+                else:
+                    self.get_logger().warn(
+                        'Nav2 navigate_to_pose not ready; staying in READY — will retry'
+                    )
             else:
-                self.get_logger().warn('No excavation_entry waypoint; using WFD')
-            self._transition(MissionPhase.TRAVERSING_TO_EXCAVATION)
+                self.get_logger().warn(
+                    'No excavation_entry waypoint; enable frontier or add waypoints'
+                )
+                self._transition(MissionPhase.TRAVERSING_TO_EXCAVATION)
 
         elif self._phase == MissionPhase.TRAVERSING_TO_EXCAVATION:
             if self._current_zone == 'excavation_zone':
@@ -596,8 +604,9 @@ class MissionSupervisorNode(Node):
     # ------------------------------------------------------------------
 
     def _send_nav_goal(self, wp):
-        if not self._nav_client.wait_for_server(timeout_sec=2.0):
-            self.get_logger().warn('Nav2 not available')
+        """Send a NavigateToPose goal. Returns True if the async send was started."""
+        if not self._nav_client.wait_for_server(timeout_sec=5.0):
+            self.get_logger().warn('Nav2 not available (navigate_to_pose action server)')
             # #region agent log
             self._debug_log(
                 hypothesis_id='H8',
@@ -606,7 +615,7 @@ class MissionSupervisorNode(Node):
                 data={'phase': self._phase.name},
             )
             # #endregion
-            return
+            return False
 
         goal = NavigateToPose.Goal()
         goal.pose = PoseStamped()
@@ -643,12 +652,15 @@ class MissionSupervisorNode(Node):
         future = self._nav_client.send_goal_async(goal)
         future.add_done_callback(self._goal_response_cb)
         self._nav_goal_active = True
+        return True
 
     def _goal_response_cb(self, future):
         goal_handle = future.result()
         if goal_handle is None or not goal_handle.accepted:
-            self.get_logger().warn('Nav2 goal rejected')
+            self.get_logger().warn('Nav2 goal rejected (planner/controller may be inactive)')
             self._nav_goal_active = False
+            self._nav_goal_failed = True
+            self._nav_goal_fail_time = self.get_clock().now()
             # #region agent log
             self._debug_log(
                 hypothesis_id='H8',
