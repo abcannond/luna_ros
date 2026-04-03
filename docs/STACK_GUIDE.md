@@ -2,7 +2,7 @@
 
 Features, design choices, launching, and troubleshooting for the Luna ROS stack.
 
-**See also:** [HARDWARE.md](HARDWARE.md) (running on real hardware)
+**See also:** [HARDWARE.md](HARDWARE.md) (running on real hardware), [AUTONOMY_ZONES_AND_LOCALIZATION.md](AUTONOMY_ZONES_AND_LOCALIZATION.md) (zones, ArUco, mission navigation), [CODEBASE_AND_SIM_COMPETITION_CYCLE.md](CODEBASE_AND_SIM_COMPETITION_CYCLE.md) (repo layout + competition-style sim routine)
 
 ---
 
@@ -25,6 +25,7 @@ One launch runs Gazebo, RTAB-Map, Nav2, and RViz. Use the **Nav2 Goal** tool in 
 |------|---------|
 | Gazebo only (no mapping, no Nav2) | `ros2 launch lunabot_2425 gz_bringup.launch.py launch_mapping:=false` |
 | Artemis arena instead of default UCF | `ros2 launch lunabot_2425 gz_bringup.launch.py world:=artemis_arena` |
+| Artemis + mapping + Nav2 (competition-style sim, one command) | `ros2 launch lunabot_2425 competition_cycle_sim.launch.py` |
 
 ### What runs (in order)
 
