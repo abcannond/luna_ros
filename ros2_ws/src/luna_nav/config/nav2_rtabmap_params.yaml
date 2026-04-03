@@ -1,5 +1,6 @@
 # Nav2 parameters for RTAB-Map integration (Lunabotics competition)
-# Costmap uses RTAB-Map occupancy grid (static layer) + live depth obstacles (voxel layer)
+# Tuned for SAFE navigation: slow speeds, wide inflation, strong obstacle avoidance.
+# The robot maps while it moves, so we trade speed for map quality and collision avoidance.
 
 bt_navigator:
   ros__parameters:
@@ -27,55 +28,64 @@ controller_server:
 
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
-      required_movement_radius: 0.3
-      movement_time_allowance: 20.0
+      required_movement_radius: 0.2
+      movement_time_allowance: 30.0
 
     goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.25
-      yaw_goal_tolerance: 0.25
+      xy_goal_tolerance: 0.30
+      yaw_goal_tolerance: 0.40
       stateful: true
 
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner"
       debug_trajectory_details: false
-      min_vel_x: -0.2
-      max_vel_x: 0.32
+      # Forward-only traversal: avoid reversing during normal path following.
+      # Reverse motion is still available through recovery behaviors (e.g., BackUp).
+      min_vel_x: 0.0
+      max_vel_x: 0.12
       min_vel_y: 0.0
       max_vel_y: 0.0
-      max_vel_theta: 1.0
+      max_vel_theta: 0.4
       min_speed_xy: 0.0
-      max_speed_xy: 0.32
+      max_speed_xy: 0.12
       min_speed_theta: 0.0
-      acc_lim_x: 2.0
+      acc_lim_x: 0.8
       acc_lim_y: 0.0
-      acc_lim_theta: 3.2
-      decel_lim_x: -2.0
+      acc_lim_theta: 1.6
+      decel_lim_x: -1.0
       decel_lim_y: 0.0
-      decel_lim_theta: -3.2
+      decel_lim_theta: -2.0
       vx_samples: 20
       vy_samples: 0
       vtheta_samples: 20
-      sim_time: 2.5
+      sim_time: 3.0
       linear_granularity: 0.05
       angular_granularity: 0.025
       transform_tolerance: 1.0
-      xy_goal_tolerance: 0.25
-      trans_stopped_velocity: 0.25
+      xy_goal_tolerance: 0.30
+      trans_stopped_velocity: 0.15
       short_circuit_trajectory_evaluation: true
       critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
-      # High obstacle scale = strong avoidance (critical for competition - no collisions)
-      BaseObstacle.scale: 0.28
+      # BaseObstacle scale: costmap values are 0-253 in the inflation zone.
+      # At 0.50, max penalty = ~127 which dominates PathDist/GoalDist
+      # and forces the controller to strongly avoid inflated obstacles.
+      BaseObstacle.scale: 1.20
+      BaseObstacle.sum_scores: false
       PathAlign.scale: 32.0
+      PathAlign.forward_point_distance: 0.1
       GoalAlign.scale: 24.0
+      GoalAlign.forward_point_distance: 0.1
       PathDist.scale: 32.0
       GoalDist.scale: 24.0
       RotateToGoal.scale: 32.0
+      RotateToGoal.slowing_factor: 5.0
+      RotateToGoal.lookahead_time: -1.0
 
 # =============================================================================
 # LOCAL COSTMAP
 # Rolling window around the robot. Uses static map + live voxel layer (depth
-# point cloud) + laserscan for redundant obstacle detection.
+# point cloud, ground-filtered) + laserscan + inflation with wide safety buffer.
 # =============================================================================
 local_costmap:
   local_costmap:
@@ -88,17 +98,10 @@ local_costmap:
       width: 5
       height: 5
       resolution: 0.05
-      robot_radius: 0.35
+      robot_radius: 0.42
       transform_tolerance: 1.0
-      plugins: ["static_layer", "voxel_layer", "inflation_layer"]
+      plugins: ["voxel_layer", "obstacle_layer", "inflation_layer"]
 
-      static_layer:
-        plugin: "nav2_costmap_2d::StaticLayer"
-        map_subscribe_transient_local: true
-        map_topic: /map
-        subscribe_to_updates: true
-
-      # 3D voxel layer from depth point cloud (ground-cropped)
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: true
@@ -117,13 +120,15 @@ local_costmap:
           marking: true
           data_type: "PointCloud2"
           raytrace_max_range: 3.5
-          raytrace_min_range: 0.3
+          # Ignore marks closer than this (sensor frame). During in-place spin, near
+          # returns from wheels/rocker/chassis in the lower FOV project as a ring in odom.
+          raytrace_min_range: 0.35
           obstacle_max_range: 2.5
-          obstacle_min_range: 0.35
-          observation_persistence: 0.2
-          expected_update_rate: 1.0
+          obstacle_min_range: 0.52
+          observation_persistence: 0.1
+          expected_update_rate: 0.0
+          inf_is_valid: true
 
-      # 2D obstacle layer from depth-derived laserscan (redundant detection)
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: true
@@ -138,28 +143,33 @@ local_costmap:
           raytrace_min_range: 0.35
           obstacle_max_range: 3.0
           obstacle_min_range: 0.35
-          observation_persistence: 0.2
+          observation_persistence: 0.1
+          expected_update_rate: 0.0
+          inf_is_valid: true
 
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 4.0
-        inflation_radius: 0.50
+        cost_scaling_factor: 2.5
+        inflation_radius: 0.75
 
       always_send_full_costmap: true
 
 # =============================================================================
 # GLOBAL COSTMAP
-# Full map frame. Uses RTAB-Map occupancy grid + inflation.
-# robot_radius MUST match local costmap so global planner generates feasible paths.
+# Full map frame. Uses RTAB-Map occupancy grid + wide inflation.
+# Real-time obstacle avoidance is handled by the local costmap's voxel + scan
+# layers. The global planner creates a route based on the continuously updated
+# RTAB-Map grid; the local controller steers around anything the global plan
+# misses.
 # =============================================================================
 global_costmap:
   global_costmap:
     ros__parameters:
-      update_frequency: 1.0
-      publish_frequency: 0.5
+      update_frequency: 1.5
+      publish_frequency: 1.0
       global_frame: map
       robot_base_frame: base_link
-      robot_radius: 0.35
+      robot_radius: 0.42
       resolution: 0.05
       track_unknown_space: true
       transform_tolerance: 1.0
@@ -173,16 +183,16 @@ global_costmap:
 
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 4.0
-        inflation_radius: 0.50
+        cost_scaling_factor: 1.5
+        inflation_radius: 1.0
 
       always_send_full_costmap: true
 
 planner_server:
   ros__parameters:
-    expected_planner_frequency: 20.0
+    expected_planner_frequency: 10.0
     planner_plugins: ["GridBased"]
-    costmap_update_timeout: 1.0
+    costmap_update_timeout: 2.0
 
     GridBased:
       plugin: "nav2_navfn_planner::NavfnPlanner"
@@ -231,10 +241,10 @@ velocity_smoother:
     smoothing_frequency: 20.0
     scale_velocities: false
     feedback: "OPEN_LOOP"
-    max_velocity: [0.32, 0.0, 0.8]
-    min_velocity: [-0.32, 0.0, -0.8]
-    max_accel: [2.0, 0.0, 3.2]
-    max_decel: [-2.0, 0.0, -3.2]
+    max_velocity: [0.18, 0.0, 0.6]
+    min_velocity: [-0.10, 0.0, -0.6]
+    max_accel: [0.8, 0.0, 1.6]
+    max_decel: [-1.0, 0.0, -2.0]
     odom_topic: "odom"
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]

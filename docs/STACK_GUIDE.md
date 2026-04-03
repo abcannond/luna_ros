@@ -2,7 +2,7 @@
 
 Features, design choices, launching, and troubleshooting for the Luna ROS stack.
 
-**See also:** [HARDWARE.md](HARDWARE.md) (running on real hardware)
+**See also:** [HARDWARE.md](HARDWARE.md) (running on real hardware) · [COMPETITION_SIM.md](COMPETITION_SIM.md) (full competition launch + `start_mission` flow)
 
 ---
 
@@ -25,6 +25,7 @@ One launch runs Gazebo, RTAB-Map, Nav2, and RViz. Use the **Nav2 Goal** tool in 
 |------|---------|
 | Gazebo only (no mapping, no Nav2) | `ros2 launch lunabot_2425 gz_bringup.launch.py launch_mapping:=false` |
 | Artemis arena instead of default UCF | `ros2 launch lunabot_2425 gz_bringup.launch.py world:=artemis_arena` |
+| Headless (no Gazebo GUI, stable in Docker) | `ros2 launch lunabot_2425 gz_bringup.launch.py headless:=true` |
 
 ### What runs (in order)
 
@@ -151,9 +152,8 @@ The filter can mask regions (e.g. to exclude fiducial camera views) and applies 
 
 - **depthimage_to_laserscan** produces `/scan` (2D slice). Nav2 uses it for the obstacle layer.
 - **depth_image_proc** (point_cloud_xyzrgb) produces `/camera/camera/depth/color/points`.
-- **height_filter_pointcloud** subscribes to that cloud, transforms to `base_link`, and drops points with `z` below `min_height` (default 0.02 m) or above `max_height` (default 2.0 m). It publishes `/camera/camera/depth/color/points_ground_filtered`. Nav2’s local costmap **voxel layer** uses this filtered topic.
 
-Height-based filtering removes floor in 3D instead of cropping image rows, so low obstacles (rocks, crates) that sit above the ground plane are kept. Tune `min_height` / `max_height` in the launch (height_filter_pointcloud params) if needed.
+Nav2's local costmap **voxel layer** subscribes to the point cloud directly, using `min_obstacle_height` to filter ground returns.
 
 ### RTAB-Map
 
@@ -168,13 +168,13 @@ RTAB-Map does SLAM from RGB and depth. It publishes `/map` (occupancy grid) and 
 Nav2 maintains two costmaps:
 
 - **Global costmap:** Static layer (RTAB-Map’s `/map`) plus inflation. Used for global path planning.
-- **Local costmap:** Static layer plus a **voxel layer** (fed by the point cloud) plus inflation. The voxel layer is tuned (e.g. `mark_threshold`, range limits, short persistence) and is fed from the *ground-cropped* point cloud so the floor doesn’t paint cost and we limit “trailing” when the robot turns.
+- **Local costmap:** **Voxel layer** (point cloud) + **obstacle layer** (`/scan`) + inflation — no static layer, so RTAB-Map grid artifacts are not replayed locally. Depth is ground-cropped before Nav2; near-field min range rejects self-hits when spinning.
 
 **Obstacle avoidance (no collisions):** Costmaps and the DWB controller are tuned so the robot does not hit rocks or other obstacles:
-- **Safety margin:** `robot_radius` is set larger than the physical robot (0.45 m) so the planner and controller keep extra clearance from obstacles.
-- **Inflation:** `inflation_radius` and `cost_scaling_factor` give a clear keep-out zone around obstacles while keeping free space low cost so the planner still has passable regions.
-- **Controller:** **BaseObstacle** scale is high (0.28) so the robot strongly avoids cost. Max speed is limited (0.32 m/s) so the robot has time to react and stop or deviate before hitting obstacles.
-- **Vision:** Ground crop is reduced (0.06) so low rocks appear in the voxel layer; local costmap updates at 8 Hz so obstacles show up quickly. See [Tuning and change log](#tuning-and-change-log) for all values and reasons.
+- **Safety margin:** `robot_radius` is set conservatively (~0.42 m) so the planner keeps clearance from obstacles.
+- **Inflation:** `inflation_radius` and `cost_scaling_factor` give a clear keep-out zone around obstacles while keeping free space passable.
+- **Controller:** **BaseObstacle** scale (0.50) penalizes trajectories through cost. Max speed is limited (0.18 m/s). Sim time is 3.0 s for look-ahead.
+- **Vision:** Ground crop (~0.14) for Nav2 depth; `obstacle_min_range` ~0.52 m to avoid marking the robot’s own wheels/chassis. See [Tuning and change log](#tuning-and-change-log).
 
 There is also an optional **clear costmap on start**: shortly after Nav2 is up, the launch can call the clear services once so each run starts with a clean in-memory costmap. Default is on; set `clear_costmap_on_start:=false` to disable.
 
@@ -226,14 +226,18 @@ Each subsection states the problem, cause (where it helps), and what to do. Conf
 
 **What you see:** When the robot turns, the local costmap shows a “trail” of cost behind it. You may also see phantom obstacles or flicker from single points or floor noise.
 
-**Why it happens:** The local costmap’s voxel layer is fed by the depth point cloud. The costmap is drawn in the map frame using the TF chain (map→odom→base_link). If that chain lags when RTAB-Map updates (e.g. during a turn), the costmap is rendered in a slightly wrong pose, so cost appears to trail. In addition, floor returns and sensor noise can add spurious cost.
+**Why it happens:** (1) **Self-hits during spin:** The depth camera is forward and pitched down; the bottom and sides of the image often see wheels, rocker, or chassis at roughly constant range. When the robot rotates in place, those returns stay at similar depth in the camera frame but sweep around in `odom`, which looks like a **ring or arc** of cost (not classic TF “slip”). (2) **TF lag:** The costmap is built using map→odom→base_link; brief lag during fast turns can smear obstacles. (3) **Floor / noise:** Ground returns and speckle add spurious cost.
 
 **What we did:**
 
-- **Costmap:** Set `transform_tolerance: 1.0` so the costmap doesn’t drop updates when TF is briefly late.
-- **Voxel layer:** Use `mark_threshold: 2`, shorter range (`obstacle_max_range: 2.5`), and `observation_persistence: 0.2`. Feed the voxel layer from the *height-filtered* point cloud (`/camera/camera/depth/color/points_ground_filtered`) so the floor is removed in 3D (points with z &lt; min_height in base_link are dropped) and rocks/crates are kept. A small image crop (`ground_crop_bottom: 0.05`) still runs before the point cloud for the bottom strip.
-- **RTAB-Map:** Set `Rtabmap/DetectionRate: 2.0` so map (and thus map→odom) updates more often when turning.
-- **Noise:** In the costmap, `mark_threshold: 2` filters single-point voxels. In RTAB-Map’s grid, `Grid/RangeMin: 0.5`, `NoiseFilteringMinNeighbors: 6`, and `MinClusterSize: 10` keep the map clean while retaining real obstacles.
+- **Local costmap: no static layer.** The local costmap uses only live sensor data (`voxel_layer` + `obstacle_layer` + `inflation_layer`). The global costmap still uses the static layer for path planning.
+- **Reject near-field depth for obstacles:** `obstacle_min_range` ~**0.52 m** on voxel and scan layers (and `range_min` on `depthimage_to_laserscan`) so chassis/wheel returns are not marked as obstacles. Tune if you need closer obstacle detection in front of the camera.
+- **Larger bottom crop on depth:** `ground_crop_bottom` ~**0.14** in `depth_fov_filter` to mask rows where wheels and near ground dominate (RTAB-Map still uses unfiltered depth on its topic).
+- **Short observation persistence:** `observation_persistence: 0.1` on voxel and scan so transient marks decay quickly when the sensor moves.
+- **Costmap:** `transform_tolerance: 1.0` so brief TF delay doesn’t drop updates.
+- **Voxel layer:** `mark_threshold: 2`, `obstacle_max_range: 2.5`, `min_obstacle_height: 0.05`.
+- **RTAB-Map:** `Rtabmap/DetectionRate: 2.0` for fresher map→odom when turning.
+- **Noise (RTAB-Map grid):** `Grid/RangeMin: 0.5`, neighbor filtering, `MinClusterSize` as in `rtabmap_sim.yaml`.
 
 **Where to look:** `luna_nav/config/nav2_rtabmap_params.yaml` (local costmap, voxel); `luna_mapping/config/rtabmap_sim.yaml` (grid); ground crop is in `rtabmap_nav2_sim.launch.py` (depth_fov_filter params).
 
@@ -342,25 +346,19 @@ Other options: rely on loop closures for global map consistency (they don’t fi
 
 Important tuning decisions and changes are recorded here so the “why” and “what” stay clear. Config file: **`luna_nav/config/nav2_rtabmap_params.yaml`** unless noted.
 
-| What changed | Why | Value / location |
-|--------------|-----|------------------|
-| **Robot radius (safety margin)** | Robot was colliding with rocks; planner treated robot as too small and planned paths too close to obstacles. | `robot_radius`: 0.30 → **0.45** m in both costmaps so the planner and controller keep more clearance (no collisions). |
-| **BaseObstacle scale (DWB)** | Trajectories through cost were not penalized enough; robot drove into high-cost (rock) cells. | `BaseObstacle.scale`: 0.02 → **0.28** so the controller strongly avoids cost and stays away from obstacles. |
-| **Max speed** | Robot needed more time to react and stop before hitting obstacles. | `max_vel_x` / `max_speed_xy`: 0.5 → **0.32** m/s; velocity_smoother `max_velocity` matched. Slower = more time to see obstacles and deviate. |
-| **Sim time (DWB)** | Planner looks further ahead so it can avoid obstacles earlier. | `sim_time`: 1.5 → **2.0** s. |
-| **Local costmap update rate** | Obstacles must appear in the costmap quickly so the controller can react. | `update_frequency`: 5 → **8** Hz. |
-| **Voxel observation persistence / delay** | Costmap should react faster to newly seen obstacles (e.g. rocks). | `observation_persistence`: 0.35 → **0.25**; `observation_source_delay`: 0.1 → **0.08** s. |
-| **Inflation: radius and decay** | Clear keep-out zone around obstacles; free space stays passable. | Local: `inflation_radius` **0.50** m, `cost_scaling_factor` **5.0**. Global: **0.42** m, **5.0**. |
-| **Ground crop** | Low rocks in the bottom of the image were cropped out and missing from the voxel layer. | `ground_crop_bottom`: 0.1 → **0.06** (launch: depth_fov_filter) so more of the scene (including low rocks) feeds the costmap. |
-| **Ground crop (depth filter)** | Floor was painting cost and causing a “trail” when turning. We only crop the pipeline that feeds the voxel layer; RTAB-Map uses raw depth. | `ground_crop_bottom`: **0.1** (fixed in `rtabmap_nav2_sim.launch.py`). See [Costmap trailing and noise](#costmap-trailing-and-noise) and [STACK_REVIEW_LUNABOTICS.md](STACK_REVIEW_LUNABOTICS.md). |
-| **Voxel mark_threshold, range, persistence** | Reduce phantom obstacles and costmap trailing while still seeing rocks. | `mark_threshold: 2`, `obstacle_max_range: 2.5`, short `observation_persistence` / `observation_source_delay`. Voxel fed from ground-cropped point cloud. |
-| **Costmap transform_tolerance** | When map→odom lags briefly (e.g. on turn), costmap was dropping updates. | **1.0** s so updates are not dropped during short TF lag. |
-| **Controller costmap_update_timeout** | Nav2 was aborting goals immediately when costmap updates lagged (e.g. depth processing). | **3.0** s (controller_server) so brief delays don't trigger abort. |
-| **Progress checker** | Nav2 was aborting when robot moved slowly (e.g. turning in place or avoiding obstacles). | `required_movement_radius`: **0.3** m, `movement_time_allowance`: **20** s so slow/careful motion doesn't trigger abort. |
-| **RTAB-Map DetectionRate** | Map→odom was updating too slowly when turning, contributing to cost trail. | **2.0** Hz so the map (and TF) update more often. |
-| **Zone publisher: odom topic and bounds** | Use same odom source as Nav2; support different arenas without code edits. | Default `odom_topic`: **/odom**. Zone bounds configurable via params; see `luna_nav/config/zone_publisher.yaml`. |
-
-When you change something significant, add a row here (what changed, why, and where).
+| What changed | Why | Current value |
+|--------------|-----|---------------|
+| **Robot radius** | Keep-out buffer around obstacles. | `robot_radius`: **0.42 m** (both costmaps). |
+| **BaseObstacle scale (DWB)** | Strong obstacle avoidance in local planner. | **0.50** (balanced with PathDist/GoalDist). |
+| **Max speed** | Slower = more time to react. | `max_vel_x`: **0.18 m/s**, `max_vel_theta`: **0.6 rad/s**. |
+| **Sim time (DWB)** | Longer look-ahead for avoidance. | **3.0 s**. |
+| **Voxel + scan** | Depth → obstacles; reject self-hits when spinning. | `observation_persistence` **0.1**, `obstacle_min_range` **~0.52 m**, `min_obstacle_height` **0.05**. |
+| **Inflation** | Keep-out zone + gradual falloff. | Local: `inflation_radius` **0.90 m**, `cost_scaling_factor` **2.0**. |
+| **Global costmap** | Static map only (no live obstacle layer). | Plugins: `static_layer` + `inflation_layer`. |
+| **Ground crop** | Mask wheels / near ground in depth for Nav2 only. | `ground_crop_bottom`: **0.14** (`depth_fov_filter` in `rtabmap_nav2_sim.launch.py`). |
+| **RTAB-Map** | Map freshness and grid detail. | `DetectionRate: 2.0`, `Grid/DepthDecimation: 2`, `NoiseFilteringRadius: 0.15`. |
+| **Frontier explorer** | Settling between goals, balanced scoring. | `settle_time_s: 4.0`, `min_frontier_size: 10`, `min_goal_distance: 0.8`. |
+| **Mission supervisor** | Stationary pre-goal delay + goal retry. | `map_warmup_s` **3.0** (no rotation); auto-retry after 5 s. |
 
 ---
 

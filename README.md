@@ -17,22 +17,24 @@ cd /ros2_ws && source install/setup.bash
 ros2 launch lunabot_2425 competition_sim.launch.py world:=ucf_arena
 ```
 
-Wait ~35s for all nodes to initialize, then start a mission:
+Wait ~30–40s for all nodes to initialize, then start a mission:
 
 ```bash
 ros2 service call /mission_supervisor/start_mission std_srvs/srv/Trigger {}
 ```
 
+Step-by-step (arenas, timing, what the mission does): [docs/COMPETITION_SIM.md](docs/COMPETITION_SIM.md).
+
 ## Documentation
 
 | Document | Description |
 |----------|-------------|
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture, package map, data flow |
-| [docs/WFD_IMPLEMENTATION.md](docs/WFD_IMPLEMENTATION.md) | Wavefront Frontier Detector algorithm and tuning |
-| [docs/AUTONOMY_ZONES_AND_LOCALIZATION.md](docs/AUTONOMY_ZONES_AND_LOCALIZATION.md) | Zone system, ArUco localization, mission phases |
-| [docs/CODEBASE_AND_SIM_COMPETITION_CYCLE.md](docs/CODEBASE_AND_SIM_COMPETITION_CYCLE.md) | Repo organization and sim competition routine |
-| [docs/COMPETITION_PREP_SSH_SEQUENCE.md](docs/COMPETITION_PREP_SSH_SEQUENCE.md) | Hardware deployment checklist |
-| [docs/HARDWARE.md](docs/HARDWARE.md) | Physical robot setup and camera calibration |
+| [docs/COMPETITION_SIM.md](docs/COMPETITION_SIM.md) | **Competition sim: launch + `start_mission` flow** |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture, package map, data flow, TF tree |
+| [docs/STACK_GUIDE.md](docs/STACK_GUIDE.md) | Launching sim, tuning, troubleshooting |
+| [docs/AUTONOMY.md](docs/AUTONOMY.md) | Zones, ArUco, WFD frontier explorer, mission FSM |
+| [docs/HARDWARE.md](docs/HARDWARE.md) | Physical robot setup (RealSense, fiducial cams, Jetson) |
+| [docs/COMPETITION_PREP_SSH_SEQUENCE.md](docs/COMPETITION_PREP_SSH_SEQUENCE.md) | Competition-day checklist and SSH sequence |
 
 ## Key Packages
 

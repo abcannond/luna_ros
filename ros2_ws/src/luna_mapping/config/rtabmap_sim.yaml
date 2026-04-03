@@ -32,7 +32,7 @@
     # Memory
     Mem/IncrementalMemory: "true"
     Mem/InitWMWithAllNodes: "false"
-    Mem/STMSize: "30"
+    Mem/STMSize: "40"
 
     # Feature detection (ORB is fast and works well for textured lunar terrain)
     Vis/FeatureType: "8"
@@ -73,10 +73,12 @@
     Grid/MinClusterSize: "10"
     Grid/ClusterRadius: "0.1"
 
-    # Noise filtering
-    Grid/NoiseFilteringRadius: "0.1"
+    # Noise filtering (aggressive to avoid phantom obstacles)
+    Grid/NoiseFilteringRadius: "0.15"
     Grid/NoiseFilteringMinNeighbors: "5"
-    Grid/DepthDecimation: "4"
+    # Decimation 2 instead of 4: better grid quality at the cost of CPU.
+    # Acceptable because the robot moves slowly.
+    Grid/DepthDecimation: "2"
 
     # Optimizer
     Optimizer/Strategy: "1"

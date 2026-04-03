@@ -1,39 +1,44 @@
 # UCF Exolith Arena zone definitions (Gazebo world frame = map frame)
 #
-# Arena: ~7.4 m x ~4.9 m (2025 Guidebook Section 3.1)
+# Derived from arena_walls.dae mesh vertex data:
+#   Inner wall X: -4.82 to +4.82  (9.64 m total width)
+#   Inner wall Y: -4.07 to +4.07  (8.14 m total depth)
+#   Center divider (barriers link) at x ≈ -0.25/+0.25 blocks access to right half.
+#
+# The robot operates ONLY in the left half: x from -4.82 to -0.25.
+# Accessible width ≈ 4.57 m, depth ≈ 8.14 m.
+#
 # Robot spawn: x=-3.80, y=3.30, yaw=-pi/2 (facing -Y)
-# Fiducial tags near (-4.75, 2.75) and (-3.75, 4.25)
-#
-# Bounds are [x_min, x_max, y_min, y_max] in meters.
-# Adjust after visual verification in Gazebo / RViz.
-#
-# Reference: 2025 Lunabotics Guidebook, Sections 3.1, 5.4, 5.5
-# https://fsi.ucf.edu/wp-content/uploads/sites/4/2025/01/lunaboticsguidebook-2025-1.pdf
+# Fiducial tags: (-3.75, 4.25) north wall, (-4.75, 2.75) west wall
 
-frame_id: map
+frame_id: world
 
 zones:
+  # Starting zone: 2 m x 2 m at robot spawn corner
   starting_zone:
-    bounds: [-5.0, -2.0, 1.5, 5.0]
+    bounds: [-4.82, -2.82, 2.07, 4.07]
     color: [0.0, 1.0, 0.0, 0.25]
-    description: "Robot start position and fiducial localization area"
+    description: "2 m x 2 m robot start / fiducial localization area"
 
-  obstacle_field:
-    bounds: [-2.0, 2.0, -4.0, 5.0]
-    color: [1.0, 0.5, 0.0, 0.25]
-    description: "Rocks and craters between start and construction sides"
-
+  # Excavation zone: 2.5 m from left wall, full depth
   excavation_zone:
-    bounds: [2.0, 5.0, -4.0, 0.5]
+    bounds: [-4.82, -2.32, -4.07, 4.07]
     color: [0.6, 0.3, 0.0, 0.25]
-    description: "Regolith excavation area"
+    description: "2.5 m wide left strip — regolith excavation area"
 
+  # Obstacle field: between excavation and center barrier, upper portion
+  obstacle_field:
+    bounds: [-2.32, -0.25, -4.07, 2.57]
+    color: [1.0, 0.5, 0.0, 0.25]
+    description: "Between excavation zone and center barrier — rocks and craters"
+
+  # Construction zone: between excavation and center barrier, near-start strip
   construction_zone:
-    bounds: [2.0, 5.0, 0.5, 5.0]
+    bounds: [-2.32, -0.25, 2.57, 4.07]
     color: [0.0, 0.5, 1.0, 0.25]
-    description: "Berm construction target area"
+    description: "Near-start 1.5 m strip — berm construction target"
 
 waypoints:
-  excavation_entry: [-0.5, -1.5, 0.0]
-  construction_entry: [3.0, 2.0, 1.57]
-  return_to_start: [-3.5, 3.0, -1.57]
+  excavation_entry: [-3.50, -1.00, -1.57]
+  construction_entry: [-1.30, 3.30, -1.57]
+  return_to_start: [-3.80, 3.00, -1.57]

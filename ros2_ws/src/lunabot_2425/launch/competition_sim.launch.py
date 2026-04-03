@@ -12,10 +12,13 @@ Usage:
   ros2 launch lunabot_2425 competition_sim.launch.py world:=ucf_arena
   ros2 launch lunabot_2425 competition_sim.launch.py world:=artemis_arena
 
-To start a mission run after the stack is up:
+To start a mission after the stack is up:
   ros2 service call /mission_supervisor/start_mission std_srvs/srv/Trigger {}
+
+See docs/COMPETITION_SIM.md for the full routine. Startup uses a short stationary warmup only (no in-place spin).
 """
 
+import math
 import os
 from ament_index_python.packages import get_package_share_directory
 
@@ -31,6 +34,11 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
+SPAWN_POSES = {
+    'artemis_arena': {'x': -2.750, 'y': -1.750, 'z': 0.0, 'yaw': math.pi / 2},
+    'ucf_arena':     {'x': -3.800, 'y':  3.300, 'z': 0.0, 'yaw': -math.pi / 2},
+}
+
 
 def _resolve_zones_file(context, *args, **kwargs):
     """Select the zones YAML matching the world argument."""
@@ -43,6 +51,24 @@ def _resolve_zones_file(context, *args, **kwargs):
     zones_file = zones_map.get(world, zones_map['ucf_arena'])
     luna_nav_share = get_package_share_directory('luna_nav')
     mission_config = os.path.join(luna_nav_share, 'config', 'mission_phases.yaml')
+
+    spawn = SPAWN_POSES.get(world, SPAWN_POSES['ucf_arena'])
+    world_to_map_tf = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='world_to_map_tf',
+        arguments=[
+            '--x', str(spawn['x']),
+            '--y', str(spawn['y']),
+            '--z', str(spawn['z']),
+            '--yaw', str(spawn['yaw']),
+            '--pitch', '0',
+            '--roll', '0',
+            '--frame-id', 'world',
+            '--child-frame-id', 'map',
+        ],
+        parameters=[{'use_sim_time': True}],
+    )
 
     zone_publisher = Node(
         package='luna_nav',
@@ -65,10 +91,12 @@ def _resolve_zones_file(context, *args, **kwargs):
         parameters=[{
             'use_sim_time': True,
             'enabled': False,
-            'min_frontier_size': 5,
-            'rate_hz': 1.0,
+            'min_frontier_size': 10,
+            'rate_hz': 0.5,
             'goal_tolerance': 0.5,
-            'blacklist_radius': 1.0,
+            'blacklist_radius': 1.2,
+            'min_goal_distance': 0.8,
+            'settle_time_s': 4.0,
         }],
     )
 
@@ -80,13 +108,18 @@ def _resolve_zones_file(context, *args, **kwargs):
         parameters=[{
             'use_sim_time': True,
             'config_file': mission_config,
+            'zones_file': zones_file,
+            'goal_frame_id': 'world',
             'rate_hz': 2.0,
             'use_frontier_exploration': True,
+            # Stationary settle only (seconds) before first goal — no rotation (see mission_supervisor).
+            'map_warmup_s': 3.0,
         }],
     )
 
     return [
         LogInfo(msg=f'Competition sim: world={world}, zones={zones_file}'),
+        world_to_map_tf,
         TimerAction(
             period=30.0,
             actions=[
@@ -101,6 +134,10 @@ def _resolve_zones_file(context, *args, **kwargs):
 
 def generate_launch_description():
     lunabot_share = get_package_share_directory('lunabot_2425')
+    luna_mapping_share = get_package_share_directory('luna_mapping')
+    competition_rviz = os.path.join(
+        luna_mapping_share, 'config', 'competition_sim.rviz'
+    )
 
     declare_world = DeclareLaunchArgument(
         'world',
@@ -115,6 +152,8 @@ def generate_launch_description():
         launch_arguments={
             'world': LaunchConfiguration('world'),
             'launch_mapping': 'true',
+            'rviz_config': competition_rviz,
+            'headless': 'false',
         }.items(),
     )
 

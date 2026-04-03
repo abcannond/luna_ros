@@ -23,6 +23,9 @@ luna_cont:
 
     publish_rate: 30.0
     base_frame_id: base_link
+    # In sim we use RTAB-Map visual odometry to own odom->base_link (see gz_bringup
+    # passing use_rtabmap_odom:=true). Keep one TF source to avoid frame drift/skew.
+    enable_odom_tf: false
 
     left_back_wheel_names: ['back_left_drive_joint']
     left_front_wheel_names: ['front_left_drive_joint']

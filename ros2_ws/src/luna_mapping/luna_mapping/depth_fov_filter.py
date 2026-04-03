@@ -7,6 +7,9 @@ Static mask for depth image: zero out fixed pixel regions.
 """
 
 import rclpy
+import json
+import time
+import urllib.request
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import Image
@@ -59,6 +62,8 @@ class DepthFovFilter(Node):
             self.crop_right = 0.0
 
         self.publisher_ = self.create_publisher(Image, output_topic, 10)
+        self._debug_log_path = '/home/piotr/luna_ros/.cursor/debug.log'
+        self._frame_count = 0
         self.subscription = self.create_subscription(
             Image,
             input_topic,
@@ -73,6 +78,7 @@ class DepthFovFilter(Node):
         )
 
     def image_callback(self, msg: Image):
+        self._frame_count += 1
         out = Image()
         out.header = msg.header
         out.height = msg.height
@@ -96,6 +102,12 @@ class DepthFovFilter(Node):
         if msg.step <= 0 or len(buf) < h * msg.step:
             return
 
+        do_sample_log = (self._frame_count % 30 == 0)
+        pre_bottom_nonzero = 0
+        pre_mid_nonzero = 0
+        sample_pixels = 0
+        sample_stride = 16
+
         bottom_rows = int(h * self.ground_crop_bottom) if self.ground_crop_bottom > 0 else 0
         left_cols = int(w * self.crop_left) if self.crop_left > 0 else 0
         right_cols = int(w * self.crop_right) if self.crop_right > 0 else 0
@@ -104,6 +116,18 @@ class DepthFovFilter(Node):
 
         for row in range(h):
             base = row * msg.step
+            if do_sample_log and row % sample_stride == 0:
+                in_bottom = row >= max(0, h - max(bottom_rows, 1))
+                in_mid = (h // 3) <= row < (2 * h // 3)
+                if in_bottom or in_mid:
+                    for col in range(0, w, sample_stride):
+                        px = buf[base + (col * bpp): base + ((col + 1) * bpp)]
+                        nz = 1 if any(px) else 0
+                        sample_pixels += 1
+                        if in_bottom:
+                            pre_bottom_nonzero += nz
+                        if in_mid:
+                            pre_mid_nonzero += nz
             # Ground crop: zero bottom fraction of image
             if row >= h - bottom_rows and bottom_rows > 0:
                 buf[base : base + msg.step] = b'\x00' * msg.step
@@ -132,6 +156,66 @@ class DepthFovFilter(Node):
 
         out.data = bytes(buf)
         self.publisher_.publish(out)
+
+        if do_sample_log and sample_pixels > 0:
+            post_bottom_nonzero = 0
+            post_mid_nonzero = 0
+            for row in range(0, h, sample_stride):
+                base = row * msg.step
+                in_bottom = row >= max(0, h - max(bottom_rows, 1))
+                in_mid = (h // 3) <= row < (2 * h // 3)
+                if in_bottom or in_mid:
+                    for col in range(0, w, sample_stride):
+                        px = out.data[base + (col * bpp): base + ((col + 1) * bpp)]
+                        nz = 1 if any(px) else 0
+                        if in_bottom:
+                            post_bottom_nonzero += nz
+                        if in_mid:
+                            post_mid_nonzero += nz
+            # #region agent log
+            self._debug_log(
+                hypothesis_id='H2',
+                location='depth_fov_filter.py:image_callback',
+                message='Depth sample occupancy before/after filter',
+                data={
+                    'frame': self._frame_count,
+                    'encoding': msg.encoding,
+                    'ground_crop_bottom': self.ground_crop_bottom,
+                    'pre_bottom_nonzero': pre_bottom_nonzero,
+                    'post_bottom_nonzero': post_bottom_nonzero,
+                    'pre_mid_nonzero': pre_mid_nonzero,
+                    'post_mid_nonzero': post_mid_nonzero,
+                },
+            )
+            # #endregion
+
+    def _debug_log(self, hypothesis_id: str, location: str, message: str, data: dict):
+        try:
+            payload = {
+                'id': f'log_{int(time.time() * 1000)}_{hypothesis_id}',
+                'timestamp': int(time.time() * 1000),
+                'runId': 'pre-fix',
+                'hypothesisId': hypothesis_id,
+                'location': location,
+                'message': message,
+                'data': data,
+            }
+            try:
+                # #region agent log
+                req = urllib.request.Request(
+                    'http://127.0.0.1:7243/ingest/118513d0-d9fa-4d38-9e11-6db013dbe340',
+                    data=json.dumps(payload).encode('utf-8'),
+                    headers={'Content-Type': 'application/json'},
+                    method='POST',
+                )
+                urllib.request.urlopen(req, timeout=0.15).read()
+                # #endregion
+            except Exception:
+                pass
+            with open(self._debug_log_path, 'a', encoding='utf-8') as f:
+                f.write(json.dumps(payload, separators=(',', ':')) + '\n')
+        except Exception:
+            pass
 
 
 def main(args=None):

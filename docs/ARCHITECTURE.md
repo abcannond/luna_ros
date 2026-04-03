@@ -2,7 +2,7 @@
 
 This document describes the software architecture of the WPI Lunabotics autonomous navigation and competition stack.
 
-**Related docs:** [WFD_IMPLEMENTATION.md](WFD_IMPLEMENTATION.md), [AUTONOMY_ZONES_AND_LOCALIZATION.md](AUTONOMY_ZONES_AND_LOCALIZATION.md), [CODEBASE_AND_SIM_COMPETITION_CYCLE.md](CODEBASE_AND_SIM_COMPETITION_CYCLE.md)
+**Related docs:** [AUTONOMY.md](AUTONOMY.md), [STACK_GUIDE.md](STACK_GUIDE.md)
 
 ---
 

@@ -1,38 +1,44 @@
 # Artemis Arena (KSC) zone definitions (Gazebo world frame = map frame)
 #
+# Derived from arena_walls.dae mesh vertex data:
+#   Inner wall X: -3.61 to +3.61  (7.22 m playable width)
+#   Inner wall Y: -2.67 to +2.67  (5.34 m playable depth)
+#   Center divider gap at x ≈ ±0.20, small opening at y ≈ ±0.20
+#
+# Zone widths/depths from 2025-26 Lunabotics Guidebook arena diagram:
+#   Starting Zone:     2.0 m x 2.0 m   bottom-left corner
+#   Excavation Zone:   2.5 m wide       left strip, full depth
+#   Obstacle Field:    4.72 m wide      right strip, upper 3.84 m
+#   Construction Zone: 4.72 m wide      right strip, bottom 1.5 m
+#
 # Robot spawn: x=-2.750, y=-1.750, yaw=pi/2 (facing +Y)
-# Fiducial tags near (-2.5, -2.65) and (-3.6, -1.75)
-#
-# Bounds are [x_min, x_max, y_min, y_max] in meters.
-# Adjust after visual verification in Gazebo / RViz.
-#
-# Reference: 2025 Lunabotics Guidebook, Sections 3.1, 5.4, 5.5
-# https://fsi.ucf.edu/wp-content/uploads/sites/4/2025/01/lunaboticsguidebook-2025-1.pdf
+# Fiducial tags: (-2.5, -2.65) south wall, (-3.6, -1.75) west wall
 
-frame_id: map
+frame_id: world
 
 zones:
+  # Starting zone listed first so it takes priority over excavation_zone
   starting_zone:
-    bounds: [-4.0, -1.5, -3.0, -0.5]
+    bounds: [-3.61, -1.61, -2.67, -0.67]
     color: [0.0, 1.0, 0.0, 0.25]
-    description: "Robot start position and fiducial localization area"
-
-  obstacle_field:
-    bounds: [-1.5, 1.5, -3.0, 3.0]
-    color: [1.0, 0.5, 0.0, 0.25]
-    description: "Rocks and craters between start and construction sides"
+    description: "2 m x 2 m robot start / fiducial localization area (bottom-left)"
 
   excavation_zone:
-    bounds: [1.5, 4.0, -3.0, 0.0]
+    bounds: [-3.61, -1.11, -2.67, 2.67]
     color: [0.6, 0.3, 0.0, 0.25]
-    description: "Regolith excavation area"
+    description: "2.5 m wide left strip — regolith excavation area"
+
+  obstacle_field:
+    bounds: [-1.11, 3.61, -1.17, 2.67]
+    color: [1.0, 0.5, 0.0, 0.25]
+    description: "Right side upper — rocks and craters"
 
   construction_zone:
-    bounds: [1.5, 4.0, 0.0, 3.0]
+    bounds: [-1.11, 3.61, -2.67, -1.17]
     color: [0.0, 0.5, 1.0, 0.25]
-    description: "Berm construction target area"
+    description: "Right side lower 1.5 m — berm construction target"
 
 waypoints:
-  excavation_entry: [0.5, -1.0, 0.0]
-  construction_entry: [2.5, 1.5, 1.57]
-  return_to_start: [-2.5, -1.5, 1.57]
+  excavation_entry: [-2.50, 1.50, 0.00]
+  construction_entry: [1.50, -2.00, 0.00]
+  return_to_start: [-2.75, -1.50, 1.57]

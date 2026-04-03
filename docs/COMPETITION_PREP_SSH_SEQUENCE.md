@@ -2,7 +2,7 @@
 
 Operational checklist for **Artemis Arena** runs: robot placement, bring-up order, SSH usage (bandwidth), localization, mapping, and planning stack.
 
-**Related:** [AUTONOMY_ZONES_AND_LOCALIZATION.md](AUTONOMY_ZONES_AND_LOCALIZATION.md), [STACK_GUIDE.md](STACK_GUIDE.md), [CODEBASE_AND_SIM_COMPETITION_CYCLE.md](CODEBASE_AND_SIM_COMPETITION_CYCLE.md) (codebase layout + sim testing routine).
+**Related:** [AUTONOMY.md](AUTONOMY.md), [STACK_GUIDE.md](STACK_GUIDE.md).
 
 **Design reference (team):** [Canva — competition flow](https://www.canva.com/design/DAG4uBCdxtM/6pPivqpfjFyfts0RoROFcQ/edit) *(internal; keep in sync with this doc).*
 
