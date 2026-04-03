@@ -10,14 +10,13 @@ Installation and build steps are documented separately in INSTALL.md.
 ---
 
 ## TERMINAL 1: Gazebo (Must run first)
-
-  colcon build
-  source /opt/ros/jazzy/setup.bash
   dbld
   drun
 
   Inside container:
-    cd /ros2_ws 
+    cd /ros2_ws
+    colcon build
+    source /opt/ros/jazzy/setup.bash
     source install/setup.bash
     ros2 launch lunabot_2425 gz_bringup.launch.py
 
