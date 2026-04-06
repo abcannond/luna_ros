@@ -50,9 +50,9 @@ def generate_launch_description():
     declare_rviz_config = DeclareLaunchArgument(
         'rviz_config',
         default_value=os.path.join(
-            luna_mapping_dir, 'config', 'rtabmap_nav2_with_fid_cams.rviz'
+            luna_mapping_dir, 'config', 'rtabmap_nav2.rviz'
         ),
-        description='Full path to RViz config file.',
+        description='Full path to RViz config. For fid-cam-heavy layout use config/experimental/rtabmap_nav2_with_fid_cams.rviz',
     )
     rviz_config = LaunchConfiguration('rviz_config')
     declare_sim = DeclareLaunchArgument(
@@ -413,8 +413,8 @@ def generate_launch_description():
     # Static transforms (sim-only: Gazebo frame aliases)
     #
     # NOTE: odom->base_link is NOT published here.
-    # In sim, LunaController publishes dynamic odom->base_link from wheel odom.
-    # On hardware, the robot driver provides it.
+    # Default competition sim uses use_rtabmap_odom:=true so rgbd_odometry publishes it.
+    # luna_cont has enable_odom_tf false to avoid two publishers. Hardware uses wheel or fused odom per bringup.
     #
     # RSP (robot_state_publisher) already publishes the full URDF chain:
     #   base_link -> depth_camera_link -> camera_color_optical_frame

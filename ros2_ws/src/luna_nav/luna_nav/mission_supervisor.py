@@ -71,6 +71,9 @@ class MissionSupervisorNode(Node):
         self.declare_parameter('use_frontier_exploration', True)
         # Stationary pre-goal delay (s); no in-place rotation (avoids costmap artifacts).
         self.declare_parameter('map_warmup_s', 3.0)
+        # Optional NDJSON debug (file + ingest). Off by default; enables extra subs when true.
+        self.declare_parameter('debug_ndjson_log', False)
+        self.declare_parameter('debug_ndjson_path', '')
 
         config_file = self.get_parameter('config_file').value
         zones_file = self.get_parameter('zones_file').value
@@ -93,6 +96,15 @@ class MissionSupervisorNode(Node):
         )
         self._map_warmup = float(
             self.get_parameter('map_warmup_s').value or 8.0
+        )
+        self._debug_ndjson_log = bool(
+            self.get_parameter('debug_ndjson_log').value
+        )
+        _p = self.get_parameter('debug_ndjson_path').value
+        self._debug_ndjson_path = (
+            str(_p).strip()
+            if str(_p).strip()
+            else '/tmp/luna_mission_supervisor.ndjson'
         )
 
         self._waypoints = {}
@@ -122,6 +134,7 @@ class MissionSupervisorNode(Node):
         self._cmd_summary_lin_avg = 0.0
         self._cmd_summary_lin_abs_avg = 0.0
         self._last_cmd_summary_t = time.time()
+        self._nav2_not_ready_ticks = 0
 
         self._debug_log_path = '/home/piotr/luna_ros/.cursor/debug.log'
 
@@ -134,15 +147,19 @@ class MissionSupervisorNode(Node):
         self._exploration_sub = self.create_subscription(
             String, '/exploration_status', self._exploration_cb, 10
         )
-        self._local_costmap_sub = self.create_subscription(
-            OccupancyGrid, '/local_costmap/costmap', self._local_costmap_cb, 10
-        )
-        self._tf_sub = self.create_subscription(
-            TFMessage, '/tf', self._tf_cb, 50
-        )
-        self._cmd_vel_observer_sub = self.create_subscription(
-            Twist, '/cmd_vel', self._cmd_vel_observer_cb, 10
-        )
+        if self._debug_ndjson_log:
+            self._local_costmap_sub = self.create_subscription(
+                OccupancyGrid,
+                '/local_costmap/costmap',
+                self._local_costmap_cb,
+                10,
+            )
+            self._tf_sub = self.create_subscription(
+                TFMessage, '/tf', self._tf_cb, 50
+            )
+            self._cmd_vel_observer_sub = self.create_subscription(
+                Twist, '/cmd_vel', self._cmd_vel_observer_cb, 10
+            )
 
         self._state_pub = self.create_publisher(String, '/mission_state', 10)
         self._dashboard_pub = self.create_publisher(
@@ -158,11 +175,15 @@ class MissionSupervisorNode(Node):
             callback_group=cb_group,
         )
 
+        # Services on the same Reentrant group as the action client so executor work
+        # for the client does not starve service callbacks. (Timer stays default group.)
         self._start_srv = self.create_service(
-            Trigger, '~/start_mission', self._start_mission_cb
+            Trigger, '~/start_mission', self._start_mission_cb,
+            callback_group=cb_group,
         )
         self._abort_srv = self.create_service(
-            Trigger, '~/abort_mission', self._abort_mission_cb
+            Trigger, '~/abort_mission', self._abort_mission_cb,
+            callback_group=cb_group,
         )
 
         self._frontier_enable_client = self.create_client(
@@ -605,17 +626,28 @@ class MissionSupervisorNode(Node):
 
     def _send_nav_goal(self, wp):
         """Send a NavigateToPose goal. Returns True if the async send was started."""
-        if not self._nav_client.wait_for_server(timeout_sec=5.0):
-            self.get_logger().warn('Nav2 not available (navigate_to_pose action server)')
+        # Do not call wait_for_server() from the timer callback: it spins the node and
+        # can deadlock the executor so ~/start_mission never completes. Non-blocking
+        # check; READY phase retries when this returns False.
+        if not self._nav_client.server_is_ready():
+            self._nav2_not_ready_ticks += 1
+            if self._nav2_not_ready_ticks == 1 or self._nav2_not_ready_ticks % 20 == 0:
+                self.get_logger().warn(
+                    'Nav2 navigate_to_pose not ready yet; will retry on next tick'
+                )
             # #region agent log
             self._debug_log(
                 hypothesis_id='H8',
                 location='mission_supervisor.py:_send_nav_goal',
-                message='Nav2 action server unavailable',
+                message='Nav2 action server unavailable (non-blocking check)',
                 data={'phase': self._phase.name},
             )
             # #endregion
             return False
+        self._nav2_not_ready_ticks = 0
+
+        # Avoid stacking NavigateToPose goals (reduces preemption / status-6 abort loops).
+        self._cancel_nav_goal()
 
         goal = NavigateToPose.Goal()
         goal.pose = PoseStamped()
@@ -746,7 +778,8 @@ class MissionSupervisorNode(Node):
         self._nav_goal_active = False
 
     def _set_frontier_enabled(self, enabled: bool):
-        if not self._frontier_enable_client.wait_for_service(timeout_sec=1.0):
+        # Same nested-spin hazard as wait_for_server when called from _tick.
+        if not self._frontier_enable_client.service_is_ready():
             self.get_logger().warn('Frontier enable service not available')
             return
         req = SetBool.Request()
@@ -811,6 +844,8 @@ class MissionSupervisorNode(Node):
         self._status_marker_pub.publish(m)
 
     def _debug_log(self, hypothesis_id: str, location: str, message: str, data: dict):
+        if not self._debug_ndjson_log:
+            return
         try:
             payload = {
                 'id': f'log_{int(time.time() * 1000)}_{hypothesis_id}',
@@ -833,7 +868,7 @@ class MissionSupervisorNode(Node):
                 # #endregion
             except Exception:
                 pass
-            with open(self._debug_log_path, 'a', encoding='utf-8') as f:
+            with open(self._debug_ndjson_path, 'a', encoding='utf-8') as f:
                 f.write(json.dumps(payload, separators=(',', ':')) + '\n')
         except Exception:
             pass

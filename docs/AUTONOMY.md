@@ -6,13 +6,7 @@ How the competition autonomy stack works: zone classification, ArUco localizatio
 
 ## Coordinate frames
 
-| Frame | Role |
-|-------|------|
-| **`map`** | Nav2 global frame; occupancy grid and zone polygons live here. |
-| **`odom`** | Continuous wheel/visual odometry; smooth short-term motion. |
-| **`base_link`** | Robot center; used for zone classification and Nav2. |
-
-**TF chain:** `map` → `odom` → `base_link`. RTAB-Map publishes `map`→`odom`; the controller publishes `odom`→`base_link`.
+For the full TF contract and sim vs hardware differences, read [ARCHITECTURE.md](ARCHITECTURE.md). Short version: **`map`** is the Nav2 global frame and zone YAML frame (via `world` alignment in sim). **`odom`→`base_link`** in default competition sim comes from **rgbd odometry**, not wheel TF (`enable_odom_tf` is false on `luna_cont`).
 
 ---
 

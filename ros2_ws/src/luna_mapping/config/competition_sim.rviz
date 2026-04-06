@@ -53,9 +53,12 @@ Visualization Manager:
     - Class: rviz_default_plugins/RobotModel
       Name: RobotModel
       Enabled: true
+      Visual Enabled: true
+      Collision Enabled: false
       Description Topic:
         Depth: 5
-        Durability Policy: Volatile
+        # Match robot_state_publisher latched /robot_description so RViz gets URDF if it starts late
+        Durability Policy: Transient Local
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /robot_description

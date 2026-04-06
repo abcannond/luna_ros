@@ -2,22 +2,41 @@
 
 This doc describes how to run the same camera and mapping stack on real hardware: **RealSense D455** for depth and RGB, and **4× Nexigo N980P** (or compatible) for fiducial cameras, typically on an **NVIDIA Jetson** inside the project’s Docker container.
 
-**See also:** [STACK_GUIDE.md](STACK_GUIDE.md) — how hardware fits into the pipeline and what’s different from sim.
+**See also** [STACK_GUIDE.md](STACK_GUIDE.md), [ARCHITECTURE.md](ARCHITECTURE.md), [DEPLOYMENT.md](DEPLOYMENT.md).
+
+---
+
+## Field checklist (sign off when validated on the robot)
+
+Use this as a lab worksheet. Date and initials each line when someone has verified it on your hardware.
+
+| Step | Verified |
+|------|----------|
+| Power and estop behavior understood | |
+| RealSense on USB 3, stable `ros2 topic hz` on color and depth | |
+| Four fiducial cams enumerated (`v4l2-ctl --list-devices`) and launch args set | |
+| `hardware_bringup.launch.py` runs without driver errors | |
+| `/odom` publishing and `odom`→`base_link` on `/tf` from the base driver | |
+| `rtabmap_nav2_hardware.launch.py` with `use_sim_time:=false`, `sim:=false` | |
+| `tf2_echo map base_link` stable while driving slowly | |
+| Nav2 goal in RViz completes in a safe test area | |
+
+Unresolved items belong in [COMPETITION_READINESS.md](COMPETITION_READINESS.md).
 
 ---
 
 ## Sim vs hardware: what changes
 
-The pipeline (camera → RTAB-Map + depth processing → Nav2) is the same. Only three things change: where the camera data comes from, whether we use sim time, and who publishes the TF frames.
+The pipeline (camera → RTAB-Map + depth processing → Nav2) is the same. What changes is the data source, `use_sim_time`, sim-only static TFs, and who owns **`odom`→`base_link`**.
 
-| In sim | On hardware |
-|--------|-------------|
-| Gazebo + bridge publish `camera/camera/*` | RealSense driver publishes the same topic names (namespace `camera/camera`) |
-| Gazebo provides `odom`→`base_link` and robot motion | Your **robot driver** must publish `/odom` and `odom`→`base_link` on `/tf` |
-| Mapping launch publishes static `base_link`→`camera_link` | **Terminal 1** (`hardware_bringup`) publishes `base_link`→`camera_link` |
-| `use_sim_time:=true` | **Terminal 2** runs the mapping launch with `use_sim_time:=false` and `sim:=false` |
+| In sim (default competition) | On hardware |
+|------------------------------|-------------|
+| Gazebo + bridge publish `camera/camera/*` | RealSense driver publishes the same topic names (`camera/camera`) |
+| **`rgbd_odometry`** plus `enable_odom_tf: false` on `luna_cont` | Your **base driver** must publish `/odom` and **`odom`→`base_link`** (unless you intentionally mirror the sim rgbd odom setup) |
+| `competition_sim` publishes **`world`→`map`** at spawn | You align map or initial pose per field procedure |
+| `use_sim_time:=true` | Mapping launch uses **`use_sim_time:=false`** and **`sim:=false`** |
 
-So on hardware you run two terminals: one for cameras and camera TF, one for the same mapping/Nav2 launch as in sim, with real time and no sim-only TFs.
+Run **two terminals** on hardware: cameras and camera TF first (`hardware_bringup`), then mapping and Nav2 (`rtabmap_nav2_hardware.launch.py`).
 
 ---
 

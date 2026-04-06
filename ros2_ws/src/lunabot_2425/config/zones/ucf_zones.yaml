@@ -1,44 +1,60 @@
-# UCF Exolith Arena zone definitions (Gazebo world frame = map frame)
+# UCF Lunabotics 2026 arena zones (Gazebo world / map frame)
 #
-# Derived from arena_walls.dae mesh vertex data:
-#   Inner wall X: -4.82 to +4.82  (9.64 m total width)
-#   Inner wall Y: -4.07 to +4.07  (8.14 m total depth)
-#   Center divider (barriers link) at x ≈ -0.25/+0.25 blocks access to right half.
+# Guidebook "Figure 1: UCF Arena Layout" (2026):
+#   - Total inner footprint: 8.14 m (ingress depth) × 9.14 m (cross-track).
+#   - Origin at ingress door center on the door wall; +X_guide runs into the arena.
+#   - Excavation: 4.0 m deep from ingress wall.
+#   - Obstacle band: remaining strip before construction (~1.54 m for 4.0 + 1.54 + 2.6 = 8.14).
+#   - Construction / berm: 2.6 m at the far wall from ingress.
+#   - Door spans Y_guide ∈ [-0.25, 0.25] on the ingress wall.
 #
-# The robot operates ONLY in the left half: x from -4.82 to -0.25.
-# Accessible width ≈ 4.57 m, depth ≈ 8.14 m.
+# Simulation mesh (arena_walls inner bounds): X ∈ [-4.82, +4.82], Y ∈ [-4.07, +4.07].
+#   ΔY = 8.14 m matches guidebook ingress-depth axis → we map X_guide (0..8.14) onto Y_sim
+#   from the north wall inward (decreasing Y): ingress at Y = +4.07, far wall at Y = -4.07.
+#   Cross-track (9.14 m guide) maps to X_sim ∈ [-4.82, +4.82] (mesh ~9.64 m; slight margin).
 #
-# Robot spawn: x=-3.80, y=3.30, yaw=-pi/2 (facing -Y)
-# Fiducial tags: (-3.75, 4.25) north wall, (-4.75, 2.75) west wall
+# Center barrier in the world blocks roughly X > -0.25 (east half). All mission zones below
+# are clipped to the ACCESSIBLE west half: X ∈ [-4.82, -0.25].
+#
+# Optional tuning: if the arena is shifted forward in 2026 testing, add a constant offset
+# to all Y bounds (same offset on ymin/ymax per zone) — not applied automatically yet.
 
 frame_id: world
 
+# Optional documented offset (meters): subtract from all zone Y bounds if ingress moves "forward"
+# relative to this model. Zone publisher ignores this key until supported in code.
+x_arena_offset_m: 0.0
+
 zones:
-  # Starting zone: 2 m x 2 m at robot spawn corner
+  # West-side start pocket (2 m × 2 m class); overlaps north part of excavation in X–Y but
+  # listed first so /current_zone prefers "starting_zone" when inside both.
   starting_zone:
     bounds: [-4.82, -2.82, 2.07, 4.07]
     color: [0.0, 1.0, 0.0, 0.25]
-    description: "2 m x 2 m robot start / fiducial localization area"
+    description: "Robot start / fiducial area (NW sector, west of barrier)"
 
-  # Excavation zone: 2.5 m from left wall, full depth
+  # 2026 excavation: 4.0 m from ingress (north wall Y=+4.07) toward -Y → Y ∈ [0.07, 4.07]
   excavation_zone:
-    bounds: [-4.82, -2.32, -4.07, 4.07]
+    bounds: [-4.82, -0.25, 0.07, 4.07]
     color: [0.6, 0.3, 0.0, 0.25]
-    description: "2.5 m wide left strip — regolith excavation area"
+    description: "Excavation — 4.0 m from ingress (guidebook), west half only"
 
-  # Obstacle field: between excavation and center barrier, upper portion
+  # Obstacle field between excavation and construction (guidebook ~1.54 m along depth)
   obstacle_field:
-    bounds: [-2.32, -0.25, -4.07, 2.57]
+    bounds: [-4.82, -0.25, -1.47, 0.07]
     color: [1.0, 0.5, 0.0, 0.25]
-    description: "Between excavation zone and center barrier — rocks and craters"
+    description: "Obstacle band between excavation and construction (west half)"
 
-  # Construction zone: between excavation and center barrier, near-start strip
+  # Construction / berm zone: 2.6 m at far wall from ingress (south Y band)
   construction_zone:
-    bounds: [-2.32, -0.25, 2.57, 4.07]
+    bounds: [-4.82, -0.25, -4.07, -1.47]
     color: [0.0, 0.5, 1.0, 0.25]
-    description: "Near-start 1.5 m strip — berm construction target"
+    description: "Construction / berm — 2.6 m at far wall (guidebook), west half only"
+
+# Approx. fiducial rails (north / west walls of mesh): (-3.75, 4.25), (-4.75, 2.75)
 
 waypoints:
-  excavation_entry: [-3.50, -1.00, -1.57]
-  construction_entry: [-1.30, 3.30, -1.57]
+  # Centroids of accessible (clipped) regions; headings are nominal for Nav2
+  excavation_entry: [-2.55, 2.05, -1.57]
+  construction_entry: [-2.55, -2.77, -1.57]
   return_to_start: [-3.80, 3.00, -1.57]

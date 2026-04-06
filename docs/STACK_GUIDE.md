@@ -2,7 +2,61 @@
 
 Features, design choices, launching, and troubleshooting for the Luna ROS stack.
 
-**See also:** [HARDWARE.md](HARDWARE.md) (running on real hardware) · [COMPETITION_SIM.md](COMPETITION_SIM.md) (full competition launch + `start_mission` flow)
+**See also:** [HARDWARE.md](HARDWARE.md) (hardware) · [COMPETITION_SIM.md](COMPETITION_SIM.md) (full competition launch + `start_mission`) · [AUTONOMY.md](AUTONOMY.md) (zones, WFD, mission FSM; avoid duplicating that here) · [ARCHITECTURE.md](ARCHITECTURE.md) (topics, TF, YAML index)
+
+---
+
+## Debugging quick reference
+
+Use this when something fails after launch. For pipeline detail and tuning, read the sections below.
+
+### Build sanity
+
+```bash
+cd /ros2_ws
+source /opt/ros/jazzy/setup.bash
+colcon build --symlink-install
+source install/setup.bash
+```
+
+After changing Python packages, rebuild the affected package. Stale `install/` trees can be removed with `rm -rf build install log` if imports act wrong.
+
+### TF checks
+
+```bash
+ros2 run tf2_ros tf2_echo map base_link
+ros2 run tf2_ros tf2_echo odom base_link
+```
+
+Expect a connected chain **`map` → `odom` → `base_link`** during mapping. If **`odom`→`base_link`** freezes while sim time advances, rgbd odometry may have stopped (registration failures). See [COMPETITION_READINESS.md](COMPETITION_READINESS.md).
+
+### Topics
+
+```bash
+ros2 topic list
+ros2 topic hz /camera/camera/color/image_raw_fixed
+ros2 topic hz /odom
+ros2 topic echo /current_zone --once
+```
+
+If `*_fixed` topics are silent, upstream bridge or frame fixers may not be running.
+
+### Nav2 and mission
+
+```bash
+ros2 action list | grep navigate
+ros2 service call /mission_supervisor/start_mission std_srvs/srv/Trigger {}
+```
+
+If goals abort immediately, check **`goal_frame_id`**, costmap state, and TF staleness. Mission supervisor cancels any prior goal before sending a new one to reduce preemption loops.
+
+### Optional NDJSON debug
+
+Set **`debug_ndjson_log:=true`** on `mission_supervisor` to subscribe to costmap, TF, and cmd_vel observers and append NDJSON to **`debug_ndjson_path`** (default under `/tmp`). Same flag exists on **`depth_fov_filter`**. Keep defaults **false** in normal runs.
+
+### Full sim validation
+
+Follow [COMPETITION_SIM.md](COMPETITION_SIM.md). Record pass or fail in team notes or PRs.
 
 ---
 
@@ -71,15 +125,7 @@ drive
 
 Controls: **i** forward, **,** back, **j** / **l** turn, **k** stop.
 
-**Diagnostics:**
-
-```bash
-ros2 topic list
-ros2 topic hz /map
-ros2 topic hz /scan
-ros2 run tf2_ros tf2_echo map base_link
-ros2 run tf2_tools view_frames
-```
+**Diagnostics:** see [Debugging quick reference](#debugging-quick-reference). For a quick map/scan pulse you can still run `ros2 topic hz /map`, `ros2 topic hz /scan`, and `ros2 run tf2_tools view_frames`.
 
 ### Launch arguments
 
@@ -252,7 +298,7 @@ Each subsection states the problem, cause (where it helps), and what to do. Conf
 **What to do (recommended when stuck/slip is an issue):**
 
 1. Launch the mapping stack with `use_rtabmap_odom:=true` so RTAB-Map’s rgbd_odometry node publishes `odom`→`base_link`.
-2. Use a controller config that *does not* publish `odom`→`base_link` (e.g. copy `robot_controllers_visual_odom.yaml` over `robot_controllers.yaml` in `lunabot_2425/config/`, then rebuild). Otherwise you’d have two sources for that transform.
+2. Set `enable_odom_tf: false` under `luna_cont` in `lunabot_2425/config/robot_controllers.yaml` so wheel odometry does not also publish `odom`→`base_link`. The default competition sim already uses this. If you enable wheel odom TF again, you will have two sources for that transform.
 3. Then only the camera drives `odom`→`base_link`. When the robot is stuck, the camera doesn’t move, so visual odom stops and the map stays aligned.
 
 Other options: rely on loop closures for global map consistency (they don’t fix live drift while stuck); on hardware, use good wheel odom or visual odom and optionally fiducials. The main goal remains avoiding collisions; this is the fallback when the robot does get stuck.
@@ -292,7 +338,7 @@ Other options: rely on loop closures for global map consistency (they don’t fi
 
 ### TF and connectivity
 
-**Sim TF tree:** `map` → `odom` → `base_link`. RTAB-Map publishes `map`→`odom`; the mapping launch (when `sim:=true`) publishes a static `odom`→`base_link` (identity). So the tree is connected.
+**Sim TF tree:** `map` → `odom` → `base_link`. RTAB-Map publishes `map`→`odom`. With `use_rtabmap_odom:=true`, `rgbd_odometry` publishes `odom`→`base_link`. `competition_sim.launch.py` also publishes static `world`→`map` at the spawn pose. The tree is connected when those nodes are running.
 
 **“No transform” or “unconnected trees”:** Usually this means diagnostics (e.g. `tf2_echo`, `view_frames`) were run before the stack was fully up. Start Gazebo, then the mapping launch; wait until you see RTAB-Map and costmap activity, then run TF diagnostics.
 
@@ -316,6 +362,16 @@ Other options: rely on loop closures for global map consistency (they don’t fi
 
 - **Teleop:** Confirm that `/cmd_vel` is published when you press keys (`ros2 topic echo /cmd_vel`). Ensure only one source (Nav2 or teleop) is publishing to `/cmd_vel`.
 - **Controllers:** Run `ros2 control list_controllers -c /controller_manager` (or the model’s controller_manager). The `luna_cont` controller should be active. If not, restart the sim and wait until you see “joint_state_broadcaster active — starting luna_cont…”.
+
+---
+
+### Path looks valid but wheels twist with little forward motion (Nav2)
+
+**What you see:** RViz shows a green global path; the quad pods steer and rotate but the robot barely translates.
+
+**Why:** DWB’s **`trans_stopped_velocity`** must be **less than `max_vel_x`**. If it is higher, every forward command counts as “translationally stopped,” so **RotateToGoal** / alignment critics dominate and the robot keeps reorienting instead of driving.
+
+**What to do:** In **`nav2_rtabmap_params.yaml`**, under `FollowPath`, keep **`trans_stopped_velocity`** well below **`max_vel_x`** (see tuning table below). Rebuild or restart Nav2 after edits.
 
 ---
 
@@ -349,11 +405,13 @@ Important tuning decisions and changes are recorded here so the “why” and �
 | What changed | Why | Current value |
 |--------------|-----|---------------|
 | **Robot radius** | Keep-out buffer around obstacles. | `robot_radius`: **0.42 m** (both costmaps). |
-| **BaseObstacle scale (DWB)** | Strong obstacle avoidance in local planner. | **0.50** (balanced with PathDist/GoalDist). |
-| **Max speed** | Slower = more time to react. | `max_vel_x`: **0.18 m/s**, `max_vel_theta`: **0.6 rad/s**. |
+| **BaseObstacle scale (DWB)** | Avoid lethal / high-cost cells; balance with path following in soft inflation. | **0.95** (with PathDist / PathAlign). |
+| **`trans_stopped_velocity` (DWB)** | Threshold for “translating” vs rotate-in-place; must be **< `max_vel_x`**. | **0.03 m/s** (`max_vel_x` **0.12**). |
+| **Max speed** | Slower = more time to react. | `max_vel_x`: **0.12 m/s**, `max_vel_theta`: **0.4 rad/s** (DWB FollowPath). |
 | **Sim time (DWB)** | Longer look-ahead for avoidance. | **3.0 s**. |
+| **`min_y_velocity_threshold` (controller server)** | Noise floor for lateral motion; use ~0 for non-holonomic DWB. | **0.001** (`max_vel_y`: **0**). |
 | **Voxel + scan** | Depth → obstacles; reject self-hits when spinning. | `observation_persistence` **0.1**, `obstacle_min_range` **~0.52 m**, `min_obstacle_height` **0.05**. |
-| **Inflation** | Keep-out zone + gradual falloff. | Local: `inflation_radius` **0.90 m**, `cost_scaling_factor` **2.0**. |
+| **Inflation** | Steeper falloff keeps corridors more traversable; lethal band stays at obstacles. | Local: `inflation_radius` **0.75 m**, `cost_scaling_factor` **3.0**. Global: `inflation_radius` **1.0 m**, `cost_scaling_factor` **2.2**. |
 | **Global costmap** | Static map only (no live obstacle layer). | Plugins: `static_layer` + `inflation_layer`. |
 | **Ground crop** | Mask wheels / near ground in depth for Nav2 only. | `ground_crop_bottom`: **0.14** (`depth_fov_filter` in `rtabmap_nav2_sim.launch.py`). |
 | **RTAB-Map** | Map freshness and grid detail. | `DetectionRate: 2.0`, `Grid/DepthDecimation: 2`, `NoiseFilteringRadius: 0.15`. |
@@ -372,4 +430,4 @@ Important tuning decisions and changes are recorded here so the “why” and �
 | RTAB-Map (grid, noise, detection rate) | `luna_mapping/config/rtabmap_sim.yaml` |
 | Depth FOV filter (ground_crop_bottom, mask_regions) | `rtabmap_nav2_sim.launch.py` (depth_fov_filter params) |
 | Zone publisher (odom topic, zone bounds) | `luna_nav/config/zone_publisher.yaml` |
-| Controller (wheel odom on/off) | `lunabot_2425/config/robot_controllers.yaml`; `robot_controllers_visual_odom.yaml` (odom TF off) |
+| Controller (wheel odom on/off) | `lunabot_2425/config/robot_controllers.yaml` (`enable_odom_tf` under `luna_cont`) |

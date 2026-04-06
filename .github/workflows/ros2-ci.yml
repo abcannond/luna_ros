@@ -1,0 +1,48 @@
+# Build workspace in the project Docker image and run non-interactive smoke checks.
+# Full Gazebo sim is not run here (no GPU/display guarantee); see docs/CONTRIBUTING.md.
+
+name: ROS 2 CI
+
+on:
+  push:
+    branches: [main, master, competition-sim]
+  pull_request:
+    branches: [main, master, competition-sim]
+
+jobs:
+  build-and-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Use HTTPS for GitHub submodule URLs
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build Docker image
+        run: docker build -t luna_ros:ci -f Dockerfile .
+
+      - name: colcon build (workspace bind-mounted)
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE/ros2_ws:/ros2_ws:rw" \
+            luna_ros:ci \
+            bash -lc 'set -eo pipefail; source /opt/ros/jazzy/setup.bash; cd /ros2_ws; colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release'
+
+      - name: Smoke script (packages + launch --show-args)
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE/ros2_ws:/ros2_ws:rw" \
+            -v "$GITHUB_WORKSPACE:/repo:ro" \
+            luna_ros:ci \
+            bash -lc 'set -eo pipefail; source /opt/ros/jazzy/setup.bash; source /ros2_ws/install/setup.bash; /repo/scripts/smoke_workspace.sh'
+
+      - name: luna_mapping linters (colcon test)
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE/ros2_ws:/ros2_ws:rw" \
+            luna_ros:ci \
+            bash -lc 'set -eo pipefail; source /opt/ros/jazzy/setup.bash; cd /ros2_ws; colcon test --packages-select luna_mapping; colcon test-result --verbose'

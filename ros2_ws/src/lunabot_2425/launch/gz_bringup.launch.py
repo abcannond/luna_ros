@@ -12,10 +12,10 @@ from launch.actions import (
     LogInfo,
     TimerAction,
 )
-from launch.conditions import LaunchConfigurationEquals, IfCondition, UnlessCondition
+from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.event_handlers import OnProcessExit
-from launch.substitutions import LaunchConfiguration, TextSubstitution
+from launch.substitutions import EqualsSubstitution, LaunchConfiguration, TextSubstitution
 from launch_ros.actions import Node
 
 
@@ -145,7 +145,9 @@ def generate_launch_description():
     gz_create_robot_ucf = Node(
         package="ros_gz_sim",
         executable="create",
-        condition=LaunchConfigurationEquals("world", "ucf_arena"),
+        condition=IfCondition(
+            EqualsSubstitution(LaunchConfiguration("world"), TextSubstitution(text="ucf_arena"))
+        ),
         arguments=[
             "-topic", "robot_description",
             "-name", "mooncake",
@@ -162,7 +164,9 @@ def generate_launch_description():
     gz_create_robot_artemis = Node(
         package="ros_gz_sim",
         executable="create",
-        condition=LaunchConfigurationEquals("world", "artemis_arena"),
+        condition=IfCondition(
+            EqualsSubstitution(LaunchConfiguration("world"), TextSubstitution(text="artemis_arena"))
+        ),
         arguments=[
             "-topic", "robot_description",
             "-name", "mooncake",

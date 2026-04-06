@@ -43,6 +43,8 @@ class DepthFovFilter(Node):
         self.declare_parameter('ground_crop_bottom', 0.0)
         self.declare_parameter('crop_left', 0.0)
         self.declare_parameter('crop_right', 0.0)
+        self.declare_parameter('debug_ndjson_log', False)
+        self.declare_parameter('debug_ndjson_path', '')
 
         input_topic = self.get_parameter('input_topic').value
         output_topic = self.get_parameter('output_topic').value
@@ -102,7 +104,7 @@ class DepthFovFilter(Node):
         if msg.step <= 0 or len(buf) < h * msg.step:
             return
 
-        do_sample_log = (self._frame_count % 30 == 0)
+        do_sample_log = self._debug_ndjson_log and (self._frame_count % 30 == 0)
         pre_bottom_nonzero = 0
         pre_mid_nonzero = 0
         sample_pixels = 0
@@ -212,7 +214,7 @@ class DepthFovFilter(Node):
                 # #endregion
             except Exception:
                 pass
-            with open(self._debug_log_path, 'a', encoding='utf-8') as f:
+            with open(self._debug_ndjson_path, 'a', encoding='utf-8') as f:
                 f.write(json.dumps(payload, separators=(',', ':')) + '\n')
         except Exception:
             pass

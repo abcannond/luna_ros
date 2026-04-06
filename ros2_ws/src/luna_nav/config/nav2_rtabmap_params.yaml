@@ -20,7 +20,8 @@ controller_server:
     controller_frequency: 10.0
     costmap_update_timeout: 3.0
     min_x_velocity_threshold: 0.001
-    min_y_velocity_threshold: 0.5
+    # Match non-holonomic DWB (max_vel_y: 0); a large threshold here is for omni robots.
+    min_y_velocity_threshold: 0.001
     min_theta_velocity_threshold: 0.001
     progress_checker_plugins: ["progress_checker"]
     goal_checker_plugins: ["goal_checker"]
@@ -64,13 +65,16 @@ controller_server:
       angular_granularity: 0.025
       transform_tolerance: 1.0
       xy_goal_tolerance: 0.30
-      trans_stopped_velocity: 0.15
+      # Must be below max_vel_x (0.12). If this is higher, DWB treats every forward
+      # command as "translationally stopped" and RotateToGoal / alignment win forever:
+      # wheels steer and twist with almost no progress (common quad-swerve symptom).
+      trans_stopped_velocity: 0.03
       short_circuit_trajectory_evaluation: true
       critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
-      # BaseObstacle scale: costmap values are 0-253 in the inflation zone.
-      # At 0.50, max penalty = ~127 which dominates PathDist/GoalDist
-      # and forces the controller to strongly avoid inflated obstacles.
-      BaseObstacle.scale: 1.20
+      # BaseObstacle: high scale strongly avoids lethal/near-lethal cells; too high
+      # with wide inflation can kill all vx samples and yield spin-in-place. Balanced
+      # with Path* critics so the robot still follows the global plan in soft-cost areas.
+      BaseObstacle.scale: 0.95
       BaseObstacle.sum_scores: false
       PathAlign.scale: 32.0
       PathAlign.forward_point_distance: 0.1
@@ -149,7 +153,9 @@ local_costmap:
 
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 2.5
+        # Higher factor: cost falls off faster with distance (more traversable corridor,
+        # still steep cost next to obstacles).
+        cost_scaling_factor: 3.0
         inflation_radius: 0.75
 
       always_send_full_costmap: true
@@ -183,7 +189,8 @@ global_costmap:
 
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 1.5
+        # Steeper decay: NavFn uses lower-cost cells for routing; lethal band stays tight.
+        cost_scaling_factor: 2.2
         inflation_radius: 1.0
 
       always_send_full_costmap: true
