@@ -38,6 +38,8 @@ setup(
             'depth_fov_filter = luna_mapping.depth_fov_filter:main',
             'depth_to_rgb = luna_mapping.depth_to_rgb:main',
             'height_filter_pointcloud = luna_mapping.height_filter_pointcloud:main',
+            'depth_round_obstacle_detector = '
+            'luna_mapping.depth_round_obstacle_detector:main',
         ],
     },
 )
