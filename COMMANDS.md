@@ -9,58 +9,53 @@ Installation and build steps are documented separately in INSTALL.md.
 
 **TERMINAL 1: Gazebo (Must run first)**
   ```bash
-    colcon build
-    source /opt/ros/jazzy/setup.bash
     dbld
     drun
   ```
 *Inside container:*
   ```bash
+      colcon build
+      source /opt/ros/jazzy/setup.bash
       cd /ros2_ws && source install/setup.bash
       ros2 launch lunabot_2425 gz_bringup.launch.py
   ```
 *Wait until Gazebo is fully up and the robot is spawned.*
 
-## TERMINAL 2: RTAB-Map + Nav2 (Run only after Gazebo is up)
-
-  New host terminal:
+**TERMINAL 2: RTAB-Map + Nav2 (Run only after Gazebo is up)**
+  *New host terminal:*
+  ```bash
     dbash
-
-  Inside container:
+  ```
+  *Inside container:*
+  ```bash
     cd /ros2_ws && source install/setup.bash
     source /opt/ros/jazzy/setup.bash
     ros2 launch luna_mapping rtabmap_nav2_sim.launch.py
-
-  This starts:
-  - RTAB-Map (map)
-  - depth → scan
-  - depth → pointcloud
-  - Nav2                                                       
-
-  Wait until RTAB-Map and Nav2 messages appear.
-
+  ```                                                    
+  *Wait until RTAB-Map and Nav2 messages appear.*
 ---
 
-## TERMINAL 3 (Optional): RViz
+**TERMINAL 3 (Optional): RViz**
   (Visualization + Nav2 goals)
 
-  New host terminal:
+ *New host terminal:*
+  ```bash
     dbash
+  ```
 
-  Inside container:
+ *Inside container:*
+  ```bash
     cd /ros2_ws && source install/setup.bash
     source /opt/ros/jazzy/setup.bash
     rviz2 -d $(ros2 pkg prefix luna_mapping)/share/luna_mapping/config/rtabmap_nav2.rviz
-
-  Use the Nav2 Goal tool in the RViz toolbar to send goals.
+  ```
+  *Use the Nav2 Goal tool in the RViz toolbar to send goals.*
 
 ---
 
-## TERMINAL 4 (Optional): Keyboard Teleop
+**TERMINAL 4 (Optional): Keyboard Teleop**
 New host terminal:
-
   dbash
-
 Inside container:
 
   cd /ros2_ws && source install/setup.bash
