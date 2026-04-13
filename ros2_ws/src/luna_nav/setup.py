@@ -20,10 +20,5 @@ setup(
     maintainer_email='root@todo.todo',
     description='Luna navigation package (Nav2, zone publisher)',
     license='TODO: License declaration',
-    entry_points={
-        'console_scripts': [
-            'zone_publisher = luna_nav.zone_publisher:main',
-            'arena_grid_publisher = luna_nav.arena_grid_publisher:main',
-        ],
-    },
+    entry_points={},
 )
