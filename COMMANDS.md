@@ -35,7 +35,20 @@ Installation and build steps are documented separately in INSTALL.md.
   *Wait until RTAB-Map and Nav2 messages appear.*
 ---
 
-**TERMINAL 3 (Optional): RViz**
+**TERMINAL 3: Testing Gridding**
+  *New host terminal:*
+  ```bash
+    dbash
+  ```
+  *Inside container:*
+  ```bash
+    source /opt/ros/jazzy/setup.bash
+  ```                                                    
+  *Wait until RTAB-Map and Nav2 messages appear.*
+---
+
+
+<!-- **TERMINAL 3 (Optional): RViz**
   (Visualization + Nav2 goals)
 
  *New host terminal:*
@@ -49,11 +62,11 @@ Installation and build steps are documented separately in INSTALL.md.
     source /opt/ros/jazzy/setup.bash
     rviz2 -d $(ros2 pkg prefix luna_mapping)/share/luna_mapping/config/rtabmap_nav2.rviz
   ```
-  *Use the Nav2 Goal tool in the RViz toolbar to send goals.*
+  *Use the Nav2 Goal tool in the RViz toolbar to send goals.* -->
 
 ---
 
-**TERMINAL 4 (Optional): Keyboard Teleop**
+<!-- **TERMINAL 4 (Optional): Keyboard Teleop**
 New host terminal:
   dbash
 Inside container:
@@ -141,4 +154,4 @@ In another terminal, echo the topic:
 
   ros2 topic echo /current_zone
 
-Zone logic (first match): starting zone (0–2, 0–2), excavation (0–2.5, 0–11), obstacle (4.38–6.38, 0–11 minus 4.38–6.88×0–1.5), construction (7–12, 0–11), else "outside bounds".
+Zone logic (first match): starting zone (0–2, 0–2), excavation (0–2.5, 0–11), obstacle (4.38–6.38, 0–11 minus 4.38–6.88×0–1.5), construction (7–12, 0–11), else "outside bounds". -->
