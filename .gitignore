@@ -27,6 +27,10 @@ Makefile
 # IDE and editor files
 .vscode/
 .idea/
+.cursor/
+
+# Local planning / scratch (not for version control)
+.thoughts/
 *.swp
 *.swo
 *.bak

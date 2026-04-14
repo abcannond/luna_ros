@@ -1,0 +1,44 @@
+# Shared arena bounds and rulebook rectangles (meters, axis-aligned, closed intervals).
+# Used by zone_publisher and arena_grid_publisher.
+
+arena:
+  x_min: 0.0
+  x_max: 6.88
+  y_min: 0.0
+  y_max: 11.00
+
+origin_tolerance_m: 0.01
+
+# Order for coarse zone_publisher resolution (first match wins after origin rule).
+zone_priority:
+  - starting_zone
+  - excavation_zone
+  - obstacle_zone
+  - construction_zone
+
+zones:
+  starting_zone:
+    code: s
+    coarse_name: starting zone
+    rectangle: [0.0, 2.0, 0.0, 2.0] # x_min, x_max, y_min, y_max
+
+  excavation_zone:
+    code: e
+    coarse_name: excavation zone
+    rectangle: [0.0, 2.5, 0.0, 11.0]
+
+  obstacle_zone:
+    code: o
+    coarse_name: obstacle zone
+    rectangle_main: [2.5, 6.88, 0.0, 11.0]
+    rectangle_exclude: [3.96, 6.88, 0.0, 1.5]
+
+  construction_zone:
+    code: c
+    coarse_name: construction zone
+    rectangle: [3.96, 6.88, 0.0, 1.5]
+
+grid:
+  cell_size_m: 1.0
+  # If true and cell qualifies, publish E{m} instead of G{k} when label is not a border.
+  prefer_excavation_e_label: true
