@@ -49,7 +49,7 @@ class JoyEcho(Node):
         self._warn_timer = self.create_timer(3.0, self._warn_if_no_joy)
         self.get_logger().info(
             f"JoyEcho: listening on {topic} (threshold={self.threshold}). "
-            "Hold A (enable) + move sticks to drive."
+            "Press Start (arm) then move sticks; Back disarms."
         )
 
     def _warn_if_no_joy(self):
@@ -70,8 +70,9 @@ class JoyEcho(Node):
             print(
                 "\n[JoyEcho] *** /joy is live *** "
                 f"{len(msg.axes)} axes, {len(msg.buttons)} buttons. "
-                "Move sticks / press buttons — you should see lines below. "
-                "Robot moves only while A (enable) is held.\n"
+                "Move sticks / press buttons — lines below. "
+                "Arm teleop with Start (see teleop_nav_gate.yaml).\n",
+                flush=True,
             )
 
         for i, v in enumerate(msg.axes):
@@ -86,21 +87,21 @@ class JoyEcho(Node):
                     action = "Rotate right" if v > 0.1 else "Rotate left" if v < -0.1 else "Stop (rotate axis)"
                 else:
                     action = f"{label}: {v:.2f}"
-                print(f"[JoyEcho] {action}")
+                print(f"[JoyEcho] {action}", flush=True)
 
         for i, v in enumerate(msg.buttons):
             prev = self.prev_buttons[i] if i < len(self.prev_buttons) else 0
             if v != prev:
                 if i == 0 and v:
-                    print("[JoyEcho] Enable (A) pressed — you can drive with sticks")
+                    print("[JoyEcho] Enable (A) pressed — you can drive with sticks", flush=True)
                 elif i == 0 and not v:
-                    print("[JoyEcho] Enable (A) released — robot should stop")
+                    print("[JoyEcho] Enable (A) released — robot should stop", flush=True)
                 elif i == 2 and v:
-                    print("[JoyEcho] Stop (X) pressed")
+                    print("[JoyEcho] Stop (X) pressed", flush=True)
                 else:
                     label = BUTTON_LABELS.get(i, f"button_{i}")
                     state = "pressed" if v else "released"
-                    print(f"[JoyEcho] {label} {state}")
+                    print(f"[JoyEcho] {label} {state}", flush=True)
 
         self.prev_axes = list(msg.axes)
         self.prev_buttons = list(msg.buttons)

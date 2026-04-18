@@ -377,8 +377,7 @@ def generate_launch_description():
                 parameters=[nav2_params_file, {'use_sim_time': use_sim_time}],
                 remappings=[
                     ('cmd_vel', 'cmd_vel_nav'),  # Input from Nav2
-                    # Smoothed output to twist_mux (not /cmd_vel_nav — that is controller->smoother)
-                    ('cmd_vel_smoothed', '/cmd_vel_navigation'),
+                    ('cmd_vel_smoothed', '/cmd_vel'),
                 ]
             ),
             

@@ -1,0 +1,13 @@
+# teleop_nav_gate: Start (default Xbox btn 7) arms teleop; Back (6) returns to Nav2.
+# Deactivate order is reverse of this list; activate uses this order.
+teleop_nav_gate:
+  ros__parameters:
+    start_button: 7
+    back_button: 6
+    teleop_cmd_vel_in: "/teleop_cmd_vel_raw"
+    cmd_vel_out: "/cmd_vel"
+    teleop_active_out: "/teleop_active"
+    nav2_lifecycle_nodes:
+      - controller_server
+      - behavior_server
+      - velocity_smoother
