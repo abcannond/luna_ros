@@ -53,6 +53,7 @@ namespace luna_controller
     double getY() const { return y_; }
     double getHeading() const { return heading_; }
     double getLinear() const { return linear_; }
+    double getStrafe() const { return strafe_; }
     double getAngular() const { return angular_; }
 
     void setWheelParams(double wheel_track, double wheel_base, double wheel_radius);
