@@ -1,4 +1,216 @@
-// UNTESTED! 
+// C620 CAN control
+
+#include <iostream>
+#include <thread>
+#include <map>
+#include <atomic>
+#include <vector>
+#include <chrono>
+#include <cstring>
+#include <linux/can.h>
+#include <linux/can/raw.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+
+using namespace std::chrono_literals;
+
+// ---------------- CONFIG ----------------
+const char* CAN_IFACE = "can0";
+const int ARB_ID = 0x200;
+const std::vector<int> MOTOR_IDS = {1,2,3,4};
+
+const int STEP = 100;
+const int LOOP_DELAY_US = 2000;
+const int MAX_CURRENT = 16000;
+
+// ---------------- STATE ----------------
+std::map<int,int> currents;
+std::map<int,int> targets;
+std::map<int,bool> reverse_flags;
+
+std::atomic<bool> running(true);
+
+int can_sock = -1;
+
+// ---------------- CAN ----------------
+
+//Function to try to establish CAN interface 
+//returns -1 if error 
+//returns the CAN interface if it exists
+int open_can(const char* iface) {
+    int s = socket(PF_CAN, SOCK_RAW, CAN_RAW);
+    if (s < 0) {
+        perror("socket(PF_CAN)");
+        return -1;
+    }
+
+    struct ifreq ifr{};
+    strncpy(ifr.ifr_name, iface, IFNAMSIZ);
+
+    if (ioctl(s, SIOCGIFINDEX, &ifr) < 0) {
+        perror("SIOCGIFINDEX (interface not found or down)");
+        close(s);
+        return -1;
+    }
+
+    struct sockaddr_can addr{};
+    addr.can_family = AF_CAN;
+    addr.can_ifindex = ifr.ifr_ifindex;
+
+    if (bind(s, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+        perror("bind(CAN)");
+        close(s);
+        return -1;
+    }
+
+    std::cout << "CAN opened successfully on " << iface << "\n";
+    return s;
+}
+
+can_frame build_msg() {
+    can_frame fr{};
+    fr.can_id = ARB_ID;
+    fr.can_dlc = 8;
+
+    int i = 0;
+    for (int m : MOTOR_IDS) {
+        int val = currents[m];
+        fr.data[i++] = static_cast<unsigned char>((val >> 8) & 0xFF);
+        fr.data[i++] = static_cast<unsigned char>(val & 0xFF);
+    }
+    return fr;
+}
+
+// ---------------- FEEDBACK ----------------
+void feedback_thread() {
+    while (running) {
+        can_frame fr{};
+        int n = static_cast<int>(read(can_sock, &fr, sizeof(fr)));
+        if (n > 0) {
+            int id = fr.can_id - 0x200;
+            if (id >= 1 && id <= 4) {
+                int enc = (fr.data[0] << 8) | fr.data[1];
+                int rpm = (int16_t)((fr.data[2] << 8) | fr.data[3]);
+
+                std::cout << "M" << id
+                          << " ENC: " << enc
+                          << " RPM: " << rpm << "\n";
+            }
+        }
+    }
+}
+
+// ---------------- CONTROL LOOP ----------------
+void control_thread() {
+    while (running) {
+        for (int m : MOTOR_IDS) {
+            int tgt = reverse_flags[m] ? -targets[m] : targets[m];
+
+            if (currents[m] < tgt)
+                currents[m] += STEP;
+            else if (currents[m] > tgt)
+                currents[m] -= STEP;
+        }
+
+        auto msg = build_msg();
+        write(can_sock, &msg, sizeof(msg));
+
+        std::this_thread::sleep_for(std::chrono::microseconds(LOOP_DELAY_US));
+    }
+}
+
+// ---------------- INPUT ----------------
+// Make sure this is commented out when running full stack, this is only for testing 
+void command_thread() {
+    std::string cmd;
+
+    std::cout << "Command interface ready:\n";
+    std::cout << "w/s/a/d = tank drive\n";
+    std::cout << "stop = zero all\n";
+    std::cout << "q = quit\n";
+
+    while (running) {
+        std::getline(std::cin, cmd);
+
+        if (cmd == "w") {
+            for (int m : MOTOR_IDS) targets[m] = 5000;
+        }
+        else if (cmd == "s") {
+            for (int m : MOTOR_IDS) targets[m] = -5000;
+        }
+        else if (cmd == "a") {
+            targets[1] = -3000; targets[2] = -3000;
+            targets[3] = 3000;  targets[4] = 3000;
+        }
+        else if (cmd == "d") {
+            targets[1] = 3000; targets[2] = 3000;
+            targets[3] = -3000; targets[4] = -3000;
+        }
+        else if (cmd == "stop") {
+            for (auto &t : targets) t.second = 0;
+        }
+        else if (cmd == "q") {
+            running = false;
+        }
+    }
+}
+
+// ---------------- SHUTDOWN ----------------
+void safe_shutdown() {
+    std::cout << "Shutting down...\n";
+
+    bool ramp = true;
+    while (ramp) {
+        ramp = false;
+
+        for (int m : MOTOR_IDS) {
+            if (currents[m] > 0) {
+                currents[m] -= STEP;
+                ramp = true;
+            } else if (currents[m] < 0) {
+                currents[m] += STEP;
+                ramp = true;
+            }
+        }
+
+        auto msg = build_msg();
+        write(can_sock, &msg, sizeof(msg));
+
+        std::this_thread::sleep_for(2ms);
+    }
+}
+
+// ---------------- MAIN ----------------
+int main() {
+    for (int m : MOTOR_IDS) {
+        currents[m] = 0;
+        targets[m] = 0;
+        reverse_flags[m] = false;
+    }
+    
+    can_sock = open_can(CAN_IFACE);
+
+    std::thread t1(feedback_thread);
+    std::thread t2(control_thread);
+    std::thread t3(command_thread);
+
+    t3.join();
+
+    running = false;
+
+    t1.join();
+    t2.join();
+
+    safe_shutdown();
+    close(can_sock);
+
+    std::cout << "Exited cleanly\n";
+}
+
+
+/*/ old control file 
 // Unified controller: brushless (C620 via SocketCAN) + brushed Spark MAX (via SparkMax API)
 
 #include <iostream>
@@ -22,7 +234,8 @@
 
 #include "luna_control/SparkMax.hpp"
 
-using namespace std::chrono_literals;
+using namespace std::chrono_literals;motor-test.py
+
 
 // ---------- Configuration ----------
 const char *CAN_IFACE = "can0";
@@ -53,7 +266,9 @@ int can_sock = -1;
 
 // ---------- Utility: open CAN socket ----------
 int open_can_socket(const char *ifname) {
-    int s = socket(PF_CAN, SOCK_RAW, CAN_RAW);
+    int s = socket(PF_CAN, SOCK_RAW, CAN_RAW);motor-test.py
+
+8 KB
     if (s < 0) { perror("socket(PF_CAN)"); return -1; }
 
     struct ifreq ifr;
@@ -82,7 +297,8 @@ int open_can_socket(const char *ifname) {
     if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &sndbuf, sizeof(sndbuf)) < 0) {
         // non-fatal; just warn
         std::cerr << "Warning: setsockopt(SO_SNDBUF) failed: " << strerror(errno) << "\n";
-    }
+    }motor-test.py
+
 
     return s;
 }
@@ -90,7 +306,7 @@ int open_can_socket(const char *ifname) {
 // ---------- Build C620 frame for a group base_id (1 or 5) ----------
 struct can_frame build_bl_frame_group(const std::map<int,int>& actual, int base_id) {
     struct can_frame fr{};
-    // According to your earlier code / devices: group base 1 => 0x200, base 5 => 0x1FF
+    // Group base 1 => 0x200, base 5 => 0x1FF
     // Keep the same mapping used previously:
     fr.can_id = (base_id == 1) ? 0x200 : 0x1FF;
     fr.can_dlc = 8;
@@ -116,7 +332,8 @@ void send_bl_frames_now() {
     ssize_t n = write(can_sock, &fr14, sizeof(fr14));
     if (n != (ssize_t)sizeof(fr14)) {
         if (errno != ENOBUFS) perror("write CAN 1-4");
-        else std::cerr << "Warning: CAN TX buffer full (1-4)\n";
+        else std::cerr << "Warning: CAN TX buffer full (1-4)\n";motor-test.py
+
     }
 
     n = write(can_sock, &fr58, sizeof(fr58));
@@ -142,7 +359,8 @@ void brushless_ramp_thread() {
         // send both frames
         send_bl_frames_now();
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(RAMP_DELAY_MS));
+        std::this_thread::sleep_for(std::chrono::milliseconds(RAMP_DELAY_MS));motor-test.py
+
     }
 
     // ramp down on exit
@@ -344,3 +562,4 @@ int main() {
         return 1;
     }
 }
+*/

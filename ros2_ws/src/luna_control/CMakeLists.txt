@@ -32,6 +32,7 @@ generate_parameter_library(luna_controller_parameters
   src/luna_controller_parameter.yaml
 )
 
+#important to include SparkMax stuff so that LunaCAN can find it 
 add_library(luna_control SHARED
   src/LunaController.cpp
   src/odometry.cpp
@@ -40,7 +41,7 @@ add_library(luna_control SHARED
   src/SparkBase.cpp
 )
 
-#LunaCAN is the only executable
+#LunaCAN is the only executable for now
 add_executable(luna_can src/luna_can.cpp)
 
 target_link_libraries(luna_can
