@@ -1,4 +1,5 @@
 // C620 CAN control
+//MOTORS 2 and 3 ARE REVERSED 
 
 #include <iostream>
 #include <thread>
@@ -94,9 +95,6 @@ void feedback_thread() {
                 int enc = (fr.data[0] << 8) | fr.data[1];
                 int rpm = (int16_t)((fr.data[2] << 8) | fr.data[3]);
 
-                std::cout << "M" << id
-                          << " ENC: " << enc
-                          << " RPM: " << rpm << "\n";
             }
         }
     }
@@ -135,7 +133,8 @@ void command_thread() {
         std::getline(std::cin, cmd);
 
         if (cmd == "w") {
-            for (int m : MOTOR_IDS) targets[m] = 5000;
+            for (int m : MOTOR_IDS) targets[m] = 1000;
+            std::cout << "fwd";
         }
         else if (cmd == "s") {
             for (int m : MOTOR_IDS) targets[m] = -5000;
@@ -153,6 +152,22 @@ void command_thread() {
         }
         else if (cmd == "q") {
             running = false;
+        }
+        else if (cmd == "t") {
+            std::cout << "m1";
+            targets[1] = 2000;
+        }
+         else if (cmd == "y") {
+            std::cout << "m2";
+            targets[2] = 2000;
+        }
+         else if (cmd == "u") {
+            std::cout << "m3";
+            targets[3] = 2000;
+        }
+         else if (cmd == "i") {
+            std::cout << "m4";
+            targets[4] = 2000;
         }
     }
 }
@@ -184,6 +199,7 @@ void safe_shutdown() {
 
 // ---------------- MAIN ----------------
 int main() {
+    std::cout << "test";
     for (int m : MOTOR_IDS) {
         currents[m] = 0;
         targets[m] = 0;
