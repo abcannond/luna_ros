@@ -183,7 +183,6 @@ namespace luna_controller
     return wrap_to_pi(diff);
   }  
 
-
   controller_interface::return_type LunaController::update(
       const rclcpp::Time &time, const rclcpp::Duration &period)
   {
@@ -498,13 +497,26 @@ namespace luna_controller
     registered_left_front_pod_handles_[0].position.get().set_value(left_front_pod_position);
     registered_right_back_pod_handles_[0].position.get().set_value(right_back_pod_position);
     registered_right_front_pod_handles_[0].position.get().set_value(right_front_pod_position);
+    
+    //hardware publisher
+    std_msgs::msg::Float64MultiArray msg;
+    msg.data = {
+      left_front_wheel_velocity,
+      right_front_wheel_velocity,
+      left_back_wheel_velocity,
+      right_back_wheel_velocity
+    };
+    wheel_pub_->publish(msg);
 
     return controller_interface::return_type::OK;
   }
 
   controller_interface::CallbackReturn LunaController::on_configure(
-      const rclcpp_lifecycle::State &)
+      const rclcpp_lifecycle::State &
+    )
   {
+    wheel_pub_ = get_node()->create_publisher<std_msgs::msg::Float64MultiArray>("wheel_cmds", rclcpp::SystemDefaultsQoS());
+
     auto logger = get_node()->get_logger();
 
     // update parameters if they have changed
