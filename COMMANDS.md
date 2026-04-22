@@ -1,76 +1,51 @@
 COMMANDS.md
 ================================
 
-## Overview
+**Overview**
 This file contains commands for launching Gazebo, RTAB-Map, Nav2, RViz,
 teleoperation, and diagnostics.
 
 Installation and build steps are documented separately in INSTALL.md.
 
----
+**TERMINAL 1: Gazebo (Must run first)**
+  ```bash
+    dbld
+    drun
+  ```
+*Inside container:*
+  ```bash
+      colcon build
+      source /opt/ros/jazzy/setup.bash
+      cd /ros2_ws && source install/setup.bash
+      ros2 launch lunabot_2425 gz_bringup.launch.py
+  ```
+*Wait until Gazebo is fully up and the robot is spawned.*
 
-## TERMINAL 1: Gazebo (Must run first)
-  dbld
-  drun
-
-  Inside container:
-    cd /ros2_ws
-    colcon build
-    source /opt/ros/jazzy/setup.bash
-    source install/setup.bash
-    ros2 launch lunabot_2425 gz_bringup.launch.py
-
-  Wait until Gazebo is fully up and the robot is spawned.
-
----
-
-## TERMINAL 2: RTAB-Map + Nav2 (Run only after Gazebo is up)
-
-  New host terminal:
+**TERMINAL 2: RTAB-Map + Nav2 (Run only after Gazebo is up)**
+  *New host terminal:*
+  ```bash
     dbash
-
-  Inside container:
+  ```
+  *Inside container:*
+  ```bash
     cd /ros2_ws && source install/setup.bash
     source /opt/ros/jazzy/setup.bash
     ros2 launch luna_mapping rtabmap_nav2_sim.launch.py
-
-  This starts:
-  - RTAB-Map (map)
-  - depth → scan
-  - depth → pointcloud
-  - Nav2                                                       
-
-  Wait until RTAB-Map and Nav2 messages appear.
-
+  ```                                                    
+  *Wait until RTAB-Map and Nav2 messages appear.*
 ---
 
-## TERMINAL 3 (Optional): RViz
-  (Visualization + Nav2 goals)
+**TERMINAL 2 (Optional): Teleop**
 
-  New host terminal:
-    dbash
+  *One launch (gate + keyboard, same as `drive` topic wiring):*
 
-  Inside container:
-    cd /ros2_ws && source install/setup.bash
+  ```bash
     source /opt/ros/jazzy/setup.bash
-    rviz2 -d $(ros2 pkg prefix luna_mapping)/share/luna_mapping/config/rtabmap_nav2.rviz
+    cd /ros2_ws && source install/setup.bash
+    ros2 launch lunabot_2425 joy_teleop.launch.py
+  ```
 
-  Use the Nav2 Goal tool in the RViz toolbar to send goals.
-
----
-
-## TERMINAL 4 (Optional): Teleop — Keyboard or Controller
-
-Choose one. Do not run both at once (both publish to `/cmd_vel_teleop`).
-
-### Keyboard
-
-  dbash
-
-Inside container:
-
-  cd /ros2_ws && source install/setup.bash
-  drive
+The `drive` alias publishes to `/teleop_cmd_vel_raw`; the gate forwards to `/cmd_vel` only while armed.
 
 Controls:
   i = forward
@@ -78,13 +53,6 @@ Controls:
   j = left
   l = right
   k = stop
-  (hold shift for holonomic strafing)
-
-### Controller
-
-Prereq: Controller plugged in (USB) before starting container.
-
-  dbash
 
 Inside container:
 
@@ -164,8 +132,6 @@ Build (from workspace root; if you hit permission errors on `install/`, use a cu
   # colcon build --build-base ./build_luna --install-base ./install_luna --packages-select luna_nav
   # then: source install_luna/setup.bash
 
-  cd /ros2_ws
-  source /opt/ros/jazzy/setup.bash
   source install/setup.bash
   ros2 run luna_nav zone_publisher
 
@@ -173,4 +139,4 @@ In another terminal, echo the topic:
 
   ros2 topic echo /current_zone
 
-Zone logic (first match): starting zone (0–2, 0–2), excavation (0–2.5, 0–11), obstacle (4.38–6.38, 0–11 minus 4.38–6.88×0–1.5), construction (7–12, 0–11), else "outside bounds".
+Zone logic (first match): starting zone (0–2, 0–2), excavation (0–2.5, 0–11), obstacle (4.38–6.38, 0–11 minus 4.38–6.88×0–1.5), construction (7–12, 0–11), else "outside bounds". -->

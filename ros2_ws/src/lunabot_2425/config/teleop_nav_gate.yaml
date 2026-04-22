@@ -8,6 +8,14 @@ teleop_nav_gate:
     cmd_vel_out: "/cmd_vel"
     teleop_active_out: "/teleop_active"
     nav2_lifecycle_nodes:
+      # Full Nav2 navigation lifecycle set (plus manager) so Start can fully shut Nav2 down.
+      # Order matters: deactivate/shutdown is applied in reverse order by teleop_nav_gate.
       - controller_server
+      - planner_server
       - behavior_server
+      - bt_navigator
+      - waypoint_follower
+      - smoother_server
       - velocity_smoother
+    # Root kill-switch: Nav2 lifecycle manager service.
+    nav2_manager: "/lifecycle_manager_navigation/manage_nodes"
