@@ -92,16 +92,9 @@ class JoyEcho(Node):
         for i, v in enumerate(msg.buttons):
             prev = self.prev_buttons[i] if i < len(self.prev_buttons) else 0
             if v != prev:
-                if i == 0 and v:
-                    print("[JoyEcho] Enable (A) pressed — you can drive with sticks", flush=True)
-                elif i == 0 and not v:
-                    print("[JoyEcho] Enable (A) released — robot should stop", flush=True)
-                elif i == 2 and v:
-                    print("[JoyEcho] Stop (X) pressed", flush=True)
-                else:
-                    label = BUTTON_LABELS.get(i, f"button_{i}")
-                    state = "pressed" if v else "released"
-                    print(f"[JoyEcho] {label} {state}", flush=True)
+                label = BUTTON_LABELS.get(i, f"button_{i}")
+                state = "pressed" if v else "released"
+                print(f"[JoyEcho] {label} {state}", flush=True)
 
         self.prev_axes = list(msg.axes)
         self.prev_buttons = list(msg.buttons)
