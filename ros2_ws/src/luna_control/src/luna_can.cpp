@@ -47,6 +47,8 @@ std::atomic<bool> running(true);
 std::unique_ptr<SparkMax> swerve[5];
 
 int can_sock = -1;
+bool enable = false;
+int TARGET_CURRENT = 0;
 
 // ---------------- CAN ----------------
 
@@ -177,34 +179,36 @@ void control_thread() {
 
         }
         */
+       if(enable == true) {
 
-       for (int m : MOTOR_IDS) {
+        for (int m : MOTOR_IDS) {
 
-            int target_current = MAX_CURRENT - 14000;
+                int target_current = TARGET_CURRENT;
 
-            // apply direction HERE (before control logic)
-            if (reverse_flags[m]) {
-                target_current = -target_current;
+                // apply direction HERE (before control logic)
+                if (reverse_flags[m]) {
+                    target_current = -target_current;
+                }
+
+                int cur = currents[m].load();
+
+                if (cur < target_current) {
+                    cur += STEP;
+                } else if (cur > target_current) {
+                    cur -= STEP;
+                }
+
+                cur = std::clamp(cur, -MAX_CURRENT, MAX_CURRENT);
+
+                currents[m].store(cur);
             }
-
-            int cur = currents[m].load();
-
-            if (cur < target_current) {
-                cur += STEP;
-            } else if (cur > target_current) {
-                cur -= STEP;
-            }
-
-            cur = std::clamp(cur, -MAX_CURRENT, MAX_CURRENT);
-
-            currents[m].store(cur);
-        }
+       }
         
         //std::cout << currents[1].load() << std::endl;
-        for (int m : MOTOR_IDS) {
+        /*for (int m : MOTOR_IDS) {
              std::cout << "M" << m << ": " << currents[m].load() << " ";
         }
-        std::cout << std::endl;
+        std::cout << std::endl; */
 
         auto msg = build_msg();
         
@@ -232,19 +236,19 @@ void command_thread() {
         std::getline(std::cin, cmd);
 
         if (cmd == "w") {
-            for (int m : MOTOR_IDS) targets[m] = 500;
+            enable = true; 
+            TARGET_CURRENT += 500;
             std::cout << "fwd";
+            std::cout << TARGET_CURRENT;
         }
         else if (cmd == "s") {
-            for (int m : MOTOR_IDS) targets[m] = -5000;
+            TARGET_CURRENT = 0;
         }
         else if (cmd == "a") {
-            targets[1] = -3000; targets[2] = -3000;
-            targets[3] = 3000;  targets[4] = 3000;
+            swerve[3]->SetDutyCycle(0.1f);
         }
         else if (cmd == "d") {
-            targets[1] = 3000; targets[2] = 3000;
-            targets[3] = -3000; targets[4] = -3000;
+            swerve[3]->SetDutyCycle(0);
         }
         else if (cmd == "stop") {
             for (auto &t : targets) t = 0;
@@ -253,8 +257,7 @@ void command_thread() {
             running = false;
         }
         else if (cmd == "t") {
-            std::cout << "m1";
-            targets[1] = 2000;
+            swerve[3]->SetDutyCycle(-0.1f);
         }
          else if (cmd == "y") {
             std::cout << "m2";
