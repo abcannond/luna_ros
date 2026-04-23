@@ -29,15 +29,22 @@ const std::vector<int> MOTOR_IDS = {1,2,3,4};
 
 const int STEP = 100;
 const int LOOP_DELAY_US = 2000;
-const int MAX_CURRENT = 16000;
+const int MAX_CURRENT = 16000; //mA
+const float MAX_SPEED = 2.5; //rad/s
+const float MM_PER_RAD = 203; // mm/rad 
+const float WHEEL_RADIUS_MM = 101.6f; 
+const float RPM_TO_MM_S =
+    static_cast<float>((2.0 * M_PI * WHEEL_RADIUS_MM) / 60.0);
 
 // ---------------- STATE ----------------
 std::array<std::atomic<int>, 5> currents; //motor currents 
 std::map<int,bool> reverse_flags;
 std::array<std::atomic<int>, 5> targets; //motor targets, index 0 not used to match with motor ids 
-std::array<std::atomic<int>, 5> drive_vels; //drive motor velocities
+std::array<std::atomic<float>, 5> steer_cmds; //swerve targets, currently in duty cycle
+std::array<std::atomic<float>, 5> drive_vels; //drive motor velocities
 std::array<std::atomic<int>, 5> drive_pos; //drive motor positions
 std::atomic<bool> running(true);
+std::unique_ptr<SparkMax> swerve[5];
 
 int can_sock = -1;
 
@@ -83,7 +90,7 @@ can_frame build_msg() {
 
     int i = 0;
     for (int m : MOTOR_IDS) {
-        int val = currents[m];
+        int val = currents[m].load();
         fr.data[i++] = static_cast<unsigned char>((val >> 8) & 0xFF);
         fr.data[i++] = static_cast<unsigned char>(val & 0xFF);
     }
@@ -103,9 +110,11 @@ void feedback_thread() {
             if (id >= 1 && id <= 4) {
                 //record encoder position and velocity for drive motors
                 int enc = (fr.data[0] << 8) | fr.data[1];
-                int rpm = (int16_t)((fr.data[2] << 8) | fr.data[3]);
                 drive_pos[id].store(enc);
-                drive_vels[id].store(rpm); 
+
+                float rpm = (int16_t)((fr.data[2] << 8) | fr.data[3]);
+                float vel_mm_s = rpm * RPM_TO_MM_S;
+                drive_vels[id].store(vel_mm_s);
             }
         }
     }
@@ -114,38 +123,88 @@ void feedback_thread() {
 // ---------------- CONTROL LOOP ----------------
 void control_thread() {
     while (running) {
-        //swerve motor heartbeat
-        swerve1.Heartbeat(); 
-        swerve2.Heartbeat();
-        swerve3.Heartbeat();
-        swerve4.HeartBeat();
+        
+        // ---- SparkMax ---- (swerve motor control)
+        for (int i = 1; i <= 4; i++) {
+            swerve[i]->Heartbeat();
 
+            float duty = steer_cmds[i].load();
 
-        //drive motor control 
+            // clamp 
+            duty = std::clamp(duty, -1.0f, 1.0f);
+
+            swerve[i]->SetDutyCycle(duty);
+        }
+
+        /*/drive motor control 
         //TODO: figure out PID and do proper rad/s conversion 
         //max speed is going to be 2.5 rad/s (0.5 m/s) for now
         for (int m : MOTOR_IDS) {
 
-            //apply reverse flags
-            int tgt = targets[m].load();
-            if (reverse_flags[m]) tgt = -tgt;
+            float vel = drive_vels[m].load();   // make sure this is rad/s
+            float tgt = static_cast<float>(targets[m].load());
 
-            if (currents[m] < tgt)
-                currents[m] += STEP;
-            else if (currents[m] > tgt)
-                currents[m] -= STEP;
+            //if (reverse_flags[m]) {
+               // vel = -vel;
+            //}
 
-            //clamp using max current to make sure motors dont blow up 
-            // currents[m] = std::clamp(currents[m], -MAX_CURRENT, MAX_CURRENT); This throws an error need to figure out why 
+            float error = tgt - vel;
 
-            if(currents[m] < 0 and currents[m] < -MAX_CURRENT) {
-                currents[m] = -MAX_CURRENT;
+            // P controller
+            float Kp = 8.0f;   //TODO: TUNE
+            int current_cmd = (int)(Kp * error);
+
+            // clamp
+            current_cmd = std::clamp(current_cmd, -MAX_CURRENT, MAX_CURRENT);
+
+            if (reverse_flags[m]) {
+                current_cmd = -current_cmd;
             }
 
-            if(currents[m] > 0 and currents[m] > MAX_CURRENT) {
-                currents[m] = MAX_CURRENT;
+            int cur = currents[m].load();
+
+            if (current_cmd > cur + STEP) {
+                cur += STEP;
             }
+            else if (current_cmd < cur - STEP){
+                cur -= STEP;
+            }
+            else {
+                cur = current_cmd;
+            }
+
+            currents[m].store(cur);
+
         }
+        */
+
+       for (int m : MOTOR_IDS) {
+
+            int target_current = MAX_CURRENT - 14000;
+
+            // apply direction HERE (before control logic)
+            if (reverse_flags[m]) {
+                target_current = -target_current;
+            }
+
+            int cur = currents[m].load();
+
+            if (cur < target_current) {
+                cur += STEP;
+            } else if (cur > target_current) {
+                cur -= STEP;
+            }
+
+            cur = std::clamp(cur, -MAX_CURRENT, MAX_CURRENT);
+
+            currents[m].store(cur);
+        }
+        
+        //std::cout << currents[1].load() << std::endl;
+        for (int m : MOTOR_IDS) {
+             std::cout << "M" << m << ": " << currents[m].load() << " ";
+        }
+        std::cout << std::endl;
 
         auto msg = build_msg();
         
@@ -173,7 +232,7 @@ void command_thread() {
         std::getline(std::cin, cmd);
 
         if (cmd == "w") {
-            for (int m : MOTOR_IDS) targets[m] = 1000;
+            for (int m : MOTOR_IDS) targets[m] = 500;
             std::cout << "fwd";
         }
         else if (cmd == "s") {
@@ -241,7 +300,7 @@ void safe_shutdown() {
 int main() {
     //set all target values to 0 to start
     for (auto &t : targets) t.store(0);
-
+    
     //set up pointer, node, and subscriber 
     rclcpp::init(0, nullptr);
     auto node = std::make_shared<rclcpp::Node>("can_interface");
@@ -252,37 +311,49 @@ int main() {
     {
         if (msg->data.size() < 4) return;
         
-        //assign message data to wheel targets
-        targets[1].store((int)msg->data[0]);
-        targets[2].store((int)msg->data[1]);
-        targets[3].store((int)msg->data[2]);
-        targets[4].store((int)msg->data[3]);
-        std::cout << targets[1]; 
+        //convert data received from message (currently rad/s -> mm/s)
+        for(int i=1; i<=4; i++){
+            float raw_rad_s = static_cast<float>(msg->data[i - 1]);
+
+            // clamp rad/s
+            raw_rad_s = std::clamp(raw_rad_s, -MAX_SPEED, MAX_SPEED);
+
+            // convert rad/s → mm/s
+            float mm_s = raw_rad_s * MM_PER_RAD;
+
+            //assign converted value to wheel targets
+            targets[i].store((int)mm_s);
+        }        
     }
     );
-
-    //initialize currents and reverse flags
-    //currently motors 2 and 3 are reversed
+    
+    //initialize currents
     for (int m : MOTOR_IDS) {
         currents[m] = 0;
-        if(m == 2 or m ==3){
-            reverse_flags[m] = true;
-        }
-        else{
-            reverse_flags[m] = false;
-        }
     }
+
+    //init reverse flags 
+    for (int m : MOTOR_IDS) {
+        reverse_flags[m] = false;
+    }
+
+    reverse_flags[2] = true;
+    reverse_flags[3] = true;
     
     //set up CAN connection 
     can_sock = open_can(CAN_IFACE);
 
     //set up SparkMax stuff for swerve motors
-    SparkMax swerve1(CAN_IFACE, 1);
-    SparkMax swerve2(CAN_IFACE, 2);
-    SparkMax swerve3(CAN_IFACE, 3);
-    SparkMax swerve4(CAN_IFACE, 4);
-    
 
+    try {
+        for (int i = 1; i <= 4; i++) {
+            swerve[i] = std::make_unique<SparkMax>(CAN_IFACE, i);
+        }
+    } 
+    catch (const std::exception& e) {
+        std::cerr << "SparkMax init failed: " << e.what() << std::endl;
+        return 1;
+    }
 
     //setup timeout 
     struct timeval tv;
@@ -294,16 +365,20 @@ int main() {
     std::thread t2(control_thread);
     std::thread t3(command_thread);
 
+    
     std::thread ros_thread([&](){
     rclcpp::spin(node);
     });
-
-    ros_thread.join();
+    
     t3.join();
-    t1.join();
-    t2.join();
 
     running = false;
+
+    //t3.join();
+    t1.join();
+    t2.join();
+    ros_thread.join();
+    rclcpp::shutdown();
 
     safe_shutdown();
     close(can_sock);
