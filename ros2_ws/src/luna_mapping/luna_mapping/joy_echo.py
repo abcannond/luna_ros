@@ -18,9 +18,9 @@ AXIS_LABELS = {
 }
 
 BUTTON_LABELS = {
-    0: "A (enable)",
-    1: "B (turbo)",
-    2: "X (stop)",
+    0: "A",
+    1: "B",
+    2: "X",
     3: "Y",
     4: "Left bumper",
     5: "Right bumper",
