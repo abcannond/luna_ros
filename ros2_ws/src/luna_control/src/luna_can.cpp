@@ -16,6 +16,7 @@
 #include <array>
 #include <csignal>
 #include <algorithm>
+#include "luna_control/SparkMax.hpp" 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/float64_multi_array.hpp"
 
@@ -34,6 +35,8 @@ const int MAX_CURRENT = 16000;
 std::array<std::atomic<int>, 5> currents; //motor currents 
 std::map<int,bool> reverse_flags;
 std::array<std::atomic<int>, 5> targets; //motor targets, index 0 not used to match with motor ids 
+std::array<std::atomic<int>, 5> drive_vels; //drive motor velocities
+std::array<std::atomic<int>, 5> drive_pos; //drive motor positions
 std::atomic<bool> running(true);
 
 int can_sock = -1;
@@ -98,9 +101,11 @@ void feedback_thread() {
         if (n > 0) {
             int id = fr.can_id - 0x200;
             if (id >= 1 && id <= 4) {
+                //record encoder position and velocity for drive motors
                 int enc = (fr.data[0] << 8) | fr.data[1];
                 int rpm = (int16_t)((fr.data[2] << 8) | fr.data[3]);
-
+                drive_pos[id].store(enc);
+                drive_vels[id].store(rpm); 
             }
         }
     }
@@ -109,6 +114,16 @@ void feedback_thread() {
 // ---------------- CONTROL LOOP ----------------
 void control_thread() {
     while (running) {
+        //swerve motor heartbeat
+        swerve1.Heartbeat(); 
+        swerve2.Heartbeat();
+        swerve3.Heartbeat();
+        swerve4.HeartBeat();
+
+
+        //drive motor control 
+        //TODO: figure out PID and do proper rad/s conversion 
+        //max speed is going to be 2.5 rad/s (0.5 m/s) for now
         for (int m : MOTOR_IDS) {
 
             //apply reverse flags
@@ -121,15 +136,25 @@ void control_thread() {
                 currents[m] -= STEP;
 
             //clamp using max current to make sure motors dont blow up 
-            currents[m] = std::clamp(currents[m], -MAX_CURRENT, MAX_CURRENT);
+            // currents[m] = std::clamp(currents[m], -MAX_CURRENT, MAX_CURRENT); This throws an error need to figure out why 
+
+            if(currents[m] < 0 and currents[m] < -MAX_CURRENT) {
+                currents[m] = -MAX_CURRENT;
+            }
+
+            if(currents[m] > 0 and currents[m] > MAX_CURRENT) {
+                currents[m] = MAX_CURRENT;
+            }
         }
 
         auto msg = build_msg();
-
-        if (write(can_sock, &msg, sizeof(msg)) != sizeof(msg)) {
+        
+        write(can_sock, &msg, sizeof(msg));
+        //only uncomment this if doing individual node testing
+        /*if (write(can_sock, &msg, sizeof(msg)) != sizeof(msg)) {
             perror("CAN write failed");
         }
-
+        */
         std::this_thread::sleep_for(std::chrono::microseconds(LOOP_DELAY_US));
     }
 }
@@ -163,7 +188,7 @@ void command_thread() {
             targets[3] = -3000; targets[4] = -3000;
         }
         else if (cmd == "stop") {
-            for (auto &t : targets) t.second = 0;
+            for (auto &t : targets) t = 0;
         }
         else if (cmd == "q") {
             running = false;
@@ -232,6 +257,7 @@ int main() {
         targets[2].store((int)msg->data[1]);
         targets[3].store((int)msg->data[2]);
         targets[4].store((int)msg->data[3]);
+        std::cout << targets[1]; 
     }
     );
 
@@ -250,6 +276,14 @@ int main() {
     //set up CAN connection 
     can_sock = open_can(CAN_IFACE);
 
+    //set up SparkMax stuff for swerve motors
+    SparkMax swerve1(CAN_IFACE, 1);
+    SparkMax swerve2(CAN_IFACE, 2);
+    SparkMax swerve3(CAN_IFACE, 3);
+    SparkMax swerve4(CAN_IFACE, 4);
+    
+
+
     //setup timeout 
     struct timeval tv;
     tv.tv_sec = 0;
@@ -258,14 +292,14 @@ int main() {
 
     std::thread t1(feedback_thread);
     std::thread t2(control_thread);
-    //std::thread t3(command_thread);
+    std::thread t3(command_thread);
 
     std::thread ros_thread([&](){
     rclcpp::spin(node);
     });
 
     ros_thread.join();
-    //t3.join();
+    t3.join();
     t1.join();
     t2.join();
 
