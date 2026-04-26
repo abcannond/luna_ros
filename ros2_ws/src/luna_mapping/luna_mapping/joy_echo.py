@@ -31,6 +31,11 @@ BUTTON_LABELS = {
     10: "Right stick click",
 }
 
+# Live state snapshot:
+# [(left trigger, left bumper), (right trigger, right bumper)]
+# Each value is 0 or 1.
+ARMANDBUCKET = [(0, 0), (0, 0)]
+
 
 class JoyEcho(Node):
     def __init__(self):
@@ -61,6 +66,20 @@ class JoyEcho(Node):
         self._warn_timer.cancel()
 
     def callback(self, msg: Joy):
+        global ARMANDBUCKET
+
+        lt_raw = msg.axes[2] if len(msg.axes) > 2 else 0.0
+        rt_raw = msg.axes[5] if len(msg.axes) > 5 else 0.0
+        lb_raw = msg.buttons[4] if len(msg.buttons) > 4 else 0
+        rb_raw = msg.buttons[5] if len(msg.buttons) > 5 else 0
+
+        lt = 1 if lt_raw < 0.8 else 0
+        rt = 1 if rt_raw < 0.8 else 0
+        lb = 1 if lb_raw else 0
+        rb = 1 if rb_raw else 0
+
+        ARMANDBUCKET = [(lt, lb), (rt, rb)]
+
         if self._first:
             self._first = False
             try:
