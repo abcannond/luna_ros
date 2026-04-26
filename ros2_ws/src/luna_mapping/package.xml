@@ -7,24 +7,21 @@
   <maintainer email="the.sam.rooney@gmail.com">lunabot</maintainer>
   <license>MIT</license>
 
-  <!-- Core dependencies -->
   <depend>rclpy</depend>
   <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
   <depend>cv_bridge</depend>
   <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>
-  
-  <!-- RTAB-Map packages -->
+
   <depend>rtabmap_launch</depend>
   <depend>rtabmap_slam</depend>
   <depend>rtabmap_odom</depend>
   <depend>rtabmap_util</depend>
-  
-  <!-- Depth processing -->
+
   <depend>depth_image_proc</depend>
   <exec_depend>depthimage_to_laserscan</exec_depend>
-  
-  <!-- Nav2 packages -->
+
   <exec_depend>nav2_bringup</exec_depend>
   <exec_depend>nav2_bt_navigator</exec_depend>
   <exec_depend>nav2_controller</exec_depend>
@@ -34,11 +31,9 @@
   <exec_depend>nav2_waypoint_follower</exec_depend>
   <exec_depend>nav2_velocity_smoother</exec_depend>
   <exec_depend>nav2_lifecycle_manager</exec_depend>
-  
-  <!-- Camera (optional for real hardware) -->
+
   <exec_depend>realsense2_camera</exec_depend>
-  
-  <!-- Fiducial localization -->
+
   <exec_depend>fiducial_localizer</exec_depend>
 
   <test_depend>ament_copyright</test_depend>

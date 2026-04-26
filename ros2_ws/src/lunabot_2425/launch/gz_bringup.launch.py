@@ -12,10 +12,10 @@ from launch.actions import (
     LogInfo,
     TimerAction,
 )
-from launch.conditions import IfCondition, UnlessCondition
+from launch.conditions import LaunchConfigurationEquals, IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.event_handlers import OnProcessExit
-from launch.substitutions import EqualsSubstitution, LaunchConfiguration, TextSubstitution
+from launch.substitutions import LaunchConfiguration, TextSubstitution
 from launch_ros.actions import Node
 
 
@@ -55,35 +55,19 @@ def generate_launch_description():
     declare_rviz_config = DeclareLaunchArgument(
         "rviz_config",
         default_value="",
-        description="Optional RViz config passed to the mapping/nav launch.",
+        description="Optional RViz config path for rtabmap_nav2_sim (empty = use its default).",
     )
     rviz_config = LaunchConfiguration("rviz_config", default="")
-    declare_headless = DeclareLaunchArgument(
-        "headless",
-        default_value="false",
-        description="Run Gazebo without the GUI window (server + headless rendering). "
-                    "Cameras still produce data for RTAB-Map / Nav2. View via RViz.",
-    )
-    headless = LaunchConfiguration("headless", default="false")
-
     # gz_args as Substitutions so launch arg is applied when using luna_ros2_worlds
     if has_worlds_pkg:
-        gz_args_gui = [
+        gz_args_parts = [
             TextSubstitution(text="-r " + worlds_path + "/"),
             world_name,
             TextSubstitution(text=".sdf"),
         ]
-        gz_args_headless = [
-            TextSubstitution(text="-r -s --headless-rendering " + worlds_path + "/"),
-            world_name,
-            TextSubstitution(text=".sdf"),
-        ]
     else:
-        gz_args_gui = [
+        gz_args_parts = [
             TextSubstitution(text="-r " + os.path.join(worlds_path, "empty.world")),
-        ]
-        gz_args_headless = [
-            TextSubstitution(text="-r -s --headless-rendering " + os.path.join(worlds_path, "empty.world")),
         ]
 
     # --- RSP ---
@@ -110,33 +94,13 @@ def generate_launch_description():
         value=f"{models_path}:{worlds_path}:{pkg_path}"
     )
 
-    gz_sim_gui = IncludeLaunchDescription(
+    gz_sim = IncludeLaunchDescription(
         gz_sim_source,
         launch_arguments={
-            "gz_args": gz_args_gui,
+            "gz_args": gz_args_parts,
             "on_exit_shutdown": "True",
         }.items(),
-        condition=UnlessCondition(headless),
     )
-
-    # Headless rendering needs EGL; force software rendering so it works
-    # without GPU passthrough in Docker. Camera sensors still produce data
-    # (slower than GPU but stable).
-    gz_headless_software_gl = SetEnvironmentVariable(
-        name='LIBGL_ALWAYS_SOFTWARE',
-        value='1',
-        condition=IfCondition(headless),
-    )
-
-    gz_sim_headless = IncludeLaunchDescription(
-        gz_sim_source,
-        launch_arguments={
-            "gz_args": gz_args_headless,
-            "on_exit_shutdown": "True",
-        }.items(),
-        condition=IfCondition(headless),
-    )
-
 
     # UCF arena spawn
     # NOTE: spawn a bit deeper into the corner so the initial pose is not
@@ -145,14 +109,12 @@ def generate_launch_description():
     gz_create_robot_ucf = Node(
         package="ros_gz_sim",
         executable="create",
-        condition=IfCondition(
-            EqualsSubstitution(LaunchConfiguration("world"), TextSubstitution(text="ucf_arena"))
-        ),
+        condition=LaunchConfigurationEquals("world", "ucf_arena"),
         arguments=[
             "-topic", "robot_description",
             "-name", "mooncake",
             "-x", "-3.80",
-            "-y", "3.30",
+            "-y", "3.10",
             "-z", "0.1",
             "-R", "0",
             "-P", "0",
@@ -164,9 +126,7 @@ def generate_launch_description():
     gz_create_robot_artemis = Node(
         package="ros_gz_sim",
         executable="create",
-        condition=IfCondition(
-            EqualsSubstitution(LaunchConfiguration("world"), TextSubstitution(text="artemis_arena"))
-        ),
+        condition=LaunchConfigurationEquals("world", "artemis_arena"),
         arguments=[
             "-topic", "robot_description",
             "-name", "mooncake",
@@ -225,8 +185,7 @@ def generate_launch_description():
         executable="spawner",
         arguments=[
             "joint_state_broadcaster",
-            "--controller-manager", "/controller_manager",
-            "--controller-manager-timeout", "30",
+            "--controller-manager", "/controller_manager"
         ],
         output="screen"
     )
@@ -236,24 +195,24 @@ def generate_launch_description():
         executable="spawner",
         arguments=[
             "luna_cont",
-            "--controller-manager", "/controller_manager",
-            "--controller-manager-timeout", "30",
+            "--controller-manager", "/controller_manager"
         ],
         output="screen"
     )
 
-    # Spawn joint_state_broadcaster AFTER the robot is spawned (either arena).
-    # A 5 s delay gives gz_ros_control time to receive the URDF and initialise
-    # the hardware interfaces before the spawner tries to configure controllers.
+    # Spawn joint_state_broadcaster AFTER the robot is spawned (either arena)
     spawn_jsb_after_robot_ucf = RegisterEventHandler(
         OnProcessExit(
             target_action=gz_create_robot_ucf,
             on_exit=[
                 LogInfo(msg="Robot spawned — waiting for gz_ros_control to initialise..."),
-                TimerAction(period=5.0, actions=[
-                    LogInfo(msg="Starting joint_state_broadcaster..."),
-                    joint_state_broadcaster_spawner,
-                ]),
+                TimerAction(
+                    period=5.0,
+                    actions=[
+                        LogInfo(msg="Starting joint_state_broadcaster..."),
+                        joint_state_broadcaster_spawner,
+                    ],
+                ),
             ]
         )
     )
@@ -262,10 +221,13 @@ def generate_launch_description():
             target_action=gz_create_robot_artemis,
             on_exit=[
                 LogInfo(msg="Robot spawned — waiting for gz_ros_control to initialise..."),
-                TimerAction(period=5.0, actions=[
-                    LogInfo(msg="Starting joint_state_broadcaster..."),
-                    joint_state_broadcaster_spawner,
-                ]),
+                TimerAction(
+                    period=5.0,
+                    actions=[
+                        LogInfo(msg="Starting joint_state_broadcaster..."),
+                        joint_state_broadcaster_spawner,
+                    ],
+                ),
             ]
         )
     )
@@ -343,10 +305,6 @@ def generate_launch_description():
             "use_sim_time": "true",
             "launch_rviz": "true",
             "launch_nav2": "true",
-            # Wheel slip/contact caused map->odom correction spikes; use RGB-D visual odom
-            # as odom->base_link source for better stability under collisions.
-            "use_rtabmap_odom": "true",
-            "rviz_config": rviz_config,
         }.items(),
     )
     # Fixed delay: wait for sim to build and robot to spawn (25 s), then start RTAB-Map/Nav2
@@ -366,12 +324,9 @@ def generate_launch_description():
         declare_world,
         declare_launch_mapping,
         declare_rviz_config,
-        declare_headless,
         rsp,
         gz_sim_resource,
-        gz_headless_software_gl,
-        gz_sim_gui,
-        gz_sim_headless,
+        gz_sim,
         gz_create_robot_delayed,
         twist_stamper,
         spawn_jsb_after_robot_ucf,

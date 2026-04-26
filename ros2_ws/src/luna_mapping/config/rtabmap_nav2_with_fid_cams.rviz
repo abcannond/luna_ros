@@ -73,7 +73,6 @@ Visualization Manager:
       Color Scheme: map
       Draw Behind: true
 
-    # Local costmap: gradient green (free) -> red (obstacle), drawn behind map for clarity
     - Class: rviz_default_plugins/Map
       Name: Local Costmap
       Enabled: true
@@ -87,7 +86,6 @@ Visualization Manager:
       Color Scheme: costmap
       Draw Behind: true
 
-    # Global costmap: raw cost (dark = free, bright = obstacle), more transparent
     - Class: rviz_default_plugins/Map
       Name: Global Costmap
       Enabled: true
@@ -101,8 +99,9 @@ Visualization Manager:
       Color Scheme: raw
       Draw Behind: true
 
+    # Depth camera: RGB and colorized depth (same as original sim)
     - Class: rviz_default_plugins/Image
-      Name: RGB Image (Color Camera POV)
+      Name: RGB Image (Depth Camera)
       Enabled: true
       Topic:
         Depth: 5
@@ -110,6 +109,7 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Best Effort
         Value: /camera/camera/color/image_raw_fixed
+      Value: true
 
     - Class: rviz_default_plugins/Image
       Name: Depth Camera POV (colorized)
@@ -120,6 +120,52 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Best Effort
         Value: /camera/camera/depth/image_colorized
+      Value: true
+
+    # Fiducial cameras (original sim layout)
+    - Class: rviz_default_plugins/Image
+      Name: Back_Left_Image
+      Enabled: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /fid_cams/back_left_camera/image_raw
+      Value: true
+
+    - Class: rviz_default_plugins/Image
+      Name: Back_Right_Image
+      Enabled: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /fid_cams/back_right_camera/image_raw
+      Value: true
+
+    - Class: rviz_default_plugins/Image
+      Name: Front_Right_Image
+      Enabled: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /fid_cams/front_right_camera/image_raw
+      Value: true
+
+    - Class: rviz_default_plugins/Image
+      Name: Front_Left_Image
+      Enabled: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /fid_cams/front_left_camera/image_raw
+      Value: true
 
     # Depth point cloud: translucent so it doesn't dominate the 3D view (camera FOV "cone")
     - Class: rviz_default_plugins/PointCloud2
@@ -138,8 +184,6 @@ Visualization Manager:
       Use Fixed Frame: true
       Alpha: 0.28
 
-    # LaserScan (from depth): disabled by default — often shows a white bar from depth artifacts;
-    # re-enable for debugging. Costmap still uses /scan; range_max capping reduces bar in costmap.
     - Class: rviz_default_plugins/LaserScan
       Name: LaserScan
       Enabled: false
@@ -152,12 +196,6 @@ Visualization Manager:
       Size (m): 0.03
       Style: Points
       Color Transformer: Intensity
-
-    - Class: nav2_rviz_plugins/ParticleCloud
-      Name: Particle Cloud
-      Enabled: false
-      Topic:
-        Value: /particle_cloud
 
     - Class: rviz_default_plugins/Path
       Name: Global Path

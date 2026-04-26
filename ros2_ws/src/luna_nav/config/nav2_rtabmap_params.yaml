@@ -1,6 +1,7 @@
 # Nav2 parameters for RTAB-Map integration (Lunabotics competition)
-# Tuned for SAFE navigation: slow speeds, wide inflation, strong obstacle avoidance.
-# The robot maps while it moves, so we trade speed for map quality and collision avoidance.
+# Merged: main costmap/static-layer improvements + holonomic DWB (bounded strafe) for
+# quadruplex swerve (LunaController uses linear.y). Global inflation tuned for more direct routes.
+# See docs/STACK_GUIDE.md (Swerve / steering) for caps and steering safety notes.
 
 bt_navigator:
   ros__parameters:
@@ -20,7 +21,7 @@ controller_server:
     controller_frequency: 10.0
     costmap_update_timeout: 3.0
     min_x_velocity_threshold: 0.001
-    # Match non-holonomic DWB (max_vel_y: 0); a large threshold here is for omni robots.
+    # Low threshold so small strafe (holonomic) is not treated as "stopped"
     min_y_velocity_threshold: 0.001
     min_theta_velocity_threshold: 0.001
     progress_checker_plugins: ["progress_checker"]
@@ -29,68 +30,58 @@ controller_server:
 
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
-      required_movement_radius: 0.2
-      movement_time_allowance: 30.0
+      required_movement_radius: 0.25
+      movement_time_allowance: 25.0
 
     goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.30
-      yaw_goal_tolerance: 0.40
+      xy_goal_tolerance: 0.28
+      yaw_goal_tolerance: 0.32
       stateful: true
 
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner"
       debug_trajectory_details: false
-      # Forward-only traversal: avoid reversing during normal path following.
-      # Reverse motion is still available through recovery behaviors (e.g., BackUp).
-      min_vel_x: 0.0
-      max_vel_x: 0.12
-      min_vel_y: 0.0
-      max_vel_y: 0.0
-      max_vel_theta: 0.4
+      # Holonomic swerve: allow bounded lateral velocity (Nav2 must match LunaController).
+      min_vel_x: -0.12
+      max_vel_x: 0.20
+      min_vel_y: -0.10
+      max_vel_y: 0.10
+      max_vel_theta: 0.55
       min_speed_xy: 0.0
-      max_speed_xy: 0.12
+      max_speed_xy: 0.22
       min_speed_theta: 0.0
-      acc_lim_x: 0.8
-      acc_lim_y: 0.0
-      acc_lim_theta: 1.6
-      decel_lim_x: -1.0
-      decel_lim_y: 0.0
-      decel_lim_theta: -2.0
+      acc_lim_x: 1.2
+      acc_lim_y: 0.8
+      acc_lim_theta: 2.0
+      decel_lim_x: -1.4
+      decel_lim_y: -0.8
+      decel_lim_theta: -2.2
       vx_samples: 20
-      vy_samples: 0
+      vy_samples: 5
       vtheta_samples: 20
-      sim_time: 3.0
+      sim_time: 2.8
       linear_granularity: 0.05
       angular_granularity: 0.025
       transform_tolerance: 1.0
-      xy_goal_tolerance: 0.30
-      # Must be below max_vel_x (0.12). If this is higher, DWB treats every forward
-      # command as "translationally stopped" and RotateToGoal / alignment win forever:
-      # wheels steer and twist with almost no progress (common quad-swerve symptom).
-      trans_stopped_velocity: 0.03
+      xy_goal_tolerance: 0.28
+      # Below max_vel_x / max_speed_xy so DWB does not stall in RotateToGoal
+      trans_stopped_velocity: 0.04
       short_circuit_trajectory_evaluation: true
       critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
-      # BaseObstacle: high scale strongly avoids lethal/near-lethal cells; too high
-      # with wide inflation can kill all vx samples and yield spin-in-place. Balanced
-      # with Path* critics so the robot still follows the global plan in soft-cost areas.
-      BaseObstacle.scale: 0.95
+      BaseObstacle.scale: 0.60
       BaseObstacle.sum_scores: false
       PathAlign.scale: 32.0
       PathAlign.forward_point_distance: 0.1
       GoalAlign.scale: 24.0
       GoalAlign.forward_point_distance: 0.1
-      PathDist.scale: 32.0
+      PathDist.scale: 36.0
       GoalDist.scale: 24.0
-      RotateToGoal.scale: 32.0
+      RotateToGoal.scale: 26.0
       RotateToGoal.slowing_factor: 5.0
       RotateToGoal.lookahead_time: -1.0
 
-# =============================================================================
-# LOCAL COSTMAP
-# Rolling window around the robot. Uses static map + live voxel layer (depth
-# point cloud, ground-filtered) + laserscan + inflation with wide safety buffer.
-# =============================================================================
+# LOCAL COSTMAP — static map + voxel (depth) + scan + inflation
 local_costmap:
   local_costmap:
     ros__parameters:
@@ -102,9 +93,15 @@ local_costmap:
       width: 5
       height: 5
       resolution: 0.05
-      robot_radius: 0.42
+      robot_radius: 0.38
       transform_tolerance: 1.0
-      plugins: ["voxel_layer", "obstacle_layer", "inflation_layer"]
+      plugins: ["static_layer", "voxel_layer", "obstacle_layer", "inflation_layer"]
+
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: true
+        map_topic: /map
+        subscribe_to_updates: true
 
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
@@ -124,8 +121,6 @@ local_costmap:
           marking: true
           data_type: "PointCloud2"
           raytrace_max_range: 3.5
-          # Ignore marks closer than this (sensor frame). During in-place spin, near
-          # returns from wheels/rocker/chassis in the lower FOV project as a ring in odom.
           raytrace_min_range: 0.35
           obstacle_max_range: 2.5
           obstacle_min_range: 0.52
@@ -153,29 +148,20 @@ local_costmap:
 
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        # Higher factor: cost falls off faster with distance (more traversable corridor,
-        # still steep cost next to obstacles).
         cost_scaling_factor: 3.0
-        inflation_radius: 0.75
+        inflation_radius: 0.62
 
       always_send_full_costmap: true
 
-# =============================================================================
-# GLOBAL COSTMAP
-# Full map frame. Uses RTAB-Map occupancy grid + wide inflation.
-# Real-time obstacle avoidance is handled by the local costmap's voxel + scan
-# layers. The global planner creates a route based on the continuously updated
-# RTAB-Map grid; the local controller steers around anything the global plan
-# misses.
-# =============================================================================
+# GLOBAL COSTMAP — RTAB-Map grid; tighter inflation than 1.0 m for more direct NavFn routes
 global_costmap:
   global_costmap:
     ros__parameters:
-      update_frequency: 1.5
+      update_frequency: 1.2
       publish_frequency: 1.0
       global_frame: map
       robot_base_frame: base_link
-      robot_radius: 0.42
+      robot_radius: 0.38
       resolution: 0.05
       track_unknown_space: true
       transform_tolerance: 1.0
@@ -189,15 +175,14 @@ global_costmap:
 
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        # Steeper decay: NavFn uses lower-cost cells for routing; lethal band stays tight.
-        cost_scaling_factor: 2.2
-        inflation_radius: 1.0
+        cost_scaling_factor: 2.6
+        inflation_radius: 0.80
 
       always_send_full_costmap: true
 
 planner_server:
   ros__parameters:
-    expected_planner_frequency: 10.0
+    expected_planner_frequency: 12.0
     planner_plugins: ["GridBased"]
     costmap_update_timeout: 2.0
 
@@ -205,7 +190,8 @@ planner_server:
       plugin: "nav2_navfn_planner::NavfnPlanner"
       tolerance: 0.5
       use_astar: true
-      allow_unknown: true
+      # Prefer known free space for straighter paths once map exists; may fail if map sparse
+      allow_unknown: false
 
 smoother_server:
   ros__parameters:
@@ -248,10 +234,11 @@ velocity_smoother:
     smoothing_frequency: 20.0
     scale_velocities: false
     feedback: "OPEN_LOOP"
-    max_velocity: [0.18, 0.0, 0.6]
-    min_velocity: [-0.10, 0.0, -0.6]
-    max_accel: [0.8, 0.0, 1.6]
-    max_decel: [-1.0, 0.0, -2.0]
+    # [vx, vy, wz] — align vy cap with DWB max_vel_y
+    max_velocity: [0.22, 0.10, 0.65]
+    min_velocity: [-0.18, -0.10, -0.65]
+    max_accel: [1.2, 0.8, 2.0]
+    max_decel: [-1.4, -0.8, -2.2]
     odom_topic: "odom"
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]

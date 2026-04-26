@@ -1,69 +1,91 @@
+# Luna ROS
 
-# WPI Lunabotics ROS2 Stack
+ROS 2 Jazzy autonomy stack for the **WPI Lunabotics** robot. Provides SLAM, navigation, and fiducial-based localization for the Lunabotics competition arena.
 
-ROS2 Jazzy / Gazebo Harmonic simulation and hardware stack for the WPI Lunabotics 2024-25 robot. Includes SLAM (RTAB-Map), Nav2 navigation, ArUco fiducial localization, Wavefront Frontier Detection (WFD), arena zone classification, and a competition mission FSM.
+**Sensors:** Intel RealSense D455 (depth + RGB) and 4x Nexigo N980P (ArUco fiducial localization).
 
-## Stack at a glance
+**Stack:** Gazebo Harmonic simulation, RTAB-Map visual SLAM, Nav2 autonomous navigation, quad-swerve drivetrain controller via ros2_control. Runs in Docker on Ubuntu 24.04 (x86) or Jetson (ARM64).
 
-The workspace is built to run **the same Nav2 and mapping core** in **sim** (Gazebo) and on **hardware** (Jetson, RealSense, fiducial webcams), with different drivers and `use_sim_time`.
+---
 
-| Piece | Package | Role |
-|-------|---------|------|
-| Robot + worlds + sim/hardware launches | `lunabot_2425` | URDF, Gazebo, `competition_sim`, `gz_bringup`, `hardware_bringup`, zones YAML, controllers |
-| Mapping + depth pipeline | `luna_mapping` | RTAB-Map, frame fixers, `rtabmap_nav2_sim` / `_hardware` |
-| Nav2 + mission + zones + WFD | `luna_nav` | `nav2_rtabmap_params.yaml`, zone_publisher, frontier_explorer, mission_supervisor |
-| Drive controller | `luna_control` | `LunaController` (`luna_cont` in `robot_controllers.yaml`) |
-| ArUco | `fiducial_localizer` | Multi-camera markers, `/fiducial_pose` |
-| Arena assets | `luna_ros2_worlds` | Worlds and models (submodule) |
+## Packages
 
-Legacy **`quad_swerve_controller`** is not loaded by current bringup (see that package’s README). Details, TF, topic tables, YAML index, and launch inventory: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+| Package | Description |
+|---------|-------------|
+| `lunabot_2425` | Robot URDF, launch files, sim/hardware bringup |
+| `luna_control` | Quad-swerve ros2_control controller (steer + drive) |
+| `luna_mapping` | RTAB-Map SLAM, depth processing, Nav2 integration |
+| `luna_nav` | Nav2 config, arena zone publisher |
+| `fiducial_localizer` | Multi-camera ArUco pose estimation (map->odom) |
+| `depth_to_pointcloud` | Depth image to PointCloud2 conversion |
+| `luna_ros2_worlds` | Gazebo arena worlds (UCF, Artemis) and models |
 
-## Quick Start (Docker)
+---
 
-```bash
-./run_ros_image.sh [image_id]
-```
+## Quick start — simulation
+
+**First time:** See [INSTALL.md](INSTALL.md) for clone, Docker build, and workspace setup.
 
 Inside the container:
 
 ```bash
 cd /ros2_ws && source install/setup.bash
-# Full competition simulation (Gazebo + RTAB-Map + Nav2 + autonomy):
-ros2 launch lunabot_2425 competition_sim.launch.py world:=ucf_arena
+ros2 launch lunabot_2425 gz_bringup.launch.py
 ```
 
-Wait ~30–40s for all nodes to initialize, then start a mission:
+One command launches Gazebo, RTAB-Map, Nav2, and RViz. Use the **Nav2 Goal** tool in RViz to navigate.
+
+| Variant | Command |
+|---------|---------|
+| Gazebo only (no mapping) | `gz_bringup.launch.py launch_mapping:=false` |
+| Artemis arena | `gz_bringup.launch.py world:=artemis_arena` |
+
+---
+
+## Quick start — hardware
+
+**Terminal 1** — cameras and TF:
 
 ```bash
-ros2 service call /mission_supervisor/start_mission std_srvs/srv/Trigger {}
+ros2 launch lunabot_2425 hardware_bringup.launch.py
 ```
 
-Step-by-step (arenas, timing, what the mission does): [docs/COMPETITION_SIM.md](docs/COMPETITION_SIM.md).
+**Terminal 2** — RTAB-Map + Nav2:
+
+```bash
+ros2 launch luna_mapping rtabmap_nav2_hardware.launch.py
+```
+
+Your robot driver must publish `/odom` and the `odom` -> `base_link` transform.
+
+---
 
 ## Documentation
 
-Eight files, written for a small team handoff. Read **COMPETITION_SIM** first if you only run sim; **ARCHITECTURE** when you change launches or params.
+| Doc | Purpose |
+|-----|---------|
+| [INSTALL.md](INSTALL.md) | Clone, build, Docker setup |
+| [docs/STACK_GUIDE.md](docs/STACK_GUIDE.md) | Pipeline details, features, tuning, troubleshooting |
+| [docs/HARDWARE.md](docs/HARDWARE.md) | Hardware setup (Jetson, RealSense, fiducial cams) |
+| [docs/STACK_REVIEW_LUNABOTICS.md](docs/STACK_REVIEW_LUNABOTICS.md) | Competition fit analysis, risks, compute limits |
 
-| Document | Description |
-|----------|-------------|
-| [docs/COMPETITION_SIM.md](docs/COMPETITION_SIM.md) | **Sim:** full launch, `start_mission`, optional two-terminal flow, **field pit checklist** (SSH, boot order) |
-| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Sim vs hardware profiles and which launch to use |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Packages, topics, TF, launch tree, **YAML index**, **package/launch inventory**, verification log |
-| [docs/STACK_GUIDE.md](docs/STACK_GUIDE.md) | Launch variants, tuning, pipeline detail, **debugging quick reference** |
-| [docs/AUTONOMY.md](docs/AUTONOMY.md) | Zones, ArUco, WFD, mission FSM |
-| [docs/HARDWARE.md](docs/HARDWARE.md) | Physical setup, USB, two-terminal hardware bringup, field checklist |
-| [docs/COMPETITION_READINESS.md](docs/COMPETITION_READINESS.md) | Known gaps, risks, next steps (leads) |
-| [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) | Pre-merge checklist, tests, CI |
+---
 
-## Key Packages
+## Architecture
 
-- **lunabot_2425** -- URDF, Gazebo worlds, launch files, zone configs
-- **luna_nav** -- Nav2 params, zone publisher, frontier explorer (WFD), mission supervisor
-- **luna_mapping** -- RTAB-Map SLAM, depth processing, Nav2 integration
-- **fiducial_localizer** -- Multi-camera ArUco detection for global pose
-- **luna_control** -- Quad-swerve drivetrain controller
+```
+Camera (D455) ──> RTAB-Map (SLAM) ──> /map (occupancy grid)
+     │                                      │
+     ├──> Depth FOV Filter ──> Point Cloud ──> Nav2 Costmaps ──> Path Planning
+     │                    └──> LaserScan                              │
+     │                                                               v
+4x Nexigo ──> Fiducial Localizer ──> map->odom TF          /cmd_vel -> Robot
+```
 
-## How to run (Docker details)
+---
 
-Run the container with `./run_ros_image.sh [image_id]`.
-This sets up the X host properly, allowing Docker to present a visible GUI (tested on Ubuntu 24.04).
+## Requirements
+
+- Docker, Linux with X11 (Ubuntu 24.04 recommended)
+- GPU recommended (for Gazebo rendering)
+- **Hardware:** Intel RealSense D455, 4x USB webcams (Nexigo N980P), optional NVIDIA Jetson

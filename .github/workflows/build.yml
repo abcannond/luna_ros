@@ -1,0 +1,60 @@
+name: Build
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  colcon-build:
+    runs-on: ubuntu-24.04
+    container:
+      image: ros:jazzy-perception-noble
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            ros-jazzy-ros2-control \
+            ros-jazzy-ros2-controllers \
+            ros-jazzy-generate-parameter-library \
+            ros-jazzy-backward-ros \
+            ros-jazzy-rtabmap-launch \
+            ros-jazzy-rtabmap-slam \
+            ros-jazzy-rtabmap-odom \
+            ros-jazzy-rtabmap-util \
+            ros-jazzy-navigation2 \
+            ros-jazzy-nav2-bringup \
+            ros-jazzy-depthimage-to-laserscan \
+            ros-jazzy-depth-image-proc \
+            ros-jazzy-realsense2-camera \
+            ros-jazzy-usb-cam \
+            ros-jazzy-ros-gz \
+            ros-jazzy-cv-bridge \
+            libeigen3-dev \
+            python3-colcon-common-extensions
+          rm -rf /var/lib/apt/lists/*
+
+      - name: Build workspace
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          cd ros2_ws
+          colcon build --symlink-install --event-handlers console_direct+
+        env:
+          MAKEFLAGS: "-j2"
+
+      - name: Run package tests
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          cd ros2_ws
+          source install/setup.bash
+          colcon test --packages-select luna_nav luna_mapping fiducial_localizer --event-handlers console_direct+
+          colcon test-result --verbose
+        continue-on-error: true

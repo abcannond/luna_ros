@@ -50,11 +50,11 @@ def generate_launch_description():
     declare_rviz_config = DeclareLaunchArgument(
         'rviz_config',
         default_value=os.path.join(
-            luna_mapping_dir, 'config', 'rtabmap_nav2.rviz'
+            luna_mapping_dir, 'config', 'rtabmap_nav2_with_fid_cams.rviz',
         ),
-        description='Full path to RViz config. For fid-cam-heavy layout use config/experimental/rtabmap_nav2_with_fid_cams.rviz',
+        description='RViz config path passed to rviz2 -d',
     )
-    rviz_config = LaunchConfiguration('rviz_config')
+    rviz_config_lc = LaunchConfiguration('rviz_config')
     declare_sim = DeclareLaunchArgument(
         'sim', default_value='true',
         description='If true, publish sim-only Gazebo<->ROS frame aliases. Set false for hardware.')
@@ -63,11 +63,6 @@ def generate_launch_description():
         'clear_costmap_on_start', default_value='true',
         description='Clear local and global costmaps once after Nav2 is up.')
     clear_costmap_on_start = LaunchConfiguration('clear_costmap_on_start', default='true')
-
-    declare_launch_fiducials = DeclareLaunchArgument(
-        'launch_fiducials', default_value='false',
-        description='Launch multi-camera fiducial localizer for ArUco detection.')
-    launch_fiducials = LaunchConfiguration('launch_fiducials', default='false')
 
     # ============================================================
     # RTAB-Map SLAM
@@ -108,7 +103,7 @@ def generate_launch_description():
             {'Grid/RayTracing': 'true'},
             {'Grid/CellSize': '0.05'},
             {'Grid/RangeMax': '5.0'},
-            {'Grid/RangeMin': '0.5'},
+            {'Grid/RangeMin': '0.4'},
             {'Grid/MaxGroundHeight': '0.15'},
             {'Grid/MaxObstacleHeight': '2.0'},
             {'Grid/NormalsSegmentation': 'true'},
@@ -183,9 +178,7 @@ def generate_launch_description():
             'input_topic': '/camera/camera/depth/image_rect_raw',
             'output_topic': '/camera/camera/depth/image_rect_raw_filtered',
             'mask_regions': '',
-            # Extra bottom rows: depth often sees wheels / rocker close to the camera;
-            # when the robot spins, those near-field returns become a circular cost trail.
-            'ground_crop_bottom': 0.14,
+            'ground_crop_bottom': 0.05,
         }]
     )
 
@@ -283,8 +276,7 @@ def generate_launch_description():
             'use_sim_time': use_sim_time,
             'scan_height': 40,
             'scan_time': 0.033,
-            # Match Nav2 obstacle_min_range: drop chassis/wheel self-hits in scan
-            'range_min': 0.52,
+            'range_min': 0.4,
             'range_max': 4.0,
             'output_frame_id': 'camera_depth_optical_frame',
         }],
@@ -309,6 +301,23 @@ def generate_launch_description():
             ('depth_registered/image_rect', '/camera/camera/depth/image_rect_raw_aligned'),
             ('points', '/camera/camera/depth/color/points'),
         ]
+    )
+
+    # Height-based ground filter: remove points below min_height in base_link.
+    # Keeps rocks and crates (above ground), avoids blind band from image crop.
+    height_filter_pointcloud = Node(
+        package='luna_mapping',
+        executable='height_filter_pointcloud',
+        name='height_filter_pointcloud',
+        output='log',
+        parameters=[{
+            'use_sim_time': use_sim_time,
+            'input_topic': '/camera/camera/depth/color/points',
+            'output_topic': '/camera/camera/depth/color/points_ground_filtered',
+            'target_frame': 'base_link',
+            'min_height': 0.02,
+            'max_height': 2.0,
+        }],
     )
 
     # ============================================================
@@ -405,7 +414,7 @@ def generate_launch_description():
         executable='rviz2',
         name='rviz2',
         output='screen',
-        arguments=['-d', rviz_config],
+        arguments=['-d', rviz_config_lc],
         parameters=[{'use_sim_time': use_sim_time}]
     )
 
@@ -413,8 +422,8 @@ def generate_launch_description():
     # Static transforms (sim-only: Gazebo frame aliases)
     #
     # NOTE: odom->base_link is NOT published here.
-    # Default competition sim uses use_rtabmap_odom:=true so rgbd_odometry publishes it.
-    # luna_cont has enable_odom_tf false to avoid two publishers. Hardware uses wheel or fused odom per bringup.
+    # In sim, LunaController publishes dynamic odom->base_link from wheel odom.
+    # On hardware, the robot driver provides it.
     #
     # RSP (robot_state_publisher) already publishes the full URDF chain:
     #   base_link -> depth_camera_link -> camera_color_optical_frame
@@ -438,35 +447,13 @@ def generate_launch_description():
         output='screen'
     )
 
-    # --- Fiducial localizer (optional) ---
-    fiducial_launch_actions = []
-    try:
-        fid_pkg = get_package_share_directory('fiducial_localizer')
-        fid_launch_source = PythonLaunchDescriptionSource(
-            os.path.join(fid_pkg, 'launch', 'multi_camera_fiducial.launch.py')
-        )
-        fid_params = os.path.join(fid_pkg, 'params', 'multi_camera_sim.yaml')
-        fiducial_include = IncludeLaunchDescription(
-            fid_launch_source,
-            condition=IfCondition(launch_fiducials),
-            launch_arguments={
-                'params_file': fid_params,
-                'use_sim_time': use_sim_time,
-            }.items(),
-        )
-        fiducial_launch_actions.append(fiducial_include)
-    except PackageNotFoundError:
-        pass
-
     return LaunchDescription([
         declare_use_sim_time,
         declare_use_rtabmap_odom,
         declare_launch_nav2,
         declare_launch_rviz,
-        declare_rviz_config,
         declare_sim,
         declare_clear_costmap_on_start,
-        declare_launch_fiducials,
 
         # Sim-only TF alias (RSP provides the actual camera chain from URDF)
         static_tf_camera_depth_frame,
@@ -487,9 +474,10 @@ def generate_launch_description():
         rtabmap_slam,
         rtabmap_odom,
 
-        # Depth to scan + point cloud
+        # Depth to scan + point cloud + height filter
         depth_to_laserscan,
         depth_to_pointcloud,
+        height_filter_pointcloud,
 
         # Nav2
         nav2_nodes,
