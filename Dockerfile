@@ -67,6 +67,9 @@ COPY entrypoint.sh /entrypoint.sh
 # optional: fix line endings & make executable
 RUN dos2unix /entrypoint.sh && chmod +x /entrypoint.sh
 
+COPY ros2_ws/menu_loop.sh .
+RUN chmod +x menu_loop.sh
+
 ENV GZ_SIM_RESOURCE_PATH=/opt/ros/jazzy/share:/ros2_ws/src/luna_ros2_worlds/models
 
 ENTRYPOINT ["/entrypoint.sh"]
