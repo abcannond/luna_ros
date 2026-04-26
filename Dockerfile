@@ -15,6 +15,7 @@ RUN apt-get update && apt-get upgrade -y && \
     ros-jazzy-cv-bridge \
     libeigen3-dev \
     libopencv-dev \
+    python3-pip \
     python3-colcon-common-extensions \
     libgl1 \
     libglx0 \
@@ -46,6 +47,8 @@ RUN apt-get update && apt-get upgrade -y && \
     ros-jazzy-depthimage-to-laserscan \
     ros-jazzy-pointcloud-to-laserscan \
     ros-jazzy-v4l2-camera \
+    iproute2 \
+    can-utils \
     ros-jazzy-joy \
     ros-jazzy-teleop-twist-joy \
     && rm -rf /var/lib/apt/lists/*
@@ -56,11 +59,19 @@ RUN echo "alias cdr='cd /ros2_ws'" >> /etc/bash.bashrc
 RUN echo "alias bld='colcon build --symlink-install'" >> /etc/bash.bashrc
 RUN echo "alias drive='PYTHONUNBUFFERED=1 ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/teleop_cmd_vel_raw -p use_sim_time:=true'" >> /etc/bash.bashrc
 RUN echo "alias sim='ros2 launch lunabot_2425 gz_bringup.launch.py'" >> /etc/bash.bashrc
+
+COPY requirements.txt . 
+RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt
+
+
 WORKDIR /ros2_ws
 
 COPY entrypoint.sh /entrypoint.sh
 # optional: fix line endings & make executable
 RUN dos2unix /entrypoint.sh && chmod +x /entrypoint.sh
+
+COPY ros2_ws/menu_loop.sh .
+RUN chmod +x menu_loop.sh
 
 ENV GZ_SIM_RESOURCE_PATH=/opt/ros/jazzy/share:/ros2_ws/src/luna_ros2_worlds/models
 
