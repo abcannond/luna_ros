@@ -7,6 +7,7 @@ from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
     IncludeLaunchDescription,
+    OpaqueFunction,
     SetEnvironmentVariable,
     RegisterEventHandler,
     LogInfo,
@@ -15,7 +16,7 @@ from launch.actions import (
 from launch.conditions import LaunchConfigurationEquals, IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.event_handlers import OnProcessExit
-from launch.substitutions import LaunchConfiguration, TextSubstitution
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 
@@ -43,8 +44,6 @@ def generate_launch_description():
         default_value="ucf_arena",
         description="Arena: ucf_arena (default) or artemis_arena",
     )
-    world_name = LaunchConfiguration("world", default="ucf_arena")
-
     # When true (default), start RTAB-Map + Nav2 + RViz after Gazebo is up (single-command sim).
     declare_launch_mapping = DeclareLaunchArgument(
         "launch_mapping",
@@ -52,17 +51,13 @@ def generate_launch_description():
         description="If true, launch RTAB-Map, Nav2, and RViz after ~18 s (single terminal). If false, Gazebo + fid cam RViz only.",
     )
     launch_mapping = LaunchConfiguration("launch_mapping", default="true")
-    # gz_args as Substitutions so launch arg is applied when using luna_ros2_worlds
-    if has_worlds_pkg:
-        gz_args_parts = [
-            TextSubstitution(text="-r " + worlds_path + "/"),
-            world_name,
-            TextSubstitution(text=".sdf"),
-        ]
-    else:
-        gz_args_parts = [
-            TextSubstitution(text="-r " + os.path.join(worlds_path, "empty.world")),
-        ]
+
+    # In Docker, default to gz sim -s (server only, no Gazebo GUI) to avoid Qt/OpenGL/EGL issues.
+    declare_gz_server_only = DeclareLaunchArgument(
+        "gz_server_only",
+        default_value="true" if os.path.exists("/.dockerenv") else "false",
+        description="If true, pass -s to gz sim (no Gazebo GUI). Use false on native Linux with working GPU.",
+    )
 
     # --- RSP ---
     rsp_source = PythonLaunchDescriptionSource(os.path.join(
@@ -88,13 +83,26 @@ def generate_launch_description():
         value=f"{models_path}:{worlds_path}:{pkg_path}"
     )
 
-    gz_sim = IncludeLaunchDescription(
-        gz_sim_source,
-        launch_arguments={
-            "gz_args": gz_args_parts,
-            "on_exit_shutdown": "True",
-        }.items(),
-    )
+    def gz_sim_launch(context):
+        gz_server_only = context.launch_configurations.get("gz_server_only", "false")
+        world = context.launch_configurations.get("world", "ucf_arena")
+        prefix = "-s " if gz_server_only == "true" else ""
+        if has_worlds_pkg:
+            world_file = f"{worlds_path}/{world}.sdf"
+        else:
+            world_file = os.path.join(worlds_path, "empty.world")
+        gz_arg = f"{prefix}-r {world_file}"
+        return [
+            IncludeLaunchDescription(
+                gz_sim_source,
+                launch_arguments={
+                    "gz_args": gz_arg,
+                    "on_exit_shutdown": "True",
+                }.items(),
+            )
+        ]
+
+    gz_sim = OpaqueFunction(function=gz_sim_launch)
 
     # UCF arena spawn (fiducial_shit before artemis merge)
     gz_create_robot_ucf = Node(

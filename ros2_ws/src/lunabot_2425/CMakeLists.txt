@@ -24,6 +24,11 @@ if(BUILD_TESTING)
 endif()
 
 install(
+  PROGRAMS scripts/teleop_nav_gate
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(
   DIRECTORY config description launch stl worlds
   DESTINATION share/${PROJECT_NAME}
 )

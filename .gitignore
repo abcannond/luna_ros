@@ -68,3 +68,9 @@ Thumbs.db
 .devel/
 .catkin_tools/
 .catkin_workspace/
+
+# Cursor IDE files
+.cursor/
+
+# Cursor agent notes
+.thoughts/
