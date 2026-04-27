@@ -41,14 +41,32 @@ add_library(luna_control SHARED
   src/SparkBase.cpp
 )
 
-#LunaCAN is the only executable for now
+#executables
 add_executable(luna_can src/luna_can.cpp)
+add_executable(luna_linaks src/luna_linaks.cpp)
+add_executable(luna_debug src/luna_debug.cpp)
 
 target_link_libraries(luna_can
   luna_control
 )
 
+target_link_libraries(luna_debug
+  luna_control
+)
+
+target_link_libraries(luna_linaks
+  luna_control
+)
+
 ament_target_dependencies(luna_can
+  rclcpp
+)
+
+ament_target_dependencies(luna_debug
+  rclcpp
+)
+
+ament_target_dependencies(luna_linaks
   rclcpp
 )
 
@@ -68,7 +86,7 @@ install(
   DIRECTORY include/
   DESTINATION include/luna_control
 )
-install(TARGETS luna_control luna_controller_parameters luna_can
+install(TARGETS luna_control luna_controller_parameters luna_can luna_debug
   EXPORT export_luna_control
   RUNTIME DESTINATION lib/luna_control
   ARCHIVE DESTINATION lib
