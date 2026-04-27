@@ -185,7 +185,15 @@ void command_thread() {
         }
         if (cmd == "f") {
             enable = true; 
-            TARGET_CURRENT += 500;
+            std::cout << TARGET_CURRENT;
+            targets[1].store(TARGET_CURRENT);
+            targets[2].store(-TARGET_CURRENT);
+            targets[3].store(-TARGET_CURRENT);
+            targets[4].store(TARGET_CURRENT);
+        }
+        if (cmd == "b") {
+            enable = true; 
+            TARGET_CURRENT = -TARGET_CURRENT;
             std::cout << TARGET_CURRENT;
             targets[1].store(TARGET_CURRENT);
             targets[2].store(-TARGET_CURRENT);
@@ -222,7 +230,7 @@ void command_thread() {
             std::cout << "m4";
             targets[4].store(TARGET_CURRENT);
         }
-        else if (cmd == "b") {
+        else if (cmd == "m") {
             std::cout << currents[1].load() << std::endl;
             for (int m : MOTOR_IDS) {
                 std::cout << "M" << m << ": " << currents[m].load() << " ";
