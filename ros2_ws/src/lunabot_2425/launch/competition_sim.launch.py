@@ -30,13 +30,15 @@ from launch.actions import (
     LogInfo,
     OpaqueFunction,
 )
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 SPAWN_POSES = {
     'artemis_arena': {'x': -2.750, 'y': -1.750, 'z': 0.0, 'yaw': math.pi / 2},
-    'ucf_arena':     {'x': -3.800, 'y':  3.300, 'z': 0.0, 'yaw': -math.pi / 2},
+    # Must match gz_bringup UCF ros_gz_sim create -x/-y/-Y (map = world at this pose).
+    'ucf_arena':     {'x': -3.800, 'y':  3.100, 'z': 0.0, 'yaw': -math.pi / 2},
 }
 
 
@@ -51,6 +53,7 @@ def _resolve_zones_file(context, *args, **kwargs):
     zones_file = zones_map.get(world, zones_map['ucf_arena'])
     luna_nav_share = get_package_share_directory('luna_nav')
     mission_config = os.path.join(luna_nav_share, 'config', 'mission_phases.yaml')
+    launch_autonomy = LaunchConfiguration('launch_autonomy')
 
     spawn = SPAWN_POSES.get(world, SPAWN_POSES['ucf_arena'])
     world_to_map_tf = Node(
@@ -122,6 +125,7 @@ def _resolve_zones_file(context, *args, **kwargs):
         world_to_map_tf,
         TimerAction(
             period=30.0,
+            condition=IfCondition(launch_autonomy),
             actions=[
                 LogInfo(msg='Starting autonomy nodes (zone_publisher, frontier_explorer, mission_supervisor)...'),
                 zone_publisher,
@@ -144,6 +148,11 @@ def generate_launch_description():
         default_value='ucf_arena',
         description='Arena: ucf_arena or artemis_arena',
     )
+    declare_launch_autonomy = DeclareLaunchArgument(
+        'launch_autonomy',
+        default_value='false',
+        description='Launch mission_supervisor/frontier_explorer stack (disabled by default).',
+    )
 
     gz_bringup = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -153,12 +162,12 @@ def generate_launch_description():
             'world': LaunchConfiguration('world'),
             'launch_mapping': 'true',
             'rviz_config': competition_rviz,
-            'headless': 'false',
         }.items(),
     )
 
     return LaunchDescription([
         declare_world,
+        declare_launch_autonomy,
         gz_bringup,
         OpaqueFunction(function=_resolve_zones_file),
     ])

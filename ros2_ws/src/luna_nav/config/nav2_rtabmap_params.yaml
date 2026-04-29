@@ -95,7 +95,7 @@ local_costmap:
       resolution: 0.05
       robot_radius: 0.38
       transform_tolerance: 1.0
-      plugins: ["static_layer", "voxel_layer", "obstacle_layer", "inflation_layer"]
+      plugins: ["static_layer", "voxel_layer", "inflation_layer"]
 
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
@@ -112,9 +112,9 @@ local_costmap:
         z_voxels: 16
         max_obstacle_height: 2.0
         mark_threshold: 2
-        observation_sources: depth_cloud
+        observation_sources: depth_cloud crater_cloud
         depth_cloud:
-          topic: /camera/camera/depth/color/points
+          topic: /camera/camera/depth/color/points_ground_filtered
           max_obstacle_height: 2.0
           min_obstacle_height: 0.05
           clearing: true
@@ -123,28 +123,24 @@ local_costmap:
           raytrace_max_range: 3.5
           raytrace_min_range: 0.35
           obstacle_max_range: 2.5
-          obstacle_min_range: 0.52
+          obstacle_min_range: 0.30
           observation_persistence: 0.1
           expected_update_rate: 0.0
           inf_is_valid: true
-
-      obstacle_layer:
-        plugin: "nav2_costmap_2d::ObstacleLayer"
-        enabled: true
-        observation_sources: scan
-        scan:
-          topic: /scan
-          max_obstacle_height: 2.0
-          clearing: true
+        crater_cloud:
+          topic: /craters/points
+          max_obstacle_height: 0.5
+          min_obstacle_height: -0.1
+          clearing: false
           marking: true
-          data_type: "LaserScan"
-          raytrace_max_range: 4.0
-          raytrace_min_range: 0.35
+          data_type: "PointCloud2"
+          raytrace_max_range: 3.5
+          raytrace_min_range: 0.0
           obstacle_max_range: 3.0
-          obstacle_min_range: 0.35
-          observation_persistence: 0.1
+          obstacle_min_range: 0.0
+          observation_persistence: 8.0
           expected_update_rate: 0.0
-          inf_is_valid: true
+          inf_is_valid: false
 
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
@@ -190,8 +186,7 @@ planner_server:
       plugin: "nav2_navfn_planner::NavfnPlanner"
       tolerance: 0.5
       use_astar: true
-      # Prefer known free space for straighter paths once map exists; may fail if map sparse
-      allow_unknown: false
+      allow_unknown: true
 
 smoother_server:
   ros__parameters:

@@ -39,6 +39,8 @@ setup(
             'depth_round_obstacle_detector = '
             'luna_mapping.depth_round_obstacle_detector:main',
             'depth_obstacle_tf_node = luna_mapping.depth_obstacle_tf_node:main',
+            'depth_crater_detector = luna_mapping.depth_crater_detector:main',
+            'odom_relay = luna_mapping.odom_relay:main',
         ],
     },
 )

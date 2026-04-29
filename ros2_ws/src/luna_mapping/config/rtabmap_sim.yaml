@@ -25,7 +25,7 @@
     database_path: ""
 
     # --- SLAM core ---
-    Rtabmap/DetectionRate: "2.0"
+    Rtabmap/DetectionRate: "3.0"
     Rtabmap/TimeThr: "0.0"
     Rtabmap/MemoryThr: "0"
 
@@ -84,8 +84,8 @@
 
     # Loop closure and proximity
     RGBD/NeighborLinkRefining: "true"
-    RGBD/AngularUpdate: "0.1"
-    RGBD/LinearUpdate: "0.1"
+    RGBD/AngularUpdate: "0.05"
+    RGBD/LinearUpdate: "0.05"
     RGBD/OptimizeFromGraphEnd: "false"
     RGBD/ProximityBySpace: "true"
     RGBD/ProximityByTime: "false"

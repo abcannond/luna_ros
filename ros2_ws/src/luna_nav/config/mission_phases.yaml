@@ -1,21 +1,20 @@
 # Mission phase configuration for the competition supervisor.
 #
-# Waypoints are [x, y, yaw] in the map frame. Override per-arena via
-# the competition_sim.launch.py zones_file parameter (the zone YAML
-# also carries waypoints that are forwarded to this node).
+# Waypoints are [x, y, yaw] in the map frame. These defaults match the UCF arena.
+# Arena-specific overrides come from the zones YAML passed via competition_sim.launch.py.
 #
-# Reference: 2025 Lunabotics Guidebook Sections 5-6
-#   - Travel Automation (Sec 6.2.3, 200 pts)
-#   - Excavation & Dump Automation (Sec 6.2.1, 150 pts)
-#   - Full Autonomy (Sec 6.2.4, 600 pts)
+# Reference: 2026 Lunabotics Guidebook Sections 5-6
+#   - Travel Automation (Sec 6.2.3, 250 pts)
+#   - Excavation & Dump Automation (Sec 6.2.1, 75+50 pts)
+#   - Full Autonomy (Sec 6.2.5, 600 pts)
 
 localize_timeout_s: 30.0
 phase_timeout_s: 120.0
 excavation_dwell_s: 10.0
 construction_dwell_s: 10.0
 
-# Default waypoints (UCF arena). Overridden by zones YAML at launch.
+# UCF arena defaults (overridden by zones YAML at launch).
 waypoints:
-  excavation_entry: [-0.5, -1.5, 0.0]
-  construction_entry: [3.0, 2.0, 1.57]
-  return_to_start: [-3.5, 3.0, -1.57]
+  excavation_entry: [-2.55, 2.05, -1.57]
+  construction_entry: [-2.55, -2.77, -1.57]
+  return_to_start: [-3.80, 3.00, -1.57]

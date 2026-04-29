@@ -63,8 +63,9 @@ def generate_launch_description():
             "enable_depth": "true",
             "enable_sync": "true",
             "align_depth.enable": "true",
-            "depth_module.profile": "640x480x15",
-            "rgb_camera.profile": "640x480x15",
+            # realsense2_camera >= 4.5x uses depth_profile / color_profile (not *.profile)
+            "depth_module.depth_profile": "640x480x15",
+            "rgb_camera.color_profile": "640x480x15",
             "camera_namespace": "camera/camera",
         }.items(),
     )
@@ -76,7 +77,7 @@ def generate_launch_description():
         name="base_to_camera_static_tf",
         arguments=[
             "0.3", "0.1", "0.65",
-            "0", "0.49", "0",
+            "0", "0.262", "0",
             "base_link",
             "camera_link",
         ],

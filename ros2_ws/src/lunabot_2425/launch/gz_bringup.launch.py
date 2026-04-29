@@ -102,10 +102,9 @@ def generate_launch_description():
         }.items(),
     )
 
-    # UCF arena spawn
-    # NOTE: spawn a bit deeper into the corner so the initial pose is not
-    # hugging the start-zone poles. This gives Nav2 more free space to plan
-    # a path before interacting with the pole cost.
+    # UCF arena spawn — MUST match competition_sim.launch.py SPAWN_POSES for
+    # world:=ucf_arena (same x/y/yaw as static world->map). y=3.10 is the safe
+    # corner offset from arena walls; do not move toward +Y without updating map + fiducials.
     gz_create_robot_ucf = Node(
         package="ros_gz_sim",
         executable="create",
@@ -305,6 +304,7 @@ def generate_launch_description():
             "use_sim_time": "true",
             "launch_rviz": "true",
             "launch_nav2": "true",
+            "rviz_config": rviz_config,
         }.items(),
     )
     # Fixed delay: wait for sim to build and robot to spawn (25 s), then start RTAB-Map/Nav2

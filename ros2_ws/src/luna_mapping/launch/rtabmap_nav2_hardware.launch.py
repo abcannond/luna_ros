@@ -16,7 +16,6 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
-from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
@@ -25,8 +24,6 @@ def generate_launch_description():
     luna_mapping_dir = get_package_share_directory("luna_mapping")
     fiducial_dir = get_package_share_directory("fiducial_localizer")
     fiducial_hardware_params = os.path.join(fiducial_dir, "params", "multi_camera_hardware.yaml")
-
-    launch_fiducial = LaunchConfiguration("launch_fiducial", default="true")
 
     return LaunchDescription([
         DeclareLaunchArgument(
@@ -49,16 +46,8 @@ def generate_launch_description():
                 "use_rtabmap_odom": LaunchConfiguration("use_rtabmap_odom", default="true"),
                 "launch_rviz": "true",
                 "launch_nav2": "true",
-            }.items(),
-        ),
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(fiducial_dir, "launch", "multi_camera_fiducial.launch.py")
-            ),
-            condition=IfCondition(launch_fiducial),
-            launch_arguments={
-                "params_file": fiducial_hardware_params,
-                "use_sim_time": "false",
+                "launch_fiducial": LaunchConfiguration("launch_fiducial", default="true"),
+                "fiducial_params_file": fiducial_hardware_params,
             }.items(),
         ),
     ])

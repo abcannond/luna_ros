@@ -315,7 +315,7 @@ class FrontierExplorerNode(Node):
     # ------------------------------------------------------------------
 
     def _send_nav_goal(self, xy):
-        if not self._nav_client.wait_for_server(timeout_sec=2.0):
+        if not self._nav_client.server_is_ready():
             self.get_logger().warn('Nav2 action server not available')
             return
 

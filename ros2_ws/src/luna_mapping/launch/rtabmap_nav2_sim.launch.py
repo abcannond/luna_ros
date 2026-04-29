@@ -6,8 +6,8 @@ This launch file integrates:
 - RTAB-Map for SLAM and visual odometry
 - Occupancy grid generation from depth camera
 - Nav2 for navigation and path planning
-- Depth-to-LaserScan for obstacle detection
-- Depth-to-PointCloud for 3D obstacle avoidance
+- Depth-to-PointCloud + height filter for 3D obstacle avoidance
+- Crater detector for depression-based hazard marking
 
 Usage:
   ros2 launch luna_mapping rtabmap_nav2_sim.launch.py
@@ -29,11 +29,17 @@ from launch_ros.descriptions import ParameterFile
 def generate_launch_description():
     luna_mapping_dir = get_package_share_directory('luna_mapping')
     luna_nav_dir = get_package_share_directory('luna_nav')
+    try:
+        fiducial_dir = get_package_share_directory('fiducial_localizer')
+    except PackageNotFoundError:
+        fiducial_dir = None
 
     use_sim_time = LaunchConfiguration('use_sim_time')
     use_rtabmap_odom = LaunchConfiguration('use_rtabmap_odom')
     launch_nav2 = LaunchConfiguration('launch_nav2')
     launch_rviz = LaunchConfiguration('launch_rviz')
+    launch_fiducial = LaunchConfiguration('launch_fiducial')
+    fiducial_params_file = LaunchConfiguration('fiducial_params_file')
 
     declare_use_sim_time = DeclareLaunchArgument(
         'use_sim_time', default_value='true',
@@ -63,6 +69,14 @@ def generate_launch_description():
         'clear_costmap_on_start', default_value='true',
         description='Clear local and global costmaps once after Nav2 is up.')
     clear_costmap_on_start = LaunchConfiguration('clear_costmap_on_start', default='true')
+    declare_launch_fiducial = DeclareLaunchArgument(
+        'launch_fiducial', default_value='true',
+        description='Run multi-camera fiducial localizer (managed by lifecycle_manager_localization).')
+    declare_fiducial_params = DeclareLaunchArgument(
+        'fiducial_params_file',
+        default_value=os.path.join(fiducial_dir, 'params', 'multi_camera_sim.yaml')
+        if fiducial_dir else '',
+        description='Fiducial localizer params YAML.')
 
     # ============================================================
     # RTAB-Map SLAM
@@ -94,6 +108,8 @@ def generate_launch_description():
             {'frame_id': 'base_link'},
             {'odom_frame_id': 'odom'},
             {'map_frame_id': 'map'},
+            # map->odom is owned by the EKF (ekf_filter_node_map), not RTAB-Map.
+            {'publish_tf': False},
             {'approx_sync': True},
             {'approx_sync_max_interval': 0.02},
             {'qos_image': 2},
@@ -112,7 +128,7 @@ def generate_launch_description():
             {'Grid/FootprintLength': '0.65'},
             {'Grid/FootprintWidth': '0.53'},
             {'Grid/FootprintHeight': '0.40'},
-            {'Rtabmap/DetectionRate': '2.0'},
+            {'Rtabmap/DetectionRate': '3.0'},
         ],
         remappings=rtabmap_remappings,
         arguments=['--delete_db_on_start']
@@ -163,22 +179,6 @@ def generate_launch_description():
             'input_topic': '/camera/camera/depth/image_rect_raw',
             'output_topic': '/camera/camera/depth/image_colorized',
             'max_range': 5.0,
-        }]
-    )
-
-    # ============================================================
-    # Depth FOV filter (ground crop + mask regions for costmap)
-    # ============================================================
-    depth_fov_filter = Node(
-        package='luna_mapping',
-        executable='depth_fov_filter',
-        name='depth_fov_filter',
-        output='screen',
-        parameters=[{
-            'input_topic': '/camera/camera/depth/image_rect_raw',
-            'output_topic': '/camera/camera/depth/image_rect_raw_filtered',
-            'mask_regions': '',
-            'ground_crop_bottom': 0.05,
         }]
     )
 
@@ -237,54 +237,17 @@ def generate_launch_description():
         }]
     )
 
-    # Filtered depth -> fixed frame for laserscan (ground-cropped)
-    image_frame_fixer_depth_laserscan = Node(
-        package='luna_mapping',
-        executable='image_frame_fixer',
-        name='image_frame_fixer_depth_laserscan',
-        output='screen',
-        parameters=[{
-            'input_topic': '/camera/camera/depth/image_rect_raw_filtered',
-            'output_topic': '/camera/camera/depth/image_rect_raw_fixed_for_scan',
-            'output_frame_id': 'camera_depth_optical_frame',
-        }]
-    )
-
-    # Filtered depth -> color optical frame for point cloud alignment
+    # Raw depth -> color optical frame for point cloud alignment
     image_frame_fixer_depth_pointcloud = Node(
         package='luna_mapping',
         executable='image_frame_fixer',
         name='image_frame_fixer_depth_pointcloud',
         output='screen',
         parameters=[{
-            'input_topic': '/camera/camera/depth/image_rect_raw_filtered',
+            'input_topic': '/camera/camera/depth/image_rect_raw',
             'output_topic': '/camera/camera/depth/image_rect_raw_aligned',
             'output_frame_id': 'camera_color_optical_frame',
         }]
-    )
-
-    # ============================================================
-    # Depth to LaserScan (2D obstacle detection)
-    # Uses FILTERED depth so ground returns don't appear as obstacles.
-    # ============================================================
-    depth_to_laserscan = Node(
-        package='depthimage_to_laserscan',
-        executable='depthimage_to_laserscan_node',
-        name='depthimage_to_laserscan',
-        output='screen',
-        parameters=[{
-            'use_sim_time': use_sim_time,
-            'scan_height': 40,
-            'scan_time': 0.033,
-            'range_min': 0.4,
-            'range_max': 4.0,
-            'output_frame_id': 'camera_depth_optical_frame',
-        }],
-        remappings=[
-            ('depth', '/camera/camera/depth/image_rect_raw_fixed_for_scan'),
-            ('depth_camera_info', '/camera/camera/depth/camera_info_fixed'),
-            ('scan', '/scan'),
-        ]
     )
 
     # Depth to PointCloud2 (3D voxel layer input)
@@ -317,6 +280,75 @@ def generate_launch_description():
             'target_frame': 'base_link',
             'min_height': 0.02,
             'max_height': 2.0,
+        }],
+    )
+
+    # Crater detector: finds depth-hole features and publishes PointCloud2 to /craters/points
+    depth_crater_detector = Node(
+        package='luna_mapping',
+        executable='depth_crater_detector',
+        name='depth_crater_detector',
+        output='log',
+        parameters=[{
+            'use_sim_time': use_sim_time,
+            'depth_topic': '/camera/camera/depth/image_rect_raw',
+            'camera_info_topic': '/camera/camera/depth/camera_info_fixed',
+            'depth_threshold_m': 0.10,
+            'floor_kernel': 41,
+            'min_roundness': 0.45,
+            'processing_rate_hz': 2.0,
+            'height_crop_bottom': 0.20,
+        }],
+    )
+
+    # Odom relay: /luna_cont/odom -> /odom + odom->base_link TF.
+    # LunaController publishes to ~/odom (= /luna_cont/odom) inside gz_ros2_control.
+    # RTAB-Map and Nav2 need /odom; TF must be broadcast in the ROS2 context so
+    # use_sim_time is correctly applied.
+    odom_relay = Node(
+        package='luna_mapping',
+        executable='odom_relay',
+        name='odom_relay',
+        output='log',
+        parameters=[{
+            'use_sim_time': use_sim_time,
+            'source_topic': '/luna_cont/odom',
+        }],
+    )
+
+    # robot_localization EKF: fuses /odom velocities + /fiducial_pose absolute
+    # pose (with covariance). Owns map->odom TF.
+    ekf_global_params_file = os.path.join(luna_mapping_dir, 'config', 'ekf_global.yaml')
+    ekf_filter_node_map = Node(
+        package='robot_localization',
+        executable='ekf_node',
+        name='ekf_filter_node_map',
+        output='screen',
+        parameters=[ekf_global_params_file, {'use_sim_time': use_sim_time}],
+    )
+
+    # Multi-camera fiducial localizer (managed lifecycle node).
+    fiducial_localizer = Node(
+        condition=IfCondition(launch_fiducial),
+        package='fiducial_localizer',
+        executable='multi_camera_marker_localizer',
+        name='multi_camera_marker_localizer',
+        output='screen',
+        parameters=[fiducial_params_file, {'use_sim_time': use_sim_time}],
+    )
+
+    # Lifecycle manager: drives fiducial through configure -> activate at launch.
+    # This is what makes the Nav2 RViz 'Localization' panel show as Active.
+    lifecycle_manager_localization = Node(
+        condition=IfCondition(launch_fiducial),
+        package='nav2_lifecycle_manager',
+        executable='lifecycle_manager',
+        name='lifecycle_manager_localization',
+        output='screen',
+        parameters=[{
+            'use_sim_time': use_sim_time,
+            'autostart': True,
+            'node_names': ['multi_camera_marker_localizer'],
         }],
     )
 
@@ -452,32 +484,43 @@ def generate_launch_description():
         declare_use_rtabmap_odom,
         declare_launch_nav2,
         declare_launch_rviz,
+        declare_rviz_config,
         declare_sim,
         declare_clear_costmap_on_start,
+        declare_launch_fiducial,
+        declare_fiducial_params,
 
         # Sim-only TF alias (RSP provides the actual camera chain from URDF)
         static_tf_camera_depth_frame,
 
+        # Odometry relay (must be before RTAB-Map)
+        odom_relay,
+
+        # EKF (map->odom). Brought up alongside odom so /odom is ready when EKF starts.
+        ekf_filter_node_map,
+
+        # Fiducial localizer + its lifecycle manager.
+        fiducial_localizer,
+        lifecycle_manager_localization,
+
         # Depth processing
         depth_to_rgb,
-        depth_fov_filter,
 
         # Frame fixers
         camera_info_fixer_color,
         camera_info_fixer_depth,
         image_frame_fixer_rgb,
         image_frame_fixer_depth_rtabmap,
-        image_frame_fixer_depth_laserscan,
         image_frame_fixer_depth_pointcloud,
 
         # RTAB-Map
         rtabmap_slam,
         rtabmap_odom,
 
-        # Depth to scan + point cloud + height filter
-        depth_to_laserscan,
+        # Point cloud + height filter + crater detector
         depth_to_pointcloud,
         height_filter_pointcloud,
+        depth_crater_detector,
 
         # Nav2
         nav2_nodes,
@@ -505,4 +548,4 @@ def generate_launch_description():
         ),
 
         rviz_node,
-    ] + fiducial_launch_actions)
+    ])

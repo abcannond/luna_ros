@@ -1,5 +1,8 @@
-# Fiducial localizer sim (4 wheel-pod cams). Topics/frames match gz_bridge and robot.urdf.xacro.
-# UCF: aruco_marker_0 DICT_5X5_1000 ID 256 (0.88 m plane) at (-4.75, 2.75, 1.0) in world/map.
+# Fiducial localizer sim (4 wheel-pod cams), aligned to Nav2 map frame.
+# UCF arena world->map is set by competition_sim.launch.py static TF (same as Gazebo spawn):
+#   world->map: x=-3.8, y=3.1, yaw=-pi/2
+# Marker anchors below are pre-converted from SDF world to map.
+# Wall-mounted marker faces are vertical (roll=pi/2).
 
 multi_camera_marker_localizer:
   ros__parameters:
@@ -19,19 +22,29 @@ multi_camera_marker_localizer:
       - back_left_camera_link_optical
       - back_right_camera_link_optical
     aruco_dict: "DICT_5X5_1000"
-    embedded_mode: true
-    marker_id_large: 256
-    marker_id_small: 395
-    marker_size_large_m: 0.88
-    marker_size_small_m: 0.126
-    marker_id: -1
-    marker_size_m: 0.16
     world_frame: "map"
     robot_frame: "base_link"
-    marker_child_frame: "aruco"
-    world_to_marker_xyz: [-4.75, 2.75, 1.0]
-    world_to_marker_yaw: 1.5708
-    camera_optical_extra_yaw_rad: 0.0
-    pose_smooth_window: 1
-    camera_extrinsic_offset_m: 0.0
-    camera_extrinsic_offset_phase_rad: 0.0
+    # Covariance for /fiducial_pose (consumed by ekf_filter_node_map).
+    position_stddev: 0.08
+    yaw_stddev: 0.04
+    range_scale_per_m: 0.05
+    max_marker_distance_m: 1.0
+    startup_stability_seconds: 3.0
+    startup_stable_xy_thresh_m: 0.03
+    startup_stable_yaw_thresh_rad: 0.06
+    startup_stable_required_frames: 4
+    # Multi-marker embedded tag config
+    # Keep one marker group active per run to avoid cross-anchor jumps.
+    active_marker_group: 0
+    outer_marker_ids: [917, 733]
+    inner_marker_ids: [840, 669]
+    outer_marker_size_m: 0.88
+    inner_marker_size_m: 0.126
+    # Converted into map frame from SDF world coordinates using world->map TF (y=3.1).
+    marker_world_x: [-1.15,  0.35]
+    marker_world_y: [ 0.05, -0.95]
+    marker_world_z: [1.0, 1.0]
+    # RPY expressed in map frame.
+    marker_world_roll_arr:  [1.5708, 1.5708]
+    marker_world_pitch_arr: [0.0,    0.0]
+    marker_world_yaw_arr:   [1.5708, 3.1416]

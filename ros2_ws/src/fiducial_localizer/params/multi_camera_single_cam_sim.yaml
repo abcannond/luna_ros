@@ -1,0 +1,22 @@
+# Single fiducial camera in Gazebo (same topics as full sim; use when only bridging one cam).
+# Same node as multi-camera stack: ``multi_camera_marker_localizer``.
+
+multi_camera_marker_localizer:
+  ros__parameters:
+    image_topics:
+      - /fid_cams/front_left_camera/image_raw
+    camera_info_topics:
+      - /fid_cams/front_left_camera/camera_info
+    camera_frames:
+      - front_left_camera_link_optical
+    aruco_dict: "DICT_4X4_50"
+    marker_id: -1
+    marker_size_m: 0.16
+    world_frame: "map"
+    robot_frame: "base_link"
+    world_to_marker_xyz: [-3.58, 3.08, 0.75]
+    world_to_marker_yaw: 0.0
+    # Covariance for /fiducial_pose (consumed by ekf_filter_node_map).
+    position_stddev: 0.05
+    yaw_stddev: 0.02
+    range_scale_per_m: 0.02
