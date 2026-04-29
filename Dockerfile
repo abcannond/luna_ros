@@ -57,9 +57,8 @@ RUN echo "alias src='source install/setup.bash'" >> /etc/bash.bashrc
 RUN echo "alias srcr='source /opt/ros/jazzy/setup.bash'" >> /etc/bash.bashrc
 RUN echo "alias cdr='cd /ros2_ws'" >> /etc/bash.bashrc
 RUN echo "alias bld='colcon build --symlink-install'" >> /etc/bash.bashrc
-RUN echo "alias drive='PYTHONUNBUFFERED=1 ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/cmd_vel -p use_sim_time:=true'" >> /etc/bash.bashrc
+RUN echo "alias drive='PYTHONUNBUFFERED=1 ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/teleop_cmd_vel_raw -p use_sim_time:=true'" >> /etc/bash.bashrc
 RUN echo "alias sim='ros2 launch lunabot_2425 gz_bringup.launch.py'" >> /etc/bash.bashrc
-
 WORKDIR /ros2_ws
 
 COPY entrypoint.sh /entrypoint.sh
