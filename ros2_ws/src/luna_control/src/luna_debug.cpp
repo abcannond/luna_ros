@@ -38,18 +38,19 @@ const float RPM_TO_MM_S =
     static_cast<float>((2.0 * M_PI * WHEEL_RADIUS_MM) / 60.0);
 
 // ---------------- STATE ----------------
-std::array<std::atomic<int>, 6> currents; //motor currents 
+std::array<std::atomic<int>, 5> currents; //motor currents 
 std::map<int,bool> reverse_flags;
-std::array<std::atomic<int>, 6> targets; //motor targets, index 0 not used to match with motor ids 
-std::array<std::atomic<float>, 6> steer_cmds; //swerve targets, currently in duty cycle
-std::array<std::atomic<float>, 6> drive_vels; //drive motor velocities
-std::array<std::atomic<int>, 6> drive_pos; //drive motor positions
+std::array<std::atomic<int>, 5> targets; //motor targets, index 0 not used to match with motor ids 
+std::array<std::atomic<int>, 5> vel_targets; //motor target rpm, index 0 not used to match with motor ids 
+std::array<std::atomic<float>, 5> steer_cmds; //swerve targets, currently in duty cycle
+std::array<std::atomic<int>, 5> drive_vels; //drive motor velocities
+std::array<std::atomic<int>, 5> drive_pos; //drive motor positions
 std::atomic<bool> running(true);
 std::unique_ptr<SparkMax> swerve[5];
 
 int can_sock = -1;
-bool enable = false;
 int TARGET_CURRENT = 0;
+int TARGET_VELOCITY = 0;
 
 // ---------------- CAN ----------------
 
@@ -115,9 +116,9 @@ void feedback_thread() {
                 int enc = (fr.data[0] << 8) | fr.data[1];
                 drive_pos[id].store(enc);
 
-                float rpm = (int16_t)((fr.data[2] << 8) | fr.data[3]);
-                float vel_mm_s = rpm * RPM_TO_MM_S;
-                drive_vels[id].store(vel_mm_s);
+                int rpm = (int16_t)((fr.data[2] << 8) | fr.data[3]);
+                //float vel_mm_s = rpm * RPM_TO_MM_S;
+                drive_vels[id].store(rpm);
             }
         }
     }
@@ -138,24 +139,44 @@ void control_thread() {
 
             swerve[i]->SetDutyCycle(duty);
         }
-
-        if(enable == true) {
-            //set currents to targets 
-            for (int m : MOTOR_IDS) {
-                int tgt = targets[m].load();
-                int cur = currents[m].load();
-
-                if(tgt > cur) {
-                    cur += STEP; 
-                }
-                else if(tgt < cur) {
-                    cur -= STEP;
-                }
-
-                currents[m].store(cur);
+        
+        //velocity control
+        for(int m: MOTOR_IDS) {
+            int cur_vel = drive_vels[m].load();
+            int tgt_vel = vel_targets[m].load();
+            
+            if(reverse_flags[m] == true) {
+                tgt_vel = -tgt_vel;
             }
-       }
 
+            int current = currents[m].load();
+
+            if(tgt_vel > cur_vel) {
+                current += STEP;
+            }
+            else if(tgt_vel < cur_vel) {
+                current -= STEP;
+            }
+
+            currents[m].store(current);
+        }
+
+        /*
+        //set currents to targets 
+        for (int m : MOTOR_IDS) {
+            int tgt = targets[m].load();
+            int cur = currents[m].load();
+
+            if(tgt > cur) {
+                cur += STEP; 
+            }
+            else if(tgt < cur) {
+                cur -= STEP;
+            }
+
+            currents[m].store(cur);
+        }
+        */
         auto msg = build_msg();
         
         write(can_sock, &msg, sizeof(msg));
@@ -178,21 +199,30 @@ void command_thread() {
         std::getline(std::cin, cmd);
 
         if (cmd == "w") {
-            enable = true; 
             TARGET_CURRENT += 500;
-            std::cout << TARGET_CURRENT;
-            
+            //std::cout << TARGET_CURRENT;
+            TARGET_VELOCITY += 1;
+            std::cout << TARGET_VELOCITY;
+        }
+        if (cmd == "q") {
+            TARGET_CURRENT -= 500;
+            //std::cout << TARGET_CURRENT;
+            TARGET_VELOCITY -= 1;
+            std::cout << TARGET_VELOCITY;
         }
         if (cmd == "f") {
-            enable = true; 
             std::cout << TARGET_CURRENT;
-            targets[1].store(TARGET_CURRENT);
-            targets[2].store(-TARGET_CURRENT);
-            targets[3].store(-TARGET_CURRENT);
-            targets[4].store(TARGET_CURRENT);
+            //targets[1].store(TARGET_CURRENT);
+            //targets[2].store(-TARGET_CURRENT);
+            //targets[3].store(-TARGET_CURRENT);
+            //targets[4].store(TARGET_CURRENT);
+
+            //set all motors to go forwards
+            for(int m: MOTOR_IDS) {
+                vel_targets[m].store(TARGET_VELOCITY);
+            }
         }
         if (cmd == "b") {
-            enable = true; 
             TARGET_CURRENT = -TARGET_CURRENT;
             std::cout << TARGET_CURRENT;
             targets[1].store(TARGET_CURRENT);
@@ -210,14 +240,21 @@ void command_thread() {
             steer_cmds[2].store(0);
             steer_cmds[3].store(0);
             steer_cmds[4].store(0);
+
+            //set all motors to go forwards
+            for(int m: MOTOR_IDS) {
+                vel_targets[m].store(0);
+            }
         }
         else if (cmd == "a") {
             std::cout << "m2";
             targets[2].store(-TARGET_CURRENT);
+            vel_targets[2].store(TARGET_VELOCITY);
         }
         else if (cmd == "d") {
             std::cout << "m1";
             targets[1].store(TARGET_CURRENT);
+            vel_targets[1].store(TARGET_VELOCITY);
         }
         else if (cmd == "q") {
             running = false;
@@ -225,15 +262,22 @@ void command_thread() {
         else if (cmd == "z") {
             std::cout << "m3";
             targets[3].store(-TARGET_CURRENT);
+            vel_targets[3].store(TARGET_VELOCITY);
         }
         else if (cmd == "x") {
             std::cout << "m4";
             targets[4].store(TARGET_CURRENT);
+            vel_targets[4].store(TARGET_VELOCITY);
         }
         else if (cmd == "m") {
             std::cout << currents[1].load() << std::endl;
             for (int m : MOTOR_IDS) {
                 std::cout << "M" << m << ": " << currents[m].load() << " ";
+            }
+            std::cout << std::endl; 
+            std::cout << drive_vels[1].load() << std::endl;
+            for (int m : MOTOR_IDS) {
+                std::cout << "V" << m << ": " << drive_vels[m].load() << " ";
             }
             std::cout << std::endl; 
         }
@@ -319,6 +363,11 @@ int main() {
     //init reverse flags 
     for (int m : MOTOR_IDS) {
         reverse_flags[m] = false;
+    }
+
+    //init velocity targets
+    for (int m : MOTOR_IDS) {
+        vel_targets[m].store(0);
     }
 
     //2 and 3 are reversed 
