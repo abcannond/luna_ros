@@ -235,6 +235,10 @@ namespace luna_controller
     double left_front_pod_feedback = 0.0;
     double right_back_pod_feedback = 0.0;
     double right_front_pod_feedback = 0.0;
+    double left_back_wheel_feedback = 0.0;
+    double left_front_wheel_feedback = 0.0;
+    double right_front_wheel_feedback = 0.0;
+    double right_back_wheel_feedback = 0.0; 
 
     if (params_.open_loop)
     {
@@ -242,14 +246,6 @@ namespace luna_controller
     }
     else
     {
-      const double left_back_wheel_feedback =
-      registered_left_back_wheel_handles_[0].feedback.get().get_value();
-      const double left_front_wheel_feedback =
-      registered_left_front_wheel_handles_[0].feedback.get().get_value();
-      const double right_back_wheel_feedback =
-      registered_right_back_wheel_handles_[0].feedback.get().get_value();
-      const double right_front_wheel_feedback =
-      registered_right_front_wheel_handles_[0].feedback.get().get_value();
 
       left_back_pod_feedback =
         registered_left_back_pod_handles_[0].feedback.get().get_value();
@@ -402,22 +398,7 @@ namespace luna_controller
     double rl_wheel_rad_s = rl_speed / wheel_radius;
     double rr_wheel_rad_s = rr_speed / wheel_radius;
     
-    // Wheel speed normalization: no explicit max_wheel_speed parameter is defined in the
-    // generated parameter library. If a hard cap is needed, add it to the parameter YAML
-    // and re-generate; for now we rely on upstream limiters / controller constraints.
-
-    //pod feedback
-    double left_front_pod_feedback =
-    registered_left_front_pod_handles_[0].feedback.get().get_value();
-
-    double right_front_pod_feedback =
-    registered_right_front_pod_handles_[0].feedback.get().get_value();
-
-    double left_back_pod_feedback =
-        registered_left_back_pod_handles_[0].feedback.get().get_value();
-
-    double right_back_pod_feedback =
-        registered_right_back_pod_handles_[0].feedback.get().get_value();
+    //currently max wheel speed param isnt recognized but is in the .yaml, need to fix
 
     /* Angle-flip optimization relative to current feedback means:
       If the angle change (target - current) has magnitude > 90deg (pi/2),

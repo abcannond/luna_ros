@@ -28,12 +28,13 @@ const int ARB_ID = 0x200;
 // hopefully we can resolve 3 turning into 5 soon 
 const std::vector<int> MOTOR_IDS = {1,2,3,4};
 
-const int STEP = 100;
+const int STEP = 10;
 const int LOOP_DELAY_US = 2000;
 const int MAX_CURRENT = 16000; //mA
 const float MAX_SPEED = 2.5; //rad/s
 const float MM_PER_RAD = 203; // mm/rad 
 const float WHEEL_RADIUS_MM = 101.6f; 
+const int GEAR_REDUCTION = 192;
 const float RPM_TO_MM_S =
     static_cast<float>((2.0 * M_PI * WHEEL_RADIUS_MM) / 60.0);
 
@@ -51,6 +52,7 @@ std::unique_ptr<SparkMax> swerve[5];
 int can_sock = -1;
 int TARGET_CURRENT = 0;
 int TARGET_VELOCITY = 0;
+auto last_time = std::chrono::steady_clock::now();
 
 // ---------------- CAN ----------------
 
@@ -139,28 +141,36 @@ void control_thread() {
 
             swerve[i]->SetDutyCycle(duty);
         }
-        
+
         //velocity control
         for(int m: MOTOR_IDS) {
             int cur_vel = drive_vels[m].load();
-            int tgt_vel = vel_targets[m].load();
+            int tgt_vel = vel_targets[m].load()*GEAR_REDUCTION; //need to convert our target wheel vel to motor vel
             
             if(reverse_flags[m] == true) {
                 tgt_vel = -tgt_vel;
             }
 
-            int current = currents[m].load();
+            int error = tgt_vel - cur_vel;
 
-            if(tgt_vel > cur_vel) {
-                current += STEP;
-            }
-            else if(tgt_vel < cur_vel) {
-                current -= STEP;
+            int current = currents[m].load();
+            
+            if(error >= GEAR_REDUCTION or error <= -GEAR_REDUCTION) {
+                //get time delta 
+                auto now = std::chrono::steady_clock::now();
+                float dt_s = std::chrono::duration<float>(now - last_time).count();
+                last_time = now;
+
+                //change current 
+                float kP = 1.0f;  //still tuning 
+                int delta = static_cast<int>(kP * (float)error * dt_s);
+
+                //clamp current 
+                current = std::clamp(current + delta, -MAX_CURRENT, MAX_CURRENT);
             }
 
             currents[m].store(current);
         }
-
         /*
         //set currents to targets 
         for (int m : MOTOR_IDS) {
@@ -201,13 +211,13 @@ void command_thread() {
         if (cmd == "w") {
             TARGET_CURRENT += 500;
             //std::cout << TARGET_CURRENT;
-            TARGET_VELOCITY += 1;
+            TARGET_VELOCITY += 5;
             std::cout << TARGET_VELOCITY;
         }
         if (cmd == "q") {
             TARGET_CURRENT -= 500;
             //std::cout << TARGET_CURRENT;
-            TARGET_VELOCITY -= 1;
+            TARGET_VELOCITY -= 5;
             std::cout << TARGET_VELOCITY;
         }
         if (cmd == "f") {
@@ -270,14 +280,12 @@ void command_thread() {
             vel_targets[4].store(TARGET_VELOCITY);
         }
         else if (cmd == "m") {
-            std::cout << currents[1].load() << std::endl;
             for (int m : MOTOR_IDS) {
                 std::cout << "M" << m << ": " << currents[m].load() << " ";
             }
             std::cout << std::endl; 
-            std::cout << drive_vels[1].load() << std::endl;
             for (int m : MOTOR_IDS) {
-                std::cout << "V" << m << ": " << drive_vels[m].load() << " ";
+                std::cout << "V" << m << ": " << drive_vels[m].load()/GEAR_REDUCTION << " ";
             }
             std::cout << std::endl; 
         }
@@ -368,6 +376,11 @@ int main() {
     //init velocity targets
     for (int m : MOTOR_IDS) {
         vel_targets[m].store(0);
+    }
+
+    //init velocity feedback
+    for (int m : MOTOR_IDS) {
+        drive_vels[m].store(0);
     }
 
     //2 and 3 are reversed 
