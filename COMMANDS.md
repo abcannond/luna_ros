@@ -53,6 +53,31 @@ Controls:
   j = left
   l = right
   k = stop
+  (hold shift for holonomic strafing)
+
+### Controller
+
+Prereq: Controller plugged in (USB) before starting container.
+
+  dbash
+
+Inside container:
+
+  cd /ros2_ws
+  source /opt/ros/jazzy/setup.bash
+  source install/setup.bash
+  ros2 launch lunabot_2425 joy_teleop.launch.py
+
+Terminal prints controller input by default (`joy_echo`). To silence printouts:
+
+  ros2 launch lunabot_2425 joy_teleop.launch.py joy_echo:=false
+
+**Important — robot only moves while you hold A (enable).** Move left stick + right stick while A is held. If nothing moves, check terminal for `[JoyEcho]` lines; if none after ~3s, see `ls /dev/input/js*` and `ros2 topic echo /joy`.
+
+- Left stick: forward/back + strafe (holonomic)
+- Right stick X: rotate
+- Hold A (enable) to drive; release to stop (deadman)
+- Input map: see docs/CONTROLLER_MAP.md
 
 Inside container:
 
@@ -132,6 +157,8 @@ Build (from workspace root; if you hit permission errors on `install/`, use a cu
   # colcon build --build-base ./build_luna --install-base ./install_luna --packages-select luna_nav
   # then: source install_luna/setup.bash
 
+  cd /ros2_ws
+  source /opt/ros/jazzy/setup.bash
   source install/setup.bash
   ros2 run luna_nav zone_publisher
 

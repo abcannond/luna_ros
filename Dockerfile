@@ -15,6 +15,7 @@ RUN apt-get update && apt-get upgrade -y && \
     ros-jazzy-cv-bridge \
     libeigen3-dev \
     libopencv-dev \
+    python3-pip \
     python3-colcon-common-extensions \
     libgl1 \
     libglx0 \
@@ -46,6 +47,8 @@ RUN apt-get update && apt-get upgrade -y && \
     ros-jazzy-depthimage-to-laserscan \
     ros-jazzy-pointcloud-to-laserscan \
     ros-jazzy-v4l2-camera \
+    iproute2 \
+    can-utils \
     ros-jazzy-joy \
     ros-jazzy-teleop-twist-joy \
     && rm -rf /var/lib/apt/lists/*
@@ -61,6 +64,9 @@ WORKDIR /ros2_ws
 COPY entrypoint.sh /entrypoint.sh
 # optional: fix line endings & make executable
 RUN dos2unix /entrypoint.sh && chmod +x /entrypoint.sh
+
+COPY ros2_ws/menu_loop.sh .
+RUN chmod +x menu_loop.sh
 
 ENV GZ_SIM_RESOURCE_PATH=/opt/ros/jazzy/share:/ros2_ws/src/luna_ros2_worlds/models
 
