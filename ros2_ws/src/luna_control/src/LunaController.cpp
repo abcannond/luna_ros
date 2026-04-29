@@ -170,19 +170,18 @@ namespace luna_controller
 
 
   static double wrap_to_pi(double a) {
-    /* normalize angle to [-pi, pi) */
+    // normalize angle to [-pi, pi)
     a = fmod(a + M_PI, 2.0 * M_PI);
     if (a < 0.0) a += 2.0 * M_PI;
     return a - M_PI;
   }
 
   static double shortest_angular_diff(double target, double source) {
-    /* returns signed shortest difference (target - source) in range [-pi, pi) */
+    //returns signed shortest difference (target - source) in range [-pi, pi) 
     double diff = wrap_to_pi(target) - wrap_to_pi(source);
-    /* after subtraction we may be in (-2pi, 2pi), normalize again */
+    //after subtraction we may be in (-2pi, 2pi), normalize again 
     return wrap_to_pi(diff);
   }  
-
 
   controller_interface::return_type LunaController::update(
       const rclcpp::Time &time, const rclcpp::Duration &period)
@@ -230,6 +229,13 @@ namespace luna_controller
     const double wheel_radius = params_.wheel_radius;
     const double wheel_base = params_.wheel_base;
 
+    // Feedback values are needed later for steering optimization / safety gating.
+    // In open-loop mode we don't have meaningful feedback, so these remain 0.0.
+    double left_back_pod_feedback = 0.0;
+    double left_front_pod_feedback = 0.0;
+    double right_back_pod_feedback = 0.0;
+    double right_front_pod_feedback = 0.0;
+
     if (params_.open_loop)
     {
       odometry_.updateOpenLoop(linear_command, angular_command, strafe_command, time);
@@ -245,14 +251,14 @@ namespace luna_controller
       const double right_front_wheel_feedback =
       registered_right_front_wheel_handles_[0].feedback.get().get_value();
 
-      const double left_back_pod_feedback =
-      registered_left_back_pod_handles_[0].feedback.get().get_value();
-      const double left_front_pod_feedback =
-      registered_left_front_pod_handles_[0].feedback.get().get_value();
-      const double right_back_pod_feedback =
-      registered_right_back_pod_handles_[0].feedback.get().get_value();
-      const double right_front_pod_feedback =
-      registered_right_front_pod_handles_[0].feedback.get().get_value();
+      left_back_pod_feedback =
+        registered_left_back_pod_handles_[0].feedback.get().get_value();
+      left_front_pod_feedback =
+        registered_left_front_pod_handles_[0].feedback.get().get_value();
+      right_back_pod_feedback =
+        registered_right_back_pod_handles_[0].feedback.get().get_value();
+      right_front_pod_feedback =
+        registered_right_front_pod_handles_[0].feedback.get().get_value();
 
       odometry_.update(
       left_back_pod_feedback,
@@ -349,25 +355,24 @@ namespace luna_controller
     double right_back_pod_position = 0.0;
     double right_front_pod_position = 0.0;
 
-    /* intermediate variables */
-    double hx = wheel_base / 2.0;   /* half wheelbase (x offsets)  */
-    double hy = wheel_track / 2.0;  /* half track    (y offsets)  */
+    // intermediate variables
+    double hx = wheel_base / 2.0;   // half wheelbase (x offsets) 
+    double hy = wheel_track / 2.0;  // half track    (y offsets)
 
-    /* wheel module coordinates (x forward, y left) */
-    const double fl_x =  hx; const double fl_y =  hy; /* front_left  */
-    const double fr_x =  hx; const double fr_y = -hy; /* front_right */
-    const double rl_x = -hx; const double rl_y =  hy; /* rear_left   */
-    const double rr_x = -hx; const double rr_y = -hy; /* rear_right  */
+    // wheel module coordinates (x forward, y left)
+    const double fl_x =  hx; const double fl_y =  hy; //front_left  
+    const double fr_x =  hx; const double fr_y = -hy; //front_right
+    const double rl_x = -hx; const double rl_y =  hy; //rear_left 
+    const double rr_x = -hx; const double rr_y = -hy; // rear_right
 
-    /* compute per-module velocity vectors in robot frame:
-      v_mod_i = [ vx - omega * y_i,  vy + omega * x_i ]
-      where vx = linear_command, vy = strafe_command, omega = angular_command
-    */
+    //compute per-module velocity vectors in robot frame:
+      //v_mod_i = [ vx - omega * y_i,  vy + omega * x_i ]
+      //where vx = linear_command, vy = strafe_command, omega = angular_command
     double vx = linear_command;
     double vy = strafe_command;
     double omega = angular_command;
 
-    /* module vector components */
+    // module vector components
     double fl_vx = vx - omega * fl_y;
     double fl_vy = vy + omega * fl_x;
     double fr_vx = vx - omega * fr_y;
@@ -377,13 +382,13 @@ namespace luna_controller
     double rr_vx = vx - omega * rr_y;
     double rr_vy = vy + omega * rr_x;
 
-    /* desired raw angles (radians) and rim speeds (m/s) */
+    // desired raw angles (radians) and rim speeds (m/s)
     double fl_angle = atan2(fl_vy, fl_vx);
     double fr_angle = atan2(fr_vy, fr_vx);
     double rl_angle = atan2(rl_vy, rl_vx);
     double rr_angle = atan2(rr_vy, rr_vx);
 
-    double fl_speed = hypot(fl_vx, fl_vy); /* linear rim speed m/s */
+    double fl_speed = hypot(fl_vx, fl_vy); // linear rim speed m/s
     double fr_speed = hypot(fr_vx, fr_vy);
     double rl_speed = hypot(rl_vx, rl_vy);
     double rr_speed = hypot(rr_vx, rr_vy);
@@ -397,24 +402,22 @@ namespace luna_controller
     double rl_wheel_rad_s = rl_speed / wheel_radius;
     double rr_wheel_rad_s = rr_speed / wheel_radius;
     
-    // Wheel speed normalization
-    double max_wheel_speed = std::max({
-      fabs(fl_wheel_rad_s),
-      fabs(fr_wheel_rad_s),
-      fabs(rl_wheel_rad_s),
-      fabs(rr_wheel_rad_s)
-    });
+    // Wheel speed normalization: no explicit max_wheel_speed parameter is defined in the
+    // generated parameter library. If a hard cap is needed, add it to the parameter YAML
+    // and re-generate; for now we rely on upstream limiters / controller constraints.
 
-    if (max_wheel_speed > params_.max_wheel_speed)
-    {
-      double scale = params_.max_wheel_speed / max_wheel_speed;
-      fl_wheel_rad_s *= scale;
-      fr_wheel_rad_s *= scale;
-      rl_wheel_rad_s *= scale;
-      rr_wheel_rad_s *= scale;
-    }
+    //pod feedback
+    double left_front_pod_feedback =
+    registered_left_front_pod_handles_[0].feedback.get().get_value();
 
+    double right_front_pod_feedback =
+    registered_right_front_pod_handles_[0].feedback.get().get_value();
 
+    double left_back_pod_feedback =
+        registered_left_back_pod_handles_[0].feedback.get().get_value();
+
+    double right_back_pod_feedback =
+        registered_right_back_pod_handles_[0].feedback.get().get_value();
 
     /* Angle-flip optimization relative to current feedback means:
       If the angle change (target - current) has magnitude > 90deg (pi/2),
@@ -426,7 +429,7 @@ namespace luna_controller
     double rl_diff = shortest_angular_diff(rl_angle, left_back_pod_feedback);
     double rr_diff = shortest_angular_diff(rr_angle, right_back_pod_feedback);
 
-    /* apply optimization (flip if steering delta would exceed 90 degrees) */
+    // apply optimization (flip if steering delta would exceed 90 degrees)
     if (fabs(fl_diff) > M_PI_2) {
       fl_angle = wrap_to_pi(fl_angle + M_PI);
       fl_wheel_rad_s = -fl_wheel_rad_s;
@@ -451,7 +454,7 @@ namespace luna_controller
     left_back_pod_position   = rl_angle;
     right_back_pod_position  = rr_angle;
 
-    left_front_wheel_velocity  = fl_wheel_rad_s; /* careful mapping: set this how your code expects */
+    left_front_wheel_velocity  = fl_wheel_rad_s; // careful mapping: set this how your code expects
     left_back_wheel_velocity   = rl_wheel_rad_s;
     right_front_wheel_velocity = fr_wheel_rad_s;
     right_back_wheel_velocity  = rr_wheel_rad_s;
@@ -488,13 +491,26 @@ namespace luna_controller
     registered_left_front_pod_handles_[0].position.get().set_value(left_front_pod_position);
     registered_right_back_pod_handles_[0].position.get().set_value(right_back_pod_position);
     registered_right_front_pod_handles_[0].position.get().set_value(right_front_pod_position);
+    
+    //hardware publisher
+    std_msgs::msg::Float64MultiArray msg;
+    msg.data = {
+      left_front_wheel_velocity,
+      right_front_wheel_velocity,
+      left_back_wheel_velocity,
+      right_back_wheel_velocity
+    };
+    wheel_pub_->publish(msg);
 
     return controller_interface::return_type::OK;
   }
 
   controller_interface::CallbackReturn LunaController::on_configure(
-      const rclcpp_lifecycle::State &)
+      const rclcpp_lifecycle::State &
+    )
   {
+    wheel_pub_ = get_node()->create_publisher<std_msgs::msg::Float64MultiArray>("wheel_cmds", rclcpp::SystemDefaultsQoS());
+
     auto logger = get_node()->get_logger();
 
     // update parameters if they have changed
@@ -935,4 +951,5 @@ namespace luna_controller
 #include "class_loader/register_macro.hpp"
 
 CLASS_LOADER_REGISTER_CLASS(
-    luna_controller::LunaController, controller_interface::ControllerInterface)
+    luna_controller::LunaController, controller_interface::ControllerInterface) 
+

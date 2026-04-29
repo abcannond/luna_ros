@@ -74,30 +74,32 @@ Visualization Manager:
       Draw Behind: true
 
     # Local costmap: gradient green (free) -> red (obstacle), drawn behind map for clarity
+    # QoS must match Nav2 (Transient Local + Reliable) or costmap won't display
     - Class: rviz_default_plugins/Map
       Name: Local Costmap
       Enabled: true
       Topic:
         Depth: 1
-        Durability Policy: Volatile
+        Durability Policy: Transient Local
         History Policy: Keep Last
-        Reliability Policy: Best Effort
+        Reliability Policy: Reliable
         Value: /local_costmap/costmap
-      Alpha: 0.6
+      Alpha: 0.7
       Color Scheme: costmap
       Draw Behind: true
 
-    # Global costmap: raw cost (dark = free, bright = obstacle), more transparent
+    # Global costmap: raw cost (dark = free, bright = obstacle)
+    # QoS must match Nav2 (Transient Local + Reliable) or costmap won't display
     - Class: rviz_default_plugins/Map
       Name: Global Costmap
       Enabled: true
       Topic:
         Depth: 1
-        Durability Policy: Volatile
+        Durability Policy: Transient Local
         History Policy: Keep Last
-        Reliability Policy: Best Effort
+        Reliability Policy: Reliable
         Value: /global_costmap/costmap
-      Alpha: 0.35
+      Alpha: 0.5
       Color Scheme: raw
       Draw Behind: true
 
