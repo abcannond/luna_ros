@@ -4,7 +4,6 @@ Subscribes to /joy and prints human-readable feedback when axes/buttons change.
 """
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import QoSProfile
 from sensor_msgs.msg import Joy
 
 
@@ -18,9 +17,9 @@ AXIS_LABELS = {
 }
 
 BUTTON_LABELS = {
-    0: "A",
-    1: "B",
-    2: "X",
+    0: "A (enable)",
+    1: "B (turbo)",
+    2: "X (stop)",
     3: "Y",
     4: "Left bumper",
     5: "Right bumper",
@@ -30,11 +29,6 @@ BUTTON_LABELS = {
     9: "Left stick click",
     10: "Right stick click",
 }
-
-# Live state snapshot:
-# [(left trigger, left bumper), (right trigger, right bumper)]
-# Each value is 0 or 1.
-ARMANDBUCKET = [(0, 0), (0, 0)]
 
 
 class JoyEcho(Node):
@@ -47,14 +41,11 @@ class JoyEcho(Node):
         self.prev_axes = []
         self.prev_buttons = []
         self._first = True
-        # Same depth as joy_node / teleop_twist_joy (rclcpp::QoS(10)).
-        self.sub = self.create_subscription(
-            Joy, topic, self.callback, QoSProfile(depth=10)
-        )
+        self.sub = self.create_subscription(Joy, topic, self.callback, 10)
         self._warn_timer = self.create_timer(3.0, self._warn_if_no_joy)
         self.get_logger().info(
             f"JoyEcho: listening on {topic} (threshold={self.threshold}). "
-            "Press Start (arm) then move sticks; Back disarms."
+            "Hold A (enable) + move sticks to drive."
         )
 
     def _warn_if_no_joy(self):
@@ -66,20 +57,6 @@ class JoyEcho(Node):
         self._warn_timer.cancel()
 
     def callback(self, msg: Joy):
-        global ARMANDBUCKET
-
-        lt_raw = msg.axes[2] if len(msg.axes) > 2 else 0.0
-        rt_raw = msg.axes[5] if len(msg.axes) > 5 else 0.0
-        lb_raw = msg.buttons[4] if len(msg.buttons) > 4 else 0
-        rb_raw = msg.buttons[5] if len(msg.buttons) > 5 else 0
-
-        lt = 1 if lt_raw < 0.8 else 0
-        rt = 1 if rt_raw < 0.8 else 0
-        lb = 1 if lb_raw else 0
-        rb = 1 if rb_raw else 0
-
-        ARMANDBUCKET = [(lt, lb), (rt, rb)]
-
         if self._first:
             self._first = False
             try:
@@ -89,9 +66,8 @@ class JoyEcho(Node):
             print(
                 "\n[JoyEcho] *** /joy is live *** "
                 f"{len(msg.axes)} axes, {len(msg.buttons)} buttons. "
-                "Move sticks / press buttons — lines below. "
-                "Arm teleop with Start (see teleop_nav_gate.yaml).\n",
-                flush=True,
+                "Move sticks / press buttons — you should see lines below. "
+                "Robot moves only while A (enable) is held.\n"
             )
 
         for i, v in enumerate(msg.axes):
@@ -106,14 +82,21 @@ class JoyEcho(Node):
                     action = "Rotate right" if v > 0.1 else "Rotate left" if v < -0.1 else "Stop (rotate axis)"
                 else:
                     action = f"{label}: {v:.2f}"
-                print(f"[JoyEcho] {action}", flush=True)
+                print(f"[JoyEcho] {action}")
 
         for i, v in enumerate(msg.buttons):
             prev = self.prev_buttons[i] if i < len(self.prev_buttons) else 0
             if v != prev:
-                label = BUTTON_LABELS.get(i, f"button_{i}")
-                state = "pressed" if v else "released"
-                print(f"[JoyEcho] {label} {state}", flush=True)
+                if i == 0 and v:
+                    print("[JoyEcho] Enable (A) pressed — you can drive with sticks")
+                elif i == 0 and not v:
+                    print("[JoyEcho] Enable (A) released — robot should stop")
+                elif i == 2 and v:
+                    print("[JoyEcho] Stop (X) pressed")
+                else:
+                    label = BUTTON_LABELS.get(i, f"button_{i}")
+                    state = "pressed" if v else "released"
+                    print(f"[JoyEcho] {label} {state}")
 
         self.prev_axes = list(msg.axes)
         self.prev_buttons = list(msg.buttons)

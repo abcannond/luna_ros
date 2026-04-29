@@ -377,7 +377,7 @@ def generate_launch_description():
                 parameters=[nav2_params_file, {'use_sim_time': use_sim_time}],
                 remappings=[
                     ('cmd_vel', 'cmd_vel_nav'),  # Input from Nav2
-                    ('cmd_vel_smoothed', '/cmd_vel'),
+                    ('cmd_vel_smoothed', 'cmd_vel'),  # Output to robot base
                 ]
             ),
             

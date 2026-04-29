@@ -1,7 +1,6 @@
 # Controller Input Map
 
-Reference for controller teleop with `ros2 launch lunabot_2425 joy_teleop.launch.py`. Luna uses holonomic drive (forward/back + strafe + rotate). **teleop_nav_gate** only forwards sticks to `/cmd_vel` after you press **Start**; **Back** returns to Nav2. Sticks work without holding an enable button while armed.
-
+Reference for controller teleop with `ros2 launch lunabot_2425 joy_teleop.launch.py`. Luna uses holonomic drive (forward/back + strafe + rotate). **No input = no motion:** hold the enable button to drive; release to stop.
 
 ---
 
@@ -12,9 +11,7 @@ Reference for controller teleop with `ros2 launch lunabot_2425 joy_teleop.launch
 | Left stick Y | axis `1` | `linear.x` (forward/back) |
 | Left stick X | axis `0` | `linear.y` (holonomic strafe) |
 | Right stick X | axis `3` | `angular.z` (yaw/rotate) |
-| Start (arm teleop) | button `7` typical Xbox | rising edge → teleop active (see `teleop_nav_gate.yaml`) |
-| Back (Nav2) | button `6` typical Xbox | rising edge → teleop inactive, reactivate Nav2 velocity nodes |
-| A | button `0` | unused when `require_enable_button` is false |
+| A (enable) | button `0` | deadman enable (hold to drive) |
 
 ---
 
