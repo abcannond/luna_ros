@@ -273,3 +273,8 @@ luna_controller:
         type: double,
         default_value: .NAN,
       }
+  max_wheel_speed: {
+    type: double,
+    default_value: 15.0,
+    description: Maximum allowed wheel speed
+  }
