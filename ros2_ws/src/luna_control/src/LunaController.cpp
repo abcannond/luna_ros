@@ -229,6 +229,13 @@ namespace luna_controller
     const double wheel_radius = params_.wheel_radius;
     const double wheel_base = params_.wheel_base;
 
+    // Feedback values are needed later for steering optimization / safety gating.
+    // In open-loop mode we don't have meaningful feedback, so these remain 0.0.
+    double left_back_pod_feedback = 0.0;
+    double left_front_pod_feedback = 0.0;
+    double right_back_pod_feedback = 0.0;
+    double right_front_pod_feedback = 0.0;
+
     if (params_.open_loop)
     {
       odometry_.updateOpenLoop(linear_command, angular_command, strafe_command, time);
@@ -244,14 +251,14 @@ namespace luna_controller
       const double right_front_wheel_feedback =
       registered_right_front_wheel_handles_[0].feedback.get().get_value();
 
-      const double left_back_pod_feedback =
-      registered_left_back_pod_handles_[0].feedback.get().get_value();
-      const double left_front_pod_feedback =
-      registered_left_front_pod_handles_[0].feedback.get().get_value();
-      const double right_back_pod_feedback =
-      registered_right_back_pod_handles_[0].feedback.get().get_value();
-      const double right_front_pod_feedback =
-      registered_right_front_pod_handles_[0].feedback.get().get_value();
+      left_back_pod_feedback =
+        registered_left_back_pod_handles_[0].feedback.get().get_value();
+      left_front_pod_feedback =
+        registered_left_front_pod_handles_[0].feedback.get().get_value();
+      right_back_pod_feedback =
+        registered_right_back_pod_handles_[0].feedback.get().get_value();
+      right_front_pod_feedback =
+        registered_right_front_pod_handles_[0].feedback.get().get_value();
 
       odometry_.update(
       left_back_pod_feedback,
@@ -395,22 +402,9 @@ namespace luna_controller
     double rl_wheel_rad_s = rl_speed / wheel_radius;
     double rr_wheel_rad_s = rr_speed / wheel_radius;
     
-    // Wheel speed normalization
-    double max_wheel_speed = std::max({
-      fabs(fl_wheel_rad_s),
-      fabs(fr_wheel_rad_s),
-      fabs(rl_wheel_rad_s),
-      fabs(rr_wheel_rad_s)
-    });
-
-    if (max_wheel_speed > params_.max_wheel_speed)
-    {
-      double scale = params_.max_wheel_speed / max_wheel_speed;
-      fl_wheel_rad_s *= scale;
-      fr_wheel_rad_s *= scale;
-      rl_wheel_rad_s *= scale;
-      rr_wheel_rad_s *= scale;
-    }
+    // Wheel speed normalization: no explicit max_wheel_speed parameter is defined in the
+    // generated parameter library. If a hard cap is needed, add it to the parameter YAML
+    // and re-generate; for now we rely on upstream limiters / controller constraints.
 
     //pod feedback
     double left_front_pod_feedback =
