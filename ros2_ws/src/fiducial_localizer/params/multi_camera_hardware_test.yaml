@@ -1,4 +1,4 @@
-# Hardware smoke-test params: single 50 cm DICT_4X4_50 marker (id=50), 3 fiducial
+# Hardware smoke-test params: any DICT_4X4_50 marker (id=-1 = accept all), 3 fiducial
 # cameras (front_left, front_right, back_left). Used by hardware_smoke.launch.py.
 #
 # To change which 3 cameras are active, edit the three lists below in lockstep
@@ -20,7 +20,7 @@ multi_camera_marker_localizer:
       - back_left_camera_link_optical
 
     aruco_dict: "DICT_4X4_50"
-    marker_id: 50
+    marker_id: -1
     marker_size_m: 0.50
     world_frame: "map"
     robot_frame: "base_link"
