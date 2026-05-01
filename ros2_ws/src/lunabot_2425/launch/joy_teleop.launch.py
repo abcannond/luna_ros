@@ -2,6 +2,8 @@
 
 teleop_twist_joy publishes to /teleop_cmd_vel_raw; teleop_nav_gate forwards to /cmd_vel when
 teleop is armed with Start (see teleop_nav_gate.yaml). Nav2 publishes /cmd_vel when teleop is off.
+
+Optional: linkage_joy:=true starts luna_linkage_joy (CAN linkages via LT/LB on /joy). Requires can0 on the robot.
 """
 import os
 
@@ -30,6 +32,13 @@ def generate_launch_description():
         description="If true, run joy_echo node to print human-readable input feedback",
     )
     joy_echo_arg = LaunchConfiguration("joy_echo", default="true")
+
+    declare_linkage_joy = DeclareLaunchArgument(
+        "linkage_joy",
+        default_value="false",
+        description="If true, run luna_linkage_joy (CAN linkage teleop; needs real can0).",
+    )
+    linkage_joy_arg = LaunchConfiguration("linkage_joy", default="false")
 
     joy_node = Node(
         package="joy",
@@ -70,11 +79,22 @@ def generate_launch_description():
         condition=IfCondition(joy_echo_arg),
     )
 
+    linkage_joy_node = Node(
+        package="luna_control",
+        executable="luna_linkage_joy",
+        name="luna_linkage_joy",
+        parameters=[{"use_sim_time": False}],
+        output="screen",
+        condition=IfCondition(linkage_joy_arg),
+    )
+
     return LaunchDescription([
         declare_use_sim_time,
         declare_joy_echo,
+        declare_linkage_joy,
         joy_node,
         teleop_node,
         teleop_nav_gate,
         joy_echo_node,
+        linkage_joy_node,
     ])
