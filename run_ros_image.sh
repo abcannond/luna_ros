@@ -8,8 +8,9 @@ if [ -z "$IMAGE_NAME" ]; then
     exit 1
 fi
 
-# Allow X11 access to local docker containers
-xhost +local:root
+# Allow X11 access from local root and SSH-forwarded sessions
+xhost +local:root 2>/dev/null || true
+xhost +localhost 2>/dev/null || true
 
 # Detect GPU
 if command -v nvidia-smi &>/dev/null; then
@@ -39,6 +40,8 @@ docker run -it \
     -e OGRE_RTT_MODE=Copy \
     -e DISPLAY \
     --volume /tmp/.X11-unix:/tmp/.X11-unix:rw \
+    --volume "$HOME/.Xauthority:/root/.Xauthority:ro" \
+    --env XAUTHORITY=/root/.Xauthority \
     --volume "$HOST_WS":/ros2_ws:rw \
     -v /usr/lib/x86_64-linux-gnu/dri:/usr/lib/x86_64-linux-gnu/dri:ro \
     -v /usr/lib/x86_64-linux-gnu/libdrm.so.2:/usr/lib/x86_64-linux-gnu/libdrm.so.2:ro \
