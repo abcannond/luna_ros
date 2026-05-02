@@ -79,6 +79,7 @@ def _build_localizer_actions(context):
             "use_sim_time": False,
             "autostart": True,
             "node_names": ["multi_camera_marker_localizer"],
+            "bond_timeout": 0.0,
         }],
     )
     # Cameras need ~4 s to advertise camera_info before the localizer activates.
@@ -167,7 +168,10 @@ def generate_launch_description():
     )
 
     # ---------- 4× Nexigo N980P (usb_cam) ----------
+    cam_info_dir = os.path.join(pkg_share, "config", "camera_info")
+
     def fid_cam_node(name, device, ns, optical_frame):
+        calib_url = f"file://{cam_info_dir}/{name}.yaml"
         return Node(
             package="usb_cam",
             executable="usb_cam_node_exe",
@@ -181,6 +185,7 @@ def generate_launch_description():
                 {"pixel_format": "mjpeg2rgb"},
                 {"camera_frame_id": optical_frame},
                 {"camera_name": name},
+                {"camera_info_url": calib_url},
             ],
             output="screen",
         )
