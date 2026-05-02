@@ -54,7 +54,7 @@ ros2 launch lunabot_2425 gz_bringup.launch.py launch_mapping:=false world:=ucf_a
 
 ## Profile: dev and legacy launches
 
-Other launch files (`simple.launch.py`, `rv_gz_bringup.launch.py`, `d455_rtabmap.launch.py`, `nav2_bringup_rtabmap.launch.py`, `rs_launch_custom.py`, arena-only under `luna_ros2_worlds`) are for **development** or one-off tests. They are listed under **Repository inventory** in [ARCHITECTURE.md](ARCHITECTURE.md). Prefer the three profiles above for team onboarding.
+Other launch files (`d455_rtabmap.launch.py`, `nav2_bringup_rtabmap.launch.py`, `rs_launch_custom.py`, arena-only under `luna_ros2_worlds`) are for **development** or one-off tests. They are listed under **Repository inventory** in [ARCHITECTURE.md](ARCHITECTURE.md). Prefer the three profiles above for team onboarding.
 
 ---
 

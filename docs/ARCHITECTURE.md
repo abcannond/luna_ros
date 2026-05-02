@@ -145,7 +145,7 @@ Team checklist for packages, launches, and doc accuracy. Update the **verificati
 | `luna_mapping` | ament_python | RTAB-Map sim and hardware launches, depth pipeline, RViz configs | yes | yes | `rtabmap_nav2_sim.launch.py`, `rtabmap_nav2_hardware.launch.py` |
 | `luna_control` | ament_cmake | `LunaController` plugin for quad-swerve (used as `luna_cont`) | yes | yes | Loaded via `robot_controllers.yaml` |
 | `quad_swerve_controller` | ament_cmake | Older ros2_control controller package (not loaded by current bringup) | no | no | See package README |
-| `fiducial_localizer` | ament_python | Multi-camera ArUco, `/fiducial_pose` | yes | yes | `fiducial_localizer.launch.py` (included from mapping launch) |
+| `fiducial_localizer` | ament_python | Multi-camera ArUco, `/fiducial_pose` | yes | yes | `multi_camera_fiducial.launch.py` (included from mapping/hardware launches) |
 | `depth_to_pointcloud` | ament_cmake | Depth image to cloud when mapping launch is off | yes | optional | `gz_bringup.launch.py` when `launch_mapping:=false` |
 | `luna_ros2_worlds` | ament_cmake | SDF worlds and models (submodule) | yes | no | Included by `gz_bringup`; optional standalone arena launches |
 | `twist_stamper` | ament_python | `/cmd_vel` to `/cmd_vel_stamped` | yes | yes | Submodule; `gz_bringup.launch.py` |
@@ -157,10 +157,8 @@ Team checklist for packages, launches, and doc accuracy. Update the **verificati
 |--------|----------------|-------|
 | `lunabot_2425/competition_sim.launch.py` | **supported** | Full competition sim + autonomy |
 | `lunabot_2425/gz_bringup.launch.py` | **supported** | Gazebo, bridges, controllers, optional mapping |
-| `lunabot_2425/hardware_bringup.launch.py` | **supported** | Physical robot bringup (validate on hardware when available) |
+| `lunabot_2425/hardware_bringup.launch.py` | **supported** | Physical robot bringup; flags `launch_localizer:=true launch_rviz:=true` enable the smoke-test workflow |
 | `lunabot_2425/rsp.launch.py` | **supported** | robot_state_publisher only |
-| `lunabot_2425/simple.launch.py` | **dev** | Minimal sim; not the competition path |
-| `lunabot_2425/rv_gz_bringup.launch.py` | **dev** | Alternate RViz + Gazebo experiment |
 | `luna_mapping/rtabmap_nav2_sim.launch.py` | **supported** | RTAB-Map + Nav2 for sim (included from gz_bringup) |
 | `luna_mapping/rtabmap_nav2_hardware.launch.py` | **supported** | RTAB-Map + Nav2 for robot |
 | `luna_mapping/d455_rtabmap.launch.py` | **dev** | D455-focused mapping bringup |

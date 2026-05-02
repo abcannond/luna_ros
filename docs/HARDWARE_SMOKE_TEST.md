@@ -1,205 +1,248 @@
-# Hardware smoke test — RealSense + 3 fiducial cams
+# Hardware smoke test
 
-Goal: on the Jetson, verify that the **RealSense D455 publishes depth** and the
-**fiducial localizer publishes `/fiducial_pose`** when a single ArUco marker is
-in view of any of three cameras. No RTAB-Map, no EKF, no Nav2.
+Two scenarios are documented here:
 
-Test marker:
-- Dictionary: `DICT_4X4_50`
-- ID: any (`marker_id: -1` — the localizer accepts all IDs in the dictionary)
-- Outer black border: **0.50 m** square
-- Held flat on a wall or board, well-lit, ~1–2 m from a camera.
-
-Active cameras: `front_left`, `front_right`, `back_left`. (Edit
-`ACTIVE_POSITIONS` near the top of `hardware_smoke.launch.py` if you swap
-which three positions are plugged in.)
+- **[Part A](#part-a-laptop-single-camera-test)** — one USB camera plugged into your laptop. Quick sanity check that the camera streams and detects AprilTag 36h11 ID 38.
+- **[Part B](#part-b-full-jetson-test-3-cameras--realsense)** — full robot bringup on the Jetson: 3 fiducial cameras + RealSense D455 + fiducial localizer.
 
 ---
 
-## 1. SSH to the Jetson and enter the container
+## Test marker
+
+- Family: **AprilTag 36h11** (`DICT_APRILTAG_36h11`)
+- ID: **38**
+- Side length: **0.17 m** (update `marker_size_m` if you print at a different size)
+- Well-lit, held square to the lens, ~0.5–1.5 m away.
+
+---
+
+## Part A: Laptop single-camera test
+
+Goal: camera streams images, overlay node draws a **green box + axes + pose** on
+AprilTag 36h11 ID 38. One USB camera plugged into the laptop, everything runs
+locally inside the container (cwd = `/ros2_ws`).
+
+### A1. Find the device node
+
+```bash
+v4l2-ctl --list-devices
+```
+
+Note the `/dev/video*` for your camera (lowest-numbered node under its USB block,
+e.g. `/dev/video2` for a NexiGo).
+
+### A2. Start the camera — Terminal 1
+
+```bash
+ros2 run usb_cam usb_cam_node_exe --ros-args \
+  -r __ns:=/test_cam \
+  -p video_device:=/dev/video2 \
+  -p image_width:=640 \
+  -p image_height:=480 \
+  -p framerate:=30.0 \
+  -p pixel_format:=mjpeg2rgb
+```
+
+Confirm it is publishing:
+
+```bash
+ros2 topic hz /test_cam/image_raw   # expect ~30 Hz
+```
+
+### A3. Run the detection overlay — Terminal 2
+
+```bash
+python3 src/helpers/fiducial_overlay_rclpy.py \
+  --ros-args \
+  -p image_topic:=/test_cam/image_raw \
+  -p camera_info_topic:=/test_cam/camera_info \
+  -p aruco_dict:=DICT_APRILTAG_36h11 \
+  -p marker_id:=38 \
+  -p marker_size_m:=0.17 \
+  -p show_window:=true
+```
+
+A window **"Fiducial Overlay (/camera/image_annotated)"** opens:
+- All detected AprilTag 36h11 tags get a white border + ID label.
+- **Tag 38 gets a green box + 3-axis pose overlay.**
+
+Hold the tag ~0.5–1 m from the camera. The axes should lock on and follow the
+tag as you move it.
+
+**No window?** (`No DISPLAY` error) — run `rqt_image_view` in a third terminal
+and subscribe to `/camera/image_annotated` instead.
+
+**Pose axes wrong scale?** — measure the actual printed side length and re-run
+with the correct `-p marker_size_m:=<meters>`.
+
+**Tag not detected?** — verify OpenCV has AprilTag support:
+```bash
+python3 -c "import cv2; print(cv2.aruco.DICT_APRILTAG_36h11)"
+```
+If this errors, install `opencv-contrib-python` (not plain `opencv-python`).
+
+---
+
+## Part B: Full Jetson test (4 cameras + RealSense)
+
+Goal: on the Jetson, verify the **RealSense D455 publishes depth** and the
+**fiducial localizer publishes `/fiducial_pose`** when an AprilTag 36h11 marker
+(ID 38 in our test prints) is in view of any of four cameras. No RTAB-Map, no
+EKF, no Nav2 — those layer on after the smoke test passes.
+
+Active cameras: `front_left`, `front_right`, `back_left`, `back_right` at 90°
+spacing. The bringup launch publishes one `usb_cam` node per position with
+matching static TFs.
+
+### B1. SSH to the Jetson and enter the container
 
 ```bash
 ssh <user>@<jetson-ip>
-./run_ros_image.sh luna_ros:jetson         # whichever wrapper you use
-```
-
-Inside the container:
-
-```bash
+./run_ros_image.sh luna_ros:jetson
 cd /ros2_ws
 ```
 
-## 2. Build the workspace (only on first run, or after edits)
+### B2. Build (first run or after edits)
 
 ```bash
 colcon build --symlink-install --packages-select fiducial_localizer lunabot_2425
 source install/setup.bash
 ```
 
-## 3. Identify the three USB camera device nodes
+### B3. Identify the four USB camera device nodes
 
 ```bash
 v4l2-ctl --list-devices
 ```
 
-Note the `/dev/video*` entry for each Nexigo (usually the lowest numbered video
-node listed under each USB camera block — e.g. `/dev/video0`, `/dev/video2`,
-`/dev/video4`). Plug the cameras in **before** running the launch so the device
-numbering is stable. The RealSense will also appear in this list — ignore it,
-the realsense2_camera driver opens it directly.
+Note the `/dev/video*` for each Nexigo (lowest-numbered node per USB block,
+e.g. `/dev/video0/2/4/6`). Plug cameras in before launching so device numbering
+is stable. The RealSense appears too — ignore it, the driver opens it directly.
 
-## 4. Launch the smoke stack
+### B4. Launch the bringup with smoke-test flags — Terminal 1
 
-In **Terminal 1** (cameras + localizer):
+The smoke test is now a flag on `hardware_bringup.launch.py`:
 
 ```bash
-ros2 launch lunabot_2425 hardware_smoke.launch.py \
+ros2 launch lunabot_2425 hardware_bringup.launch.py \
+  launch_localizer:=true \
+  launch_rviz:=true \
   fid_front_left_dev:=/dev/video0 \
   fid_front_right_dev:=/dev/video2 \
-  fid_back_left_dev:=/dev/video4
+  fid_back_left_dev:=/dev/video4 \
+  fid_back_right_dev:=/dev/video6
+```
+
+To use the AprilTag 36h11 preset YAML instead of the default DICT_4X4_50:
+
+```bash
+ros2 launch lunabot_2425 hardware_bringup.launch.py \
+  launch_localizer:=true launch_rviz:=true \
+  localizer_params:=$(ros2 pkg prefix fiducial_localizer)/share/fiducial_localizer/params/multi_camera_hardware_apriltag.yaml
+```
+
+Or override marker dictionary / size on the fly without editing YAML:
+
+```bash
+ros2 launch lunabot_2425 hardware_bringup.launch.py \
+  launch_localizer:=true launch_rviz:=true \
+  marker_dict:=DICT_APRILTAG_36h11 marker_size_m:=1.0
 ```
 
 Watch for:
-- `RealSense Node Is Up!` (or similar from realsense2_camera).
-- Three `usb_cam` startup lines, one per camera.
-- After ~4 s, `multi_camera_marker_localizer` configures and activates via
-  `lifecycle_manager_fiducial_smoke`.
+- `RealSense Node Is Up!`
+- Four `usb_cam` startup lines.
+- After ~4 s: `multi_camera_marker_localizer` activates via lifecycle manager.
+- RViz window opens with the hardware config (see B6).
 
-If a camera fails to open, the device path is wrong or the camera is busy —
-unplug/replug, rerun `v4l2-ctl --list-devices`, and pass the corrected path.
-
-## 5. Verify in a second terminal
-
-In **Terminal 2** (in the same container):
+### B5. Verify — Terminal 2
 
 ```bash
-source /ros2_ws/install/setup.bash
+source install/setup.bash
 ```
 
-### 5a. RealSense depth and color
-
+**RealSense:**
 ```bash
-ros2 topic hz /camera/camera/depth/image_rect_raw     # expect ~15 Hz
-ros2 topic hz /camera/camera/color/image_raw          # expect ~15 Hz
-ros2 topic echo /camera/camera/depth/camera_info --once   # K matrix populated
+ros2 topic hz /camera/camera/depth/image_rect_raw   # expect ~15 Hz
+ros2 topic hz /camera/camera/color/image_raw        # expect ~15 Hz
+ros2 topic echo /camera/camera/depth/camera_info --once  # K matrix populated
 ```
 
-#### Quick image check — rqt_image_view (lightest weight)
-
-X11 forwarding or a local display required for all GUI options below.
-
+**Fiducial cameras (all four):**
 ```bash
-ros2 run rqt_image_view rqt_image_view
+for c in front_left front_right back_left back_right; do
+  ros2 topic hz /fid_cams/${c}_camera/image_raw     # expect ~30 Hz each
+done
+ros2 topic echo /fid_cams/front_left_camera/camera_info --once
 ```
 
-Pick `/camera/camera/depth/image_rect_raw` and `/camera/camera/color/image_raw`
-from the dropdown. Depth renders as a grayscale image — brighter = closer.
+Each `camera_info` must have a non-zero K matrix. If all zeros the camera is
+uncalibrated — PnP will give garbage. Calibrate with
+`ros2 run camera_calibration cameracalibrator`.
 
-#### Full 3-D point cloud — RViz2
-
-**On the Jetson** (with a display or `ssh -X`):
-```bash
-rviz2
-```
-
-**On your laptop** (same network — less load on the Jetson):
-```bash
-export ROS_DOMAIN_ID=<same as jetson>
-rviz2
-```
-
-Inside RViz2:
-
-1. Set **Fixed Frame** → `camera_link`.
-2. Add → **Image** → topic `/camera/camera/color/image_raw` — live color feed.
-3. Add → **PointCloud2** → topic `/camera/camera/depth/color/points` — aligned
-   point cloud. Set **Color Transformer** to `RGB8` for a color overlay, or
-   `AxisColor` to see depth by hue.
-4. *(Optional)* Add → **Image** → topic `/camera/camera/depth/image_rect_raw`
-   for a side-by-side depth image panel.
-
-The point cloud topic only publishes because `align_depth.enable: true` is set
-in the launch file. If the PointCloud2 display is empty, confirm the topic is
-live:
-
-```bash
-ros2 topic hz /camera/camera/depth/color/points   # expect ~15 Hz
-```
-
-If the topic is missing entirely, check that the RealSense node started without
-errors and that `align_depth.enable` wasn't overridden.
-
-### 5b. Fiducial cameras
-
-```bash
-ros2 topic hz /fid_cams/front_left_camera/image_raw   # expect ~30 Hz
-ros2 topic hz /fid_cams/front_right_camera/image_raw
-ros2 topic hz /fid_cams/back_left_camera/image_raw
-ros2 topic echo /fid_cams/front_left_camera/camera_info --once  # K populated
-```
-
-Each `camera_info` topic should show a non-zero K matrix from the camera's
-calibration; if it's all zeros, the camera is publishing but uncalibrated and
-the PnP solve will be garbage. Run a calibration if needed
-(`ros2 run camera_calibration cameracalibrator …`).
-
-### 5c. TF tree (sanity)
-
+**TF tree:**
 ```bash
 ros2 run tf2_tools view_frames
 ```
+Expect: `base_link → {front_left,front_right,back_left,back_right}_camera_link_optical`
+and `base_link → camera_link`.
 
-Check that `base_link → front_left_camera_link_optical`,
-`… → front_right_camera_link_optical`, `… → back_left_camera_link_optical`,
-and `base_link → camera_link` all exist.
-
-### 5d. Fiducial pose
-
-Hold the printed 50 cm DICT_4X4_50 id-50 marker in front of one of the active
-cameras at ~1 m, square to the lens.
-
+**Fiducial pose:**
 ```bash
 ros2 topic hz /fiducial_pose
 ros2 topic echo /fiducial_pose --once
 ```
 
-Expected:
-- `hz` ticks at a few Hz while the tag is in view (drops to 0 when occluded).
-- `header.frame_id == "map"`.
-- `pose.pose.position` shows the rover's position relative to the marker
-  (since `world_to_marker_xyz` is `[0,0,0]` in this YAML, this is just the
-  rover-frame ↔ marker-frame offset).
-
-Move the marker side-to-side: `pose.position.x/y` should change in the
-expected direction. Rotate the marker: yaw should change.
-
-If `/fiducial_pose` never appears:
+Hold the marker ~1 m from any camera. `hz` should tick; move the marker and
+`pose.position` should track it.
 
 | Symptom | Cause |
 |---|---|
-| `multi_camera_marker_localizer` log says "marker detected" but no pose | TF lookup base_link → camera frame failing — check static TFs are alive. |
-| No "marker detected" log at all | Wrong dictionary, or marker too small/far. Confirm the print is `DICT_4X4_50` and try at ~1 m, well lit. |
-| `Camera N TF lookup failed` warns | The `base_link → <pos>_camera_link_optical` static TF isn't running (see launch). |
-| `K matrix all zeros` for that camera | usb_cam isn't loading a calibration — pose math will diverge. Calibrate the camera. |
+| "marker detected" logged but no `/fiducial_pose` | TF lookup `base_link → camera frame` failing — check static TFs. |
+| No "marker detected" at all | Wrong family, or marker too small/far. Confirm dictionary matches the YAML; try ~0.5–1 m, well lit. |
+| `Camera N TF lookup failed` | `base_link → <pos>_camera_link_optical` static TF not running. |
+| `K matrix all zeros` | usb_cam not loading calibration — pose math will diverge. Calibrate first. |
 
-## 6. Shut down
+### B6. RViz visualization (`launch_rviz:=true`)
 
-`Ctrl+C` in Terminal 1 stops everything. The lifecycle manager will deactivate
-the localizer cleanly on shutdown.
+The RViz window opened by the launch loads
+`lunabot_2425/config/hardware.rviz`. It works for both the smoke test and the
+full SLAM stack — displays without their topics simply render empty.
+
+| Display | Topic | When it lights up |
+|---|---|---|
+| **RealSense Cloud** (PointCloud2) | `/camera/camera/depth/color/points` | Always — live D455 cloud at ~15 Hz |
+| **RTAB-Map Cloud** (PointCloud2, *off by default*) | `/rtabmap/cloud_map` | When `rtabmap_nav2_hardware.launch.py` is also running. Enable in the Displays panel. |
+| **Map** | `/map` | When RTAB-Map / Nav2 is publishing the occupancy grid |
+| **Fiducial Pose** (PoseWithCovariance) | `/fiducial_pose` | Red arrow appears when any camera sees a marker |
+| **Front/Back × Left/Right Cam** (Image × 4) | `/fid_cams/<pos>_camera/image_raw` | Always when bringup is running |
+| **TF + RobotModel + Grid** | TF tree, `/robot_description` | Always |
+
+Fixed Frame defaults to `map`. If you haven't started anything publishing
+`map → odom` yet, switch it to `base_link` from the Displays panel for the
+smoke test.
+
+### B7. Shut down
+
+`Ctrl+C` in Terminal 1. The lifecycle manager deactivates the localizer cleanly.
 
 ---
 
 ## What this does NOT verify
 
-- Wheel/visual odometry (no `/odom` source running).
-- `map → odom` from the EKF.
-- RTAB-Map SLAM or the Nav2 stack.
-- Static-TF accuracy: the `base_link → camera_link*` transforms in
-  `hardware_smoke.launch.py` are placeholders. They affect only how
-  `/fiducial_pose` *interprets* a detection — depth visualization and raw
-  image streams are independent of them. Once you trust the pose magnitude
-  qualitatively, measure your real mount offsets and update the launch file.
+- Wheel/visual odometry or `/odom`.
+- `map → odom` EKF fusion.
+- RTAB-Map SLAM or Nav2.
+- Static-TF accuracy — the `base_link → camera_link*` values in
+  `hardware_bringup.launch.py` are placeholder mounts. Measure the real offsets
+  before trusting `/fiducial_pose` for navigation.
 
-For the full hardware stack (RTAB-Map + EKF + Nav2 + RViz) use
-`rtabmap_nav2_hardware.launch.py` after `hardware_bringup.launch.py`; see
-`docs/HARDWARE.md`.
+For the full stack (RTAB-Map + EKF + Nav2) start the bringup without the smoke
+flags, then in a second terminal:
+
+```bash
+ros2 launch luna_mapping rtabmap_nav2_hardware.launch.py
+```
+
+The same `hardware.rviz` config will then also show `/map` and the RTAB-Map
+cloud (enable it in the Displays panel). See `docs/HARDWARE.md`.

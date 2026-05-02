@@ -11,15 +11,12 @@ setup(
          ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name + '/launch', [
-            'launch/fiducial_localizer.launch.py',
             'launch/multi_camera_fiducial.launch.py',
         ]),
         ('share/' + package_name + '/params', [
-            'params/jetson.yaml',
             'params/multi_camera_sim.yaml',
             'params/multi_camera_hardware.yaml',
-            'params/multi_camera_hardware_test.yaml',
-            'params/multi_camera_single_cam_sim.yaml',
+            'params/multi_camera_hardware_apriltag.yaml',
             'params/multi_camera_single_cam_hardware.yaml',
         ]),
     ],
@@ -31,7 +28,6 @@ setup(
     license='MIT',
     entry_points={
         'console_scripts': [
-            'marker_localizer = fiducial_localizer.marker_localizer:main',
             'multi_camera_marker_localizer = fiducial_localizer.multi_camera_marker_localizer:main',
             'fiducial_camera_republisher = fiducial_localizer.fiducial_camera_republisher:main',
         ],
