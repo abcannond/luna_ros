@@ -25,7 +25,6 @@ public:
     // NOT_TESTED until verified on hardware.
     bool move_linkages_up();
     bool move_linkages_down();
-    bool move_linkages_stop();
 
 private:
     bool send_ext_frame(std::uint32_t id29, const std::array<std::uint8_t, 8>& data);

@@ -1,5 +1,5 @@
 // Joy → linkage CAN (menu_loop cmd2/cmd3/cmd4). NOT_TESTED until hardware check.
-// LT = up, LB = down, neither = stop, BOTH LT+LB = stop (neutral).
+// LT = up, LB = down, otherwise no CAN command is sent.
 
 #include "luna_control/teleop_can.hpp"
 
@@ -52,7 +52,7 @@ public:
 
         RCLCPP_INFO(
             get_logger(),
-            "luna_linkage_joy: CAN=%s LT=axis[%d] (|axis|>%.2f) LB=button[%d] both→stop",
+            "luna_linkage_joy: CAN=%s LT=axis[%d] (|axis|>%.2f) LB=button[%d]",
             can_iface_.c_str(),
             trigger_axis_,
             trigger_threshold_,
@@ -79,7 +79,6 @@ private:
         {
             std::lock_guard<std::mutex> lock(joy_mutex_);
             if (!have_joy_) {
-                can_.move_linkages_stop();
                 return;
             }
             joy_copy = last_joy_;
@@ -89,9 +88,6 @@ private:
         const bool lb = bumper_held(joy_copy, bumper_button_);
 
         if (lt && lb) {
-            if (!can_.move_linkages_stop()) {
-                RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 2000, "move_linkages_stop failed");
-            }
             return;
         }
         if (lt) {
@@ -106,9 +102,7 @@ private:
             }
             return;
         }
-        if (!can_.move_linkages_stop()) {
-            RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 2000, "move_linkages_stop failed");
-        }
+        return;
     }
 
     luna_control::teleop_can::TeleopCan can_;

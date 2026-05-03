@@ -42,7 +42,7 @@ Installation and build steps are documented separately in INSTALL.md.
   ```bash
     source /opt/ros/jazzy/setup.bash
     cd /ros2_ws && source install/setup.bash
-    ros2 launch lunabot_2425 joy_teleop.launch.py
+    ros2 launch lunabot_2425 joy_teleop.launch.py linkage_joy:=true
   ```
 
 The `drive` alias publishes to `/teleop_cmd_vel_raw`; the gate forwards to `/cmd_vel` only while armed.

@@ -23,8 +23,6 @@ constexpr std::array<std::uint8_t, 8> kPay01 =
     {0x01, 0xFB, 0xFB, 0xFB, 0xFB, 0xFB, 0xFF, 0xFF};
 constexpr std::array<std::uint8_t, 8> kPay02 =
     {0x02, 0xFB, 0xFB, 0xFB, 0xFB, 0xFB, 0xFF, 0xFF};
-constexpr std::array<std::uint8_t, 8> kPay00 =
-    {0x00, 0xFB, 0xFB, 0xFB, 0xFB, 0xFB, 0xFF, 0xFF};
 
 }  // namespace
 
@@ -103,13 +101,6 @@ bool TeleopCan::move_linkages_down() {
     if (!send_ext_frame(kId800, kPay02)) return false;
     if (!send_ext_frame(kIdC800, kPay03)) return false;
     if (!send_ext_frame(kIdF600, kPay03)) return false;
-    return true;
-}
-
-bool TeleopCan::move_linkages_stop() {
-    if (!send_ext_frame(kId800, kPay00)) return false;
-    if (!send_ext_frame(kIdC800, kPay00)) return false;
-    if (!send_ext_frame(kIdF600, kPay00)) return false;
     return true;
 }
 
