@@ -90,7 +90,7 @@ class JoyEcho(Node):
                 "\n[JoyEcho] *** /joy is live *** "
                 f"{len(msg.axes)} axes, {len(msg.buttons)} buttons. "
                 "Move sticks / press buttons — lines below. "
-                "Arm teleop with Start (see teleop_nav_gate.yaml).\n",
+                "Arm teleop with Start.\n",
                 flush=True,
             )
 

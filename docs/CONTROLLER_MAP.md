@@ -1,45 +1,35 @@
-# Controller Input Map
+**Overview**
+This is an outline of how teleop works, this includes:
+1) how controller inputs are read
+2) how sim is controlled
 
-Reference for controller teleop with `ros2 launch lunabot_2425 joy_teleop.launch.py`. Luna uses holonomic drive (forward/back + strafe + rotate). **teleop_nav_gate** only forwards sticks to `/cmd_vel` after you press **Start**; **Back** returns to Nav2. Sticks work without holding an enable button while armed.
 
----
+**How Files Work Together**
+1) how controller inputs are read
+ *Files*
+ -``joy_teleop.launch.py``
+   - sets up /joy publisher and joy_echo
+   - driver node handles hardware inputs
+ - ``joy_echo.py``
+   - subscribes to /joy and prints values
+ - setup.py
 
-## Input Map (used by `joy_teleop.yaml`)
-
-| Input | Index | Used for |
-|---|---:|---|
-| Left stick Y | axis `1` | `linear.x` (forward/back) |
-| Left stick X | axis `0` | `linear.y` (holonomic strafe) |
-| Right stick X | axis `3` | `angular.z` (yaw/rotate) |
-| Start (arm teleop) | button `7` typical Xbox | rising edge → teleop active (see `teleop_nav_gate.yaml`) |
-| Back (Nav2) | button `6` typical Xbox | rising edge → teleop inactive, reactivate Nav2 velocity nodes |
-| A | button `0` | unused when `require_enable_button` is false |
-
----
-
-## How to find your indices
-
-Controller axis/button indices vary by vendor (Xbox, PS, generic). To discover yours:
-
-1. Plug in the controller and start the stack (Gazebo + RTAB-Map, then `ros2 launch lunabot_2425 joy_teleop.launch.py`).
-2. In another terminal:
-   ```bash
-   ros2 topic echo /joy
-   ```
-3. Move each stick and press each button. Note which `axes` or `buttons` index changes:
-   - `axes[0]`, `axes[1]` = left stick X, Y
-   - `axes[2]`, `axes[3]` = often right stick or triggers
-   - `buttons[0]` = typically A / X
-4. Update `lunabot_2425/config/joy_teleop.yaml` and this table if your controller differs.
-
----
-
-## Printouts (joy_echo)
-
-Enabled by default. You should see `[JoyEcho]` lines when the controller sends input.
-
-To disable: `ros2 launch lunabot_2425 joy_teleop.launch.py joy_echo:=false`
-
-Output examples: `[JoyEcho] Forward`, `[JoyEcho] Strafe left`, `[JoyEcho] Enable (A) pressed — you can drive with sticks`, `[JoyEcho] Enable (A) released — robot should stop`.
-
-If you see **no** `[JoyEcho]` lines after a few seconds, the controller may not be publishing (`joy_node`). Check `ls /dev/input/js*` and `ros2 topic echo /joy` inside the container.
+2) sim control
+ *Files*
+ - ``joy_teleop.launch.py``
+   - starts teleop_nav_gate
+ - ``teleop_twist_joy``
+   - subscribes to /joy and publishes /teleop_cmd_vel_raw
+ - ``teleop_nav_gate``
+   - waits for "start" from controller
+   - makes /teleop_cmd_vel_raw -> /cmd_vel (when armed)
+ - ``gz_bringup.launch.py``
+   - launches sim
+   - launches twist_stamper
+ - ``twist_stamper.py``
+   - makes /cmd_vel -> /cmd_vel_stamped
+ - ``robot_controllers.yaml``
+   - config luna_cont so command_topic is /cmd_vel_stamped
+   - luna_cont allows for robot to move in sim
+ - ``gz_bridge.config.yaml``
+   - bridges gazebo and RViz

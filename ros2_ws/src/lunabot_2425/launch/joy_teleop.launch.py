@@ -1,12 +1,3 @@
-"""Launch joy_node + teleop_twist_joy + teleop_nav_gate.
-
-teleop_twist_joy publishes to /teleop_cmd_vel_raw; teleop_nav_gate forwards to /cmd_vel when
-teleop is armed with Start (see teleop_nav_gate.yaml). Nav2 publishes /cmd_vel when teleop is off.
-
-Optional: linkage_joy:=true starts luna_linkage_joy (CAN linkages via LT/LB on /joy). Requires can0 on the robot.
-"""
-import os
-
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
@@ -17,8 +8,39 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     pkg_share = get_package_share_directory("lunabot_2425")
-    config_path = os.path.join(pkg_share, "config", "joy_teleop.yaml")
-    gate_config_path = os.path.join(pkg_share, "config", "teleop_nav_gate.yaml")
+
+    # teleop_twist_joy params (inlined; was config/joy_teleop.yaml)
+    teleop_twist_joy_params = {
+        "axis_linear": {"x": 1, "y": 0},
+        "axis_angular": {"yaw": 3},
+        "scale_linear": {"x": 0.5, "y": 0.5},
+        "scale_angular": {"yaw": 0.5},
+        # Sticks always publish to /teleop_cmd_vel_raw; teleop_nav_gate gates /cmd_vel via Start/Back.
+        "require_enable_button": False,
+        "enable_button": 0,
+        "enable_turbo_button": -1,
+        "use_sim_time": False,
+    }
+
+    # teleop_nav_gate params (inlined; was config/teleop_nav_gate.yaml)
+    teleop_nav_gate_params = {
+        "start_button": 7,
+        "back_button": 6,
+        "teleop_cmd_vel_in": "/teleop_cmd_vel_raw",
+        "cmd_vel_out": "/cmd_vel",
+        "teleop_active_out": "/teleop_active",
+        "nav2_lifecycle_nodes": [
+            "controller_server",
+            "planner_server",
+            "behavior_server",
+            "bt_navigator",
+            "waypoint_follower",
+            "smoother_server",
+            "velocity_smoother",
+        ],
+        "nav2_manager": "/lifecycle_manager_navigation/manage_nodes",
+        "use_sim_time": False,
+    }
 
     declare_use_sim_time = DeclareLaunchArgument(
         "use_sim_time",
@@ -53,7 +75,7 @@ def generate_launch_description():
         package="teleop_twist_joy",
         executable="teleop_node",
         name="teleop_twist_joy_node",
-        parameters=[config_path, {"use_sim_time": False}],
+        parameters=[teleop_twist_joy_params],
         remappings=[
             ("joy", "/joy"),
             ("cmd_vel", "/teleop_cmd_vel_raw"),
@@ -66,7 +88,7 @@ def generate_launch_description():
         package="lunabot_2425",
         executable="teleop_nav_gate",
         name="teleop_nav_gate",
-        parameters=[gate_config_path, {"use_sim_time": False}],
+        parameters=[teleop_nav_gate_params],
         output="screen",
     )
 
