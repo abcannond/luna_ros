@@ -17,6 +17,12 @@ constexpr std::array<std::uint8_t, 8> kRunInPayload = {
 
 constexpr std::array<std::uint8_t, 8> kRunOutPayload = {
     0x02, 0xFB, 0xFB, 0xFB, 0xFB, 0xFB, 0xFF, 0xFF};
+
+constexpr std::array<std::uint8_t, 8> kStopPayload = {
+    0x03, 0xFB, 0xFB, 0xFB, 0xFB, 0xFB, 0xFF, 0xFF};
+
+constexpr std::array<std::uint8_t, 8> kClearErrorPayload = {
+    0x00, 0xFB, 0xFB, 0xFB, 0xFB, 0xFB, 0xFF, 0xFF};
 }
 
 // Opens a SocketCAN raw socket on the given iface (e.g. can0) and binds it so
@@ -50,7 +56,6 @@ LinakActuator::LinakActuator(std::string can_interface) : can_interface_(std::mo
   }
 
   sock_ = s;
-  clear_error_codes();
 }
 
 LinakActuator::~LinakActuator()
@@ -82,7 +87,13 @@ bool LinakActuator::send_ext_frame(std::uint32_t can_id29, const std::array<std:
 
 void LinakActuator::tick_200ms() {}
 
-void LinakActuator::stop() {}
+// STOP / neutral: e.g. cansend can0 18EF8000#03FBFBFBFBFBFFFF
+void LinakActuator::stop(std::uint32_t can_id)
+{
+  if (!send_ext_frame(can_id, kStopPayload)) {
+    std::cerr << "LinakActuator::stop: send failed\n";
+  }
+}
 
 void LinakActuator::set_speed(float) {}
 
@@ -104,7 +115,13 @@ void LinakActuator::run_out(std::uint32_t can_id)
 
 void LinakActuator::run_to_position_mm(double) {}
 
-void LinakActuator::clear_error_codes() {}
+// Clear faults: e.g. cansend can0 18EF8000#00FBFBFBFBFBFFFF
+void LinakActuator::clear_error_codes(std::uint32_t can_id)
+{
+  if (!send_ext_frame(can_id, kClearErrorPayload)) {
+    std::cerr << "LinakActuator::clear_error_codes: send failed\n";
+  }
+}
 
 double LinakActuator::current_position_mm() const
 {

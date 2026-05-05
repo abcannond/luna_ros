@@ -16,12 +16,12 @@ public:
   LinakActuator & operator=(const LinakActuator &) = delete;
 
   void tick_200ms();
-  void stop();
+  void stop(std::uint32_t can_id);
   void set_speed(float speed);
   void run_in(std::uint32_t can_id);
   void run_out(std::uint32_t can_id);
   void run_to_position_mm(double position_mm);
-  void clear_error_codes();
+  void clear_error_codes(std::uint32_t can_id);
   double current_position_mm() const;
 
 private:
