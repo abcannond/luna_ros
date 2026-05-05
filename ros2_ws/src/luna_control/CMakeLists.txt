@@ -43,7 +43,10 @@ add_library(luna_control SHARED
 
 #executables
 add_executable(luna_can src/luna_can.cpp)
-add_executable(luna_linaks src/luna_linaks.cpp)
+add_executable(luna_linaks
+  src/luna_linaks.cpp
+  src/linak_actuator.cpp
+)
 add_executable(luna_debug src/luna_debug.cpp)
 
 add_executable(luna_linkage_joy
