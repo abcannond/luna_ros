@@ -26,21 +26,15 @@ constexpr std::array<std::uint8_t, 8> kStopPayload = {
 constexpr std::array<std::uint8_t, 8> kClearErrorPayload = {
     0x00, 0xFB, 0xFB, 0xFB, 0xFB, 0xFB, 0xFF, 0xFF};
 
-// Speed: #FFFFFBXXFBFBFFFF — only byte [3] varies (0–200, 0.5% per unit).
 constexpr std::array<std::uint8_t, 8> kSpeedPayloadTemplate = {
     0xFF, 0xFF, 0xFB, 0x00, 0xFB, 0xFB, 0xFF, 0xFF};
 
-constexpr int kSpeedRawMax = 200;
-
-std::uint8_t speed_percent_to_raw(float speed_percent)
-{
-  const float clamped = std::clamp(speed_percent, 0.0f, 100.0f);
-  const long rounded = std::lround(clamped * 2.0f);
-  const long raw = std::clamp(rounded, 0L, static_cast<long>(kSpeedRawMax));
-  return static_cast<std::uint8_t>(raw);
+constexpr std::array<std::uint8_t, 8> kPositionPayloadTemplate = {
+    0x00, 0x00, 0xFB, 0xFB, 0xFB, 0xFB, 0xFF, 0xFF};
 }
 
-}
+static std::uint8_t speed_percent_to_raw(float speed_percent);
+static std::uint16_t position_mm_to_raw(double position_mm);
 
 // Opens a SocketCAN raw socket on the given iface (e.g. can0) and binds it so
 // subsequent writes from this object are transmitted on that bus.
@@ -104,7 +98,7 @@ bool LinakActuator::send_ext_frame(std::uint32_t can_id29, const std::array<std:
 
 void LinakActuator::tick_200ms() {}
 
-// STOP / neutral: e.g. cansend can0 18EF8000#03FBFBFBFBFBFFFF
+// STOPS LINAK
 void LinakActuator::stop(std::uint32_t can_id)
 {
   if (!send_ext_frame(can_id, kStopPayload)) {
@@ -119,6 +113,14 @@ void LinakActuator::set_speed(std::uint32_t can_id, float speed_percent)
   if (!send_ext_frame(can_id, payload)) {
     std::cerr << "LinakActuator::set_speed: send failed\n";
   }
+}
+static std::uint8_t speed_percent_to_raw(float speed_percent)
+{
+  constexpr int kSpeedRawMax = 200;
+  const float clamped = std::clamp(speed_percent, 0.0f, 100.0f);
+  const long rounded = std::lround(clamped * 2.0f);
+  const long raw = std::clamp(rounded, 0L, static_cast<long>(kSpeedRawMax));
+  return static_cast<std::uint8_t>(raw);
 }
 
 //MOVES LINAK IN
@@ -137,9 +139,27 @@ void LinakActuator::run_out(std::uint32_t can_id)
   }
 }
 
-void LinakActuator::run_to_position_mm(double) {}
+void LinakActuator::run_to_position_mm(std::uint32_t can_id, double position_mm)
+{
+  std::array<std::uint8_t, 8> payload = kPositionPayloadTemplate;
+  const std::uint16_t raw = position_mm_to_raw(position_mm);
+  payload[0] = static_cast<std::uint8_t>((raw >> 8) & 0xFF);
+  payload[1] = static_cast<std::uint8_t>(raw & 0xFF);
+  if (!send_ext_frame(can_id, payload)) {
+    std::cerr << "LinakActuator::run_to_position_mm: send failed\n";
+  }
+}
+static std::uint16_t position_mm_to_raw(double position_mm)
+{
+  constexpr int kPositionRawMax = 0xFAFF;
+  const double max_mm = static_cast<double>(kPositionRawMax) * 0.1;
+  const double clamped = std::clamp(position_mm, 0.0, max_mm);
+  const long rounded = std::lround(clamped * 10.0);
+  const long raw = std::clamp(rounded, 0L, static_cast<long>(kPositionRawMax));
+  return static_cast<std::uint16_t>(raw);
+}
 
-// Clear faults: e.g. cansend can0 18EF8000#00FBFBFBFBFBFFFF
+// CLEAR ERRORS
 void LinakActuator::clear_error_codes(std::uint32_t can_id)
 {
   if (!send_ext_frame(can_id, kClearErrorPayload)) {

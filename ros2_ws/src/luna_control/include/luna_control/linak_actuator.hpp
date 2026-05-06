@@ -20,7 +20,7 @@ public:
   void set_speed(std::uint32_t can_id, float speed_percent); //speed_percent is rounded to closest 0.5%
   void run_in(std::uint32_t can_id);
   void run_out(std::uint32_t can_id);
-  void run_to_position_mm(double position_mm);
+  void run_to_position_mm(std::uint32_t can_id, double position_mm);
   void clear_error_codes(std::uint32_t can_id);
   double current_position_mm() const;
 
