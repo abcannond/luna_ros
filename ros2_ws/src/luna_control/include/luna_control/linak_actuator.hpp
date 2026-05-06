@@ -17,7 +17,7 @@ public:
 
   void tick_200ms();
   void stop(std::uint32_t can_id);
-  void set_speed(float speed);
+  void set_speed(std::uint32_t can_id, float speed_percent); //speed_percent is rounded to closest 0.5%
   void run_in(std::uint32_t can_id);
   void run_out(std::uint32_t can_id);
   void run_to_position_mm(double position_mm);
@@ -30,8 +30,6 @@ private:
   std::string can_interface_;
   int sock_{-1};
   std::uint32_t reg_a_shadow_{0};
-  double position_mm_{0.0};
-  bool position_valid_{false};
 };
 
 #endif

@@ -1,5 +1,7 @@
 #include "luna_control/linak_actuator.hpp"
 
+#include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <iostream>
 #include <limits>
@@ -23,6 +25,21 @@ constexpr std::array<std::uint8_t, 8> kStopPayload = {
 
 constexpr std::array<std::uint8_t, 8> kClearErrorPayload = {
     0x00, 0xFB, 0xFB, 0xFB, 0xFB, 0xFB, 0xFF, 0xFF};
+
+// Speed: #FFFFFBXXFBFBFFFF — only byte [3] varies (0–200, 0.5% per unit).
+constexpr std::array<std::uint8_t, 8> kSpeedPayloadTemplate = {
+    0xFF, 0xFF, 0xFB, 0x00, 0xFB, 0xFB, 0xFF, 0xFF};
+
+constexpr int kSpeedRawMax = 200;
+
+std::uint8_t speed_percent_to_raw(float speed_percent)
+{
+  const float clamped = std::clamp(speed_percent, 0.0f, 100.0f);
+  const long rounded = std::lround(clamped * 2.0f);
+  const long raw = std::clamp(rounded, 0L, static_cast<long>(kSpeedRawMax));
+  return static_cast<std::uint8_t>(raw);
+}
+
 }
 
 // Opens a SocketCAN raw socket on the given iface (e.g. can0) and binds it so
@@ -95,7 +112,14 @@ void LinakActuator::stop(std::uint32_t can_id)
   }
 }
 
-void LinakActuator::set_speed(float) {}
+void LinakActuator::set_speed(std::uint32_t can_id, float speed_percent)
+{
+  std::array<std::uint8_t, 8> payload = kSpeedPayloadTemplate;
+  payload[3] = speed_percent_to_raw(speed_percent);
+  if (!send_ext_frame(can_id, payload)) {
+    std::cerr << "LinakActuator::set_speed: send failed\n";
+  }
+}
 
 //MOVES LINAK IN
 void LinakActuator::run_in(std::uint32_t can_id)
@@ -125,5 +149,5 @@ void LinakActuator::clear_error_codes(std::uint32_t can_id)
 
 double LinakActuator::current_position_mm() const
 {
-  return position_valid_ ? position_mm_ : std::numeric_limits<double>::quiet_NaN();
+  return std::numeric_limits<double>::quiet_NaN();
 }
