@@ -32,12 +32,12 @@
     </joint>
 
     <!-- ===== Optical frames for ROS conventions ===== -->
-    <!-- Color optical frame (rotated for camera coordinate system: Z forward, X right, Y down) -->
+    <!-- Color optical frame (rotated for camera coordinate system Z forward, X right, Y down) -->
     <link name="camera_color_optical_frame"/>
     <joint name="camera_color_optical_joint" type="fixed">
       <parent link="depth_camera_link"/>
       <child link="camera_color_optical_frame"/>
-      <!-- Rotation: -90 deg roll, 0 pitch, -90 deg yaw transforms robot frame to optical frame -->
+      <!-- Rotation -90 deg roll, 0 pitch, -90 deg yaw transforms robot frame to optical frame -->
       <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
     </joint>
 
@@ -102,7 +102,7 @@
           <render_engine>ogre</render_engine>
         </camera>
 
-        <!-- Optional: packed depth for pointcloud conversion -->
+        <!-- Optional packed depth for pointcloud conversion -->
         <publisher>
           <topic>/sim/camera/depth/image_packed</topic>
           <type>pointcloud_packed</type>

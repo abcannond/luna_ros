@@ -12,6 +12,7 @@ from launch.actions import (
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import LaunchConfiguration, Command
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
@@ -19,11 +20,13 @@ def generate_launch_description():
     package_name = "lunabot_2425"
     pkg_share = get_package_share_directory(package_name)
 
-    robot_description = Command([
+    robot_description = ParameterValue (
+        Command([
         'xacro ',
         os.path.join(pkg_share, 'description', 'robot.urdf.xacro'),
         ' use_sim:=false'
-    ])
+        ])
+    )
 
     # robot state publisher
     rsp = Node(

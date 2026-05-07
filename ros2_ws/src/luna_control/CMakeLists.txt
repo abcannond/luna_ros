@@ -103,11 +103,15 @@ install(
   DIRECTORY include/
   DESTINATION include/luna_control
 )
-install(TARGETS luna_control luna_controller_parameters luna_can luna_debug luna_linkage_joy
+install(TARGETS luna_control luna_controller_parameters luna_can luna_debug luna_linaks luna_linkage_joy
   EXPORT export_luna_control
   RUNTIME DESTINATION lib/luna_control
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
+)
+install(
+  FILES luna_can.xml
+  DESTINATION share/${PROJECT_NAME}
 )
 
 ament_export_targets(export_luna_control HAS_LIBRARY_TARGET)
