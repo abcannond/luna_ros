@@ -35,6 +35,7 @@ generate_parameter_library(luna_controller_parameters
 #important to include SparkMax stuff so that LunaCAN can find it 
 add_library(luna_control SHARED
   src/LunaController.cpp
+  src/LunaCan.cpp
   src/odometry.cpp
   src/speed_limiter.cpp
   src/SparkMax.cpp

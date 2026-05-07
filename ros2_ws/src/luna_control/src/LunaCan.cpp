@@ -188,7 +188,7 @@ CallbackReturn LunaCan::on_shutdown(const rclcpp_lifecycle::State &)
         ramping = true;
       }
     }
-    send_c620_frame();
+    send_C620_frame();
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
   }
   
@@ -273,10 +273,9 @@ hardware_interface::return_type LunaCan::write(
 
         double vel_error = target_vel - wheel_state_vel_[i];
 
-        int target_current = static_cast<int>(vel * WHEEL_VEL_TO_CURRENT_KP);
-        target_current = std::clamp(target_current, -C620_MAX_CURRENT, C620_MAX_CURRENT);
+        //TODO: finish controller
     }
-    send_c620_frame();
+    send_C620_frame();
 
     //SparkMax motors 
     for (std::size_t i = 0; i < NUM_PODS; ++i) {
@@ -302,7 +301,7 @@ void LunaCan::feedback_loop()
     }
 
     //C620 feedback frames: 0x201(front right), 0x202(front left), 0x203(back left), 0x204(back right)
-    int raw_id = static_cast<int>(fr.can_id) - C620_FB_ID_BASE;
+    int raw_id = static_cast<int>(fr.can_id) - C620_FB_ID;
     if (raw_id < 1 || raw_id > 4) {
       continue;
     }
@@ -311,14 +310,14 @@ void LunaCan::feedback_loop()
     for (std::size_t i = 0; i < NUM_WHEELS; ++i) {
       if (wheel_can_ids_[i] == raw_id) {
         C620_Feedback fb{};
-        fb.angle_raw = (fr.data[0] << 8) | fr.data[1];
+        fb.angle = (fr.data[0] << 8) | fr.data[1];
 
         //RPM is signed int16, bytes 2-3
         int16_t rpm_raw = static_cast<int16_t>((fr.data[2] << 8) | fr.data[3]);
         //Convert RPM → rad/s
-        fb.velocity = static_cast<double>(rpm_raw) * (2.0 * M_PI / 60.0);
+        fb.speed = static_cast<double>(rpm_raw) * (2.0 * M_PI / 60.0);
 
-        if (wheel_reverse_flags_[i]) { fb.velocity = -fb.velocity; }
+        if (wheel_reverse_flags_[i]) { fb.speed = -fb.speed; }
 
         fb.current  = static_cast<int16_t>((fr.data[4] << 8) | fr.data[5]);
 
@@ -330,10 +329,10 @@ void LunaCan::feedback_loop()
 }
 
 //send drive commands to C620s
-void LunaCan::send_c620_frame()
+void LunaCan::send_C620_frame()
 {
   can_frame fr{};
-  fr.can_id  = C620_CMD_ID;
+  fr.can_id  = C620_WRITE_ID;
   fr.can_dlc = 8;
 
   //Frame layout: [motor1_H, motor1_L, motor2_H, motor2_L, motor3_H, motor3_L, motor4_H, motor4_L]
@@ -360,7 +359,7 @@ void LunaCan::send_c620_frame()
 void LunaCan::zero_all_outputs()
 {
   current_ramp_.fill(0);
-  send_c620_frame();
+  send_C620_frame();
 
   for (std::size_t i = 0; i < NUM_PODS; ++i) {
     if (spark_[i]) {
