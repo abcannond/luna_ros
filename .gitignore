@@ -67,4 +67,4 @@ Thumbs.db
 # ROS 1 compatibility (if bridging)
 .devel/
 .catkin_tools/
-.catkin_workspace/
+.catkin_workspace/ros2_ws/test_linaks
