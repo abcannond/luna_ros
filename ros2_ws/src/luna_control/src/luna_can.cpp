@@ -222,58 +222,6 @@ void control_thread() {
     }
 }
 
-// ---------------- INPUT ----------------
-// Make sure this is commented out when running full stack, this is only for testing 
-void command_thread() {
-    std::string cmd;
-
-    std::cout << "Command interface ready:\n";
-    std::cout << "w/s/a/d = tank drive\n";
-    std::cout << "stop = zero all\n";
-    std::cout << "q = quit\n";
-
-    while (running) {
-        std::getline(std::cin, cmd);
-
-        if (cmd == "w") {
-            enable = true; 
-            TARGET_CURRENT += 500;
-            std::cout << "fwd";
-            std::cout << TARGET_CURRENT;
-        }
-        else if (cmd == "s") {
-            TARGET_CURRENT = 0;
-        }
-        else if (cmd == "a") {
-            swerve[3]->SetDutyCycle(0.1f);
-        }
-        else if (cmd == "d") {
-            swerve[3]->SetDutyCycle(0);
-        }
-        else if (cmd == "stop") {
-            for (auto &t : targets) t = 0;
-        }
-        else if (cmd == "q") {
-            running = false;
-        }
-        else if (cmd == "t") {
-            swerve[3]->SetDutyCycle(-0.1f);
-        }
-         else if (cmd == "y") {
-            std::cout << "m2";
-            targets[2] = 2000;
-        }
-         else if (cmd == "u") {
-            std::cout << "m3";
-            targets[3] = 2000;
-        }
-         else if (cmd == "i") {
-            std::cout << "m4";
-            targets[4] = 2000;
-        }
-    }
-}
-
 // ---------------- SHUTDOWN ----------------
 void safe_shutdown() {
     std::cout << "Shutting down...\n";
@@ -366,18 +314,14 @@ int main() {
 
     std::thread t1(feedback_thread);
     std::thread t2(control_thread);
-    std::thread t3(command_thread);
 
     
     std::thread ros_thread([&](){
     rclcpp::spin(node);
     });
-    
-    t3.join();
 
     running = false;
 
-    //t3.join();
     t1.join();
     t2.join();
     ros_thread.join();
