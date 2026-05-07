@@ -45,7 +45,7 @@ LinakActuator::LinakActuator(const std::string& can_iface,
     reg_a_[7] = 0xFF;         // reserved
 
     open_socket(can_iface);
-    clear_errors();
+    clear_errors();  // required before first motion command per datasheet
 }
 
 LinakActuator::~LinakActuator()
@@ -87,6 +87,7 @@ void LinakActuator::open_socket(const std::string& iface)
     fcntl(socket_, F_SETFL, fl | O_NONBLOCK);
 }
 
+// writes 16-bit value into bytes 0-1, little-endian
 void LinakActuator::set_position_field(uint16_t raw_pos)
 {
     reg_a_[0] = static_cast<uint8_t>( raw_pos        & 0x00FFu);
@@ -148,6 +149,7 @@ void LinakActuator::poll_feedback()
     }
 }
 
+// these only update the position field, speed/ramp/current bytes are untouched
 void LinakActuator::stop()    { set_position_field(POS_STOP); }
 void LinakActuator::run_out() { set_position_field(POS_RUN_OUT); }
 void LinakActuator::run_in()  { set_position_field(POS_RUN_IN); }
@@ -162,6 +164,7 @@ void LinakActuator::run_to_position(float position_mm)
 
 void LinakActuator::clear_errors()
 {
+    // send clear error then immediately revert to stop so the next periodic send is safe
     set_position_field(POS_CLEAR_ERROR);
     send_command();
     set_position_field(POS_STOP);
