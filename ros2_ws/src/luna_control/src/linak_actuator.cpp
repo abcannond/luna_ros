@@ -1,10 +1,13 @@
 #include "luna_control/linak_actuator.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstring>
 #include <iostream>
 #include <limits>
+#include <mutex>
+#include <thread>
 #include <linux/can.h>
 #include <linux/can/raw.h>
 #include <net/if.h>
@@ -31,6 +34,12 @@ constexpr std::array<std::uint8_t, 8> kSpeedPayloadTemplate = {
 
 constexpr std::array<std::uint8_t, 8> kPositionPayloadTemplate = {
     0x00, 0x00, 0xFB, 0xFB, 0xFB, 0xFB, 0xFF, 0xFF};
+
+constexpr auto kHeartbeatPeriod = std::chrono::milliseconds{200};
+
+constexpr std::size_t kSpeedByteIndex = 3;
+constexpr std::size_t kPositionHighByteIndex = 0;
+constexpr std::size_t kPositionLowByteIndex = 1;
 }
 
 static std::uint8_t speed_percent_to_raw(float speed_percent);
@@ -67,10 +76,19 @@ LinakActuator::LinakActuator(std::string can_interface) : can_interface_(std::mo
   }
 
   sock_ = s;
+
+  reg_a_shadow_ = kStopPayload;
+  heartbeat_running_.store(true);
+  heartbeat_thread_ = std::thread(&LinakActuator::heartbeat_loop_, this);
 }
 
 LinakActuator::~LinakActuator()
 {
+  heartbeat_running_.store(false);
+  if (heartbeat_thread_.joinable()) {
+    heartbeat_thread_.join();
+  }
+
   if (sock_ >= 0) {
     close(sock_);
     sock_ = -1;
@@ -95,24 +113,50 @@ bool LinakActuator::send_ext_frame(std::uint32_t can_id29, const std::array<std:
   }
   return true;
 }
+/*
+//HEARTBEAT
+*/
+void LinakActuator::heartbeat_loop_()
+{
+  using clock = std::chrono::steady_clock;
+  auto next = clock::now() + kHeartbeatPeriod;
 
-void LinakActuator::tick_200ms() {}
+  while (heartbeat_running_.load()) {
+    std::this_thread::sleep_until(next);
+    next += kHeartbeatPeriod;
+
+    std::uint32_t ext_can_id_to_send = 0;
+    bool has_can_id = false;
+    std::array<std::uint8_t, 8> payload{};
+    {
+      std::lock_guard<std::mutex> lock(reg_mutex_);
+      ext_can_id_to_send = target_ext_can_id_;
+      has_can_id = has_can_id_;
+      payload = reg_a_shadow_;
+    }
+
+    if (!has_can_id) {
+      continue;
+    }
+    (void)send_ext_frame(ext_can_id_to_send, payload);
+  }
+}
 
 // STOPS LINAK
 void LinakActuator::stop(std::uint32_t can_id)
 {
-  if (!send_ext_frame(can_id, kStopPayload)) {
-    std::cerr << "LinakActuator::stop: send failed\n";
-  }
+  std::lock_guard<std::mutex> lock(reg_mutex_);
+  target_ext_can_id_ = can_id;
+  has_can_id_ = true;
+  reg_a_shadow_ = kStopPayload;
 }
-
+//SETS SPEED OF LINAK
 void LinakActuator::set_speed(std::uint32_t can_id, float speed_percent)
 {
-  std::array<std::uint8_t, 8> payload = kSpeedPayloadTemplate;
-  payload[3] = speed_percent_to_raw(speed_percent);
-  if (!send_ext_frame(can_id, payload)) {
-    std::cerr << "LinakActuator::set_speed: send failed\n";
-  }
+  std::lock_guard<std::mutex> lock(reg_mutex_);
+  target_ext_can_id_ = can_id;
+  has_can_id_ = true;
+  reg_a_shadow_[kSpeedByteIndex] = speed_percent_to_raw(speed_percent);
 }
 static std::uint8_t speed_percent_to_raw(float speed_percent)
 {
@@ -122,32 +166,33 @@ static std::uint8_t speed_percent_to_raw(float speed_percent)
   const long raw = std::clamp(rounded, 0L, static_cast<long>(kSpeedRawMax));
   return static_cast<std::uint8_t>(raw);
 }
-
 //MOVES LINAK IN
 void LinakActuator::run_in(std::uint32_t can_id)
 {
-  if (!send_ext_frame(can_id, kRunInPayload)) {
-    std::cerr << "LinakActuator::run_in: send failed\n";
-  }
+  std::lock_guard<std::mutex> lock(reg_mutex_);
+  target_ext_can_id_ = can_id;
+  has_can_id_ = true;
+  reg_a_shadow_ = kRunInPayload;
 }
-
 //MOVES LINAK OUT
 void LinakActuator::run_out(std::uint32_t can_id)
 {
-  if (!send_ext_frame(can_id, kRunOutPayload)) {
-    std::cerr << "LinakActuator::run_out: send failed\n";
-  }
+  std::lock_guard<std::mutex> lock(reg_mutex_);
+  target_ext_can_id_ = can_id;
+  has_can_id_ = true;
+  reg_a_shadow_ = kRunOutPayload;
 }
-
+//MOVES LINAK TO POSITION
 void LinakActuator::run_to_position_mm(std::uint32_t can_id, double position_mm)
 {
-  std::array<std::uint8_t, 8> payload = kPositionPayloadTemplate;
+  std::lock_guard<std::mutex> lock(reg_mutex_);
+  target_ext_can_id_ = can_id;
+  has_can_id_ = true;
+
+  reg_a_shadow_ = kPositionPayloadTemplate;
   const std::uint16_t raw = position_mm_to_raw(position_mm);
-  payload[0] = static_cast<std::uint8_t>((raw >> 8) & 0xFF);
-  payload[1] = static_cast<std::uint8_t>(raw & 0xFF);
-  if (!send_ext_frame(can_id, payload)) {
-    std::cerr << "LinakActuator::run_to_position_mm: send failed\n";
-  }
+  reg_a_shadow_[kPositionHighByteIndex] = static_cast<std::uint8_t>((raw >> 8) & 0xFF);
+  reg_a_shadow_[kPositionLowByteIndex] = static_cast<std::uint8_t>(raw & 0xFF);
 }
 static std::uint16_t position_mm_to_raw(double position_mm)
 {
@@ -158,15 +203,15 @@ static std::uint16_t position_mm_to_raw(double position_mm)
   const long raw = std::clamp(rounded, 0L, static_cast<long>(kPositionRawMax));
   return static_cast<std::uint16_t>(raw);
 }
-
-// CLEAR ERRORS
+//CLEAR ERRORS
 void LinakActuator::clear_error_codes(std::uint32_t can_id)
 {
-  if (!send_ext_frame(can_id, kClearErrorPayload)) {
-    std::cerr << "LinakActuator::clear_error_codes: send failed\n";
-  }
+  std::lock_guard<std::mutex> lock(reg_mutex_);
+  target_ext_can_id_ = can_id;
+  has_can_id_ = true;
+  reg_a_shadow_ = kClearErrorPayload;
 }
-
+//GETS POSITION OF LINAK
 double LinakActuator::current_position_mm() const
 {
   return std::numeric_limits<double>::quiet_NaN();

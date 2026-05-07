@@ -2,9 +2,12 @@
 #define LINAK_ACTUATOR_HPP
 #pragma once
 
+#include <atomic>
 #include <array>
 #include <cstdint>
+#include <mutex>
 #include <string>
+#include <thread>
 
 class LinakActuator
 {
@@ -26,10 +29,16 @@ public:
 
 private:
   bool send_ext_frame(std::uint32_t can_id29, const std::array<std::uint8_t, 8> & data);
+  void heartbeat_loop_();
 
   std::string can_interface_;
   int sock_{-1};
-  std::uint32_t reg_a_shadow_{0};
+  std::mutex reg_mutex_;
+  std::uint32_t target_ext_can_id_{0};
+  bool has_can_id_{false};
+  std::array<std::uint8_t, 8> reg_a_shadow_{};
+  std::atomic<bool> heartbeat_running_{false};
+  std::thread heartbeat_thread_;
 };
 
 #endif
