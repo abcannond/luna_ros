@@ -41,7 +41,6 @@
 // message types. 
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
-#include "odometry.hpp" //dupicate of above?
 
 #include "rclcpp_lifecycle/state.hpp"
 #include "realtime_tools/realtime_box.h"

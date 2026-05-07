@@ -59,7 +59,7 @@ CallbackReturn LunaCan::on_init(const hardware_interface::HardwareInfo & info) {
         wheel_can_ids_[i] = std::stoi(j.parameters.at("can_id"));
         
         //get reverse flags
-        wheel_reversed_[i] = j.parameters.count("reversed")
+        wheel_reverse_flags_[i] = j.parameters.count("reversed")
         ? (j.parameters.at("reversed") == "true")
         : false;
 
@@ -269,9 +269,9 @@ hardware_interface::return_type LunaCan::write(
         double target_vel = wheel_cmd_vel_[i];
 
         //apply reverse flags 
-        if (wheel_reversed_[i]) { target_vel = -target_vel; }
+        if (wheel_reverse_flags_[i]) { target_vel = -target_vel; }
 
-        double vel_error = target_vel - wheel_state_vel[i];
+        double vel_error = target_vel - wheel_state_vel_[i];
 
         int target_current = static_cast<int>(vel * WHEEL_VEL_TO_CURRENT_KP);
         target_current = std::clamp(target_current, -C620_MAX_CURRENT, C620_MAX_CURRENT);
@@ -310,7 +310,7 @@ void LunaCan::feedback_loop()
     // Find which wheel index this CAN ID belongs to
     for (std::size_t i = 0; i < NUM_WHEELS; ++i) {
       if (wheel_can_ids_[i] == raw_id) {
-        C620Feedback fb{};
+        C620_Feedback fb{};
         fb.angle_raw = (fr.data[0] << 8) | fr.data[1];
 
         //RPM is signed int16, bytes 2-3
@@ -318,7 +318,7 @@ void LunaCan::feedback_loop()
         //Convert RPM → rad/s
         fb.velocity = static_cast<double>(rpm_raw) * (2.0 * M_PI / 60.0);
 
-        if (wheel_reversed_[i]) { fb.velocity = -fb.velocity; }
+        if (wheel_reverse_flags_[i]) { fb.velocity = -fb.velocity; }
 
         fb.current  = static_cast<int16_t>((fr.data[4] << 8) | fr.data[5]);
 
@@ -413,4 +413,4 @@ void LunaCan::close_can()
 
 }   //namespace luna_can
 
-PLUGINLIB_EXPORT_CLASS(luna_can::LunaCan hardware_interface::SystemInterface)
+PLUGINLIB_EXPORT_CLASS(luna_can::LunaCan, hardware_interface::SystemInterface)

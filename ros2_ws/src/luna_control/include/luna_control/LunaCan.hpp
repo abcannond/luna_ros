@@ -34,12 +34,13 @@ namespace luna_can {
     //basic parameters 
     constexpr std::size_t NUM_WHEELS = 4;
     constexpr std::size_t NUM_PODS   = 4;
+    constexpr std::size_t NUM_JOINTS = NUM_WHEELS + NUM_PODS;
 
     //C620 parameters (drive motor speed controllers)
     constexpr int C620_WRITE_ID = 0x200; //base for all writes to C620s
     constexpr int C620_FB_ID = 0x200; //base for all reads from C620s 
-    constexpr double C620_MAX_CURRENT = 16000.0 //max current in mA 
-    constexpr double WHEEL_RADIUS_M = 0.1016 // wheel radius in m
+    constexpr double C620_MAX_CURRENT = 16000.0; //max current in mA 
+    constexpr double WHEEL_RADIUS_M = 0.1016; // wheel radius in m
     constexpr double C620_kP = 0.01; //TODO: tune this garbage 
     constexpr double C620_kI = 0.0; //TODO: see above 
 

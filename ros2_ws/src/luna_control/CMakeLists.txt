@@ -97,6 +97,7 @@ ament_target_dependencies(luna_control PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS})
 # which is appropriate when building the dll but not consuming it.
 target_compile_definitions(luna_control PRIVATE "LUNA_CONTROL_BUILDING_DLL")
 pluginlib_export_plugin_description_file(controller_interface luna_plugin.xml)
+pluginlib_export_plugin_description_file(hardware_interface luna_can.xml)
 
 install(
   DIRECTORY include/
