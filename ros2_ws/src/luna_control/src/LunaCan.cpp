@@ -144,6 +144,14 @@ CallbackReturn LunaCan::on_activate(const rclcpp_lifecycle::State &)
 {
   feedback_running_ = true;
   feedback_thread_  = std::thread(&LunaCan::feedback_loop, this);
+  // Arm C620s by sending zero current for 500ms
+  current_ramp_.fill(0);
+  auto start = std::chrono::steady_clock::now();
+  while (std::chrono::steady_clock::now() - start < std::chrono::milliseconds(500)) {
+      send_C620_frame();
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+  RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "C620s armed");
 
   RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "on_activate OK — feedback thread started");
   return CallbackReturn::SUCCESS;
@@ -272,7 +280,15 @@ hardware_interface::return_type LunaCan::write(
         if (wheel_reverse_flags_[i]) { target_vel = -target_vel; }
 
         double vel_error = target_vel - wheel_state_vel_[i];
-
+        if(wheel_cmd_vel_[i] >= 2) {
+          current_ramp_[1] = 1000;
+          RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "current_ramp_[1]: %d", current_ramp_[1]);
+          //RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "interface: %s", can_interface_.c_str());
+          //RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "can_sock_ = %d", can_sock_);
+        }
+        else {
+          current_ramp_[1] = 0;
+        }
         //TODO: finish controller
     }
     send_C620_frame();
@@ -347,11 +363,8 @@ void LunaCan::send_C620_frame()
 
   //warn if can write gets messed up 
   if (::write(can_sock_, &fr, sizeof(fr)) != sizeof(fr)) {
-    RCLCPP_WARN_THROTTLE(
-      rclcpp::get_logger("LunaCan"),
-      *rclcpp::Clock::make_shared(),
-      1000,
-      "CAN write failed");
+    RCLCPP_ERROR(rclcpp::get_logger("LunaCan"),
+        "CAN write failed: %s", strerror(errno));
   }
 }
 

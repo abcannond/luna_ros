@@ -445,7 +445,7 @@ namespace luna_controller
     double right_back_pod_delta = fabs(shortest_angular_diff(right_back_pod_position, right_back_pod_feedback));
     double right_front_pod_delta= fabs(shortest_angular_diff(right_front_pod_position, right_front_pod_feedback));
 
-    bool allow_wheel_movement = (
+    bool allow_wheel_movement = params_.open_loop || (
       left_back_pod_delta  < params_.allowed_steer_pod_driving_angle &&
       left_front_pod_delta < params_.allowed_steer_pod_driving_angle &&
       right_back_pod_delta < params_.allowed_steer_pod_driving_angle &&

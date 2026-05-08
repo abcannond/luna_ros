@@ -141,7 +141,7 @@ void control_thread() {
 
             swerve[i]->SetDutyCycle(duty);
         }
-
+        /*
         //velocity control
         for(int m: MOTOR_IDS) {
             int cur_vel = drive_vels[m].load();
@@ -170,8 +170,8 @@ void control_thread() {
             }
 
             currents[m].store(current);
-        }
-        /*
+        } */
+        
         //set currents to targets 
         for (int m : MOTOR_IDS) {
             int tgt = targets[m].load();
@@ -186,7 +186,7 @@ void control_thread() {
 
             currents[m].store(cur);
         }
-        */
+        
         auto msg = build_msg();
         
         write(can_sock, &msg, sizeof(msg));
@@ -210,9 +210,9 @@ void command_thread() {
 
         if (cmd == "w") {
             TARGET_CURRENT += 500;
-            //std::cout << TARGET_CURRENT;
+            std::cout << TARGET_CURRENT;
             TARGET_VELOCITY += 5;
-            std::cout << TARGET_VELOCITY;
+            //std::cout << TARGET_VELOCITY;
         }
         if (cmd == "q") {
             TARGET_CURRENT -= 500;
