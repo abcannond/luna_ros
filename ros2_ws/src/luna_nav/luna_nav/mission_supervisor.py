@@ -136,9 +136,10 @@ class MissionSupervisorNode(Node):
             Trigger, '~/abort_mission', self._abort_mission_cb, callback_group=cb_group)
 
         self._frontier_enable_client = self.create_client(SetBool, '/frontier_explorer/enable')
-        # Per-actuator services: shoulder lowers/raises bucket; lift extends/retracts for dump
-        self._shoulder_extend  = self.create_client(Trigger, '/luna_linaks_node/shoulder/extend')
-        self._shoulder_retract = self.create_client(Trigger, '/luna_linaks_node/shoulder/retract')
+        # wrist (0xC8): extend angles scoop down for excavation, retract raises it
+        self._wrist_extend     = self.create_client(Trigger, '/luna_linaks_node/wrist/extend')
+        self._wrist_retract    = self.create_client(Trigger, '/luna_linaks_node/wrist/retract')
+        # lift (0xF6): extend raises scissor lift for gravity dump
         self._lift_extend      = self.create_client(Trigger, '/luna_linaks_node/lift/extend')
         self._lift_retract     = self.create_client(Trigger, '/luna_linaks_node/lift/retract')
         self._linaks_stop_all  = self.create_client(Trigger, '/luna_linaks_node/stop_all')
@@ -294,11 +295,11 @@ class MissionSupervisorNode(Node):
                 self._transition(MissionPhase.TRAVERSING_TO_EXCAVATION)
 
         elif self._phase == MissionPhase.IN_EXCAVATION_ZONE:
-            # Step 1 (t=0): lower bucket
+            # Step 1 (t=0): extend wrist → angles scoop down into regolith
             if not self._linaks_called:
                 self._linaks_called = True
-                self._call_linaks(self._shoulder_extend, 'shoulder/extend')
-                self.get_logger().info('Excavation: lowering bucket')
+                self._call_linaks(self._wrist_extend, 'wrist/extend')
+                self.get_logger().info('Excavation: lowering wrist/scoop')
 
             # Step 2 (t=lower_delay): drive forward to scoop
             drive_start = self._excavation_lower_delay
@@ -315,8 +316,8 @@ class MissionSupervisorNode(Node):
             elif elapsed >= drive_end and not self._excavation_raised:
                 self._excavation_raised = True
                 self._cmd_vel_pub.publish(Twist())  # stop
-                self._call_linaks(self._shoulder_retract, 'shoulder/retract')
-                self.get_logger().info('Excavation: raising bucket')
+                self._call_linaks(self._wrist_retract, 'wrist/retract')
+                self.get_logger().info('Excavation: raising wrist/scoop')
 
             if elapsed > self._excavation_dwell:
                 self.get_logger().info('Excavation dwell complete; heading to construction')
