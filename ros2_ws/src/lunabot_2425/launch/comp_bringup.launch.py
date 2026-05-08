@@ -20,11 +20,19 @@ def generate_launch_description():
     package_name = "lunabot_2425"
     pkg_share = get_package_share_directory(package_name)
 
+    declare_use_sim = DeclareLaunchArgument(
+        'use_sim',
+        default_value='false',
+        description='Use simulation time'
+    )
+
+    use_sim = LaunchConfiguration('use_sim')
+
     robot_description = ParameterValue (
         Command([
         'xacro ',
         os.path.join(pkg_share, 'description', 'robot.urdf.xacro'),
-        ' use_sim:=false'
+        ' use_sim:=', use_sim
         ])
     )
 
@@ -34,7 +42,7 @@ def generate_launch_description():
         executable='robot_state_publisher',
         parameters=[{
             'robot_description': robot_description,
-            'use_sim_time': False,
+            'use_sim_time': use_sim,
         }],
         output='screen',
     )
@@ -44,8 +52,9 @@ def generate_launch_description():
         package='controller_manager',
         executable='ros2_control_node',
         parameters=[
-            {'robot_description': robot_description},
             os.path.join(pkg_share, 'config', 'robot_controllers.yaml'),
+            {'robot_description': robot_description,
+            'use_sim_time': use_sim},
         ],
         output='screen',
     )
@@ -55,7 +64,7 @@ def generate_launch_description():
         package='twist_stamper',
         executable='twist_stamper',
         name='twist_stamper',
-        parameters=[{'use_sim_time': False, 'frame_id': 'base_link'}],
+        parameters=[{'use_sim_time': use_sim, 'frame_id': 'base_link'}],
         remappings=[
             ('cmd_vel_in', '/cmd_vel'),
             ('cmd_vel_out', '/cmd_vel_stamped'),
@@ -105,6 +114,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        declare_use_sim,
         rsp,
         ros2_control_node,
         twist_stamper,
