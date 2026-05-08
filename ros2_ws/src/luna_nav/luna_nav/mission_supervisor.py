@@ -136,12 +136,13 @@ class MissionSupervisorNode(Node):
             Trigger, '~/abort_mission', self._abort_mission_cb, callback_group=cb_group)
 
         self._frontier_enable_client = self.create_client(SetBool, '/frontier_explorer/enable')
-        # wrist (0xC8): extend angles scoop down for excavation, retract raises it
+        # shoulder (0x80) + wrist (0xC8): both sides of 4-bar, move together to lower/raise scoop
+        self._shoulder_extend  = self.create_client(Trigger, '/luna_linaks_node/shoulder/extend')
+        self._shoulder_retract = self.create_client(Trigger, '/luna_linaks_node/shoulder/retract')
         self._wrist_extend     = self.create_client(Trigger, '/luna_linaks_node/wrist/extend')
         self._wrist_retract    = self.create_client(Trigger, '/luna_linaks_node/wrist/retract')
-        # lift (0xF6): extend raises scissor lift for gravity dump
+        # lift (0xF6): scissor lift extends for gravity dump; retract not commanded (unknown if it retracts)
         self._lift_extend      = self.create_client(Trigger, '/luna_linaks_node/lift/extend')
-        self._lift_retract     = self.create_client(Trigger, '/luna_linaks_node/lift/retract')
         self._linaks_stop_all  = self.create_client(Trigger, '/luna_linaks_node/stop_all')
 
         self._timer = self.create_timer(1.0 / rate, self._tick)
@@ -295,11 +296,12 @@ class MissionSupervisorNode(Node):
                 self._transition(MissionPhase.TRAVERSING_TO_EXCAVATION)
 
         elif self._phase == MissionPhase.IN_EXCAVATION_ZONE:
-            # Step 1 (t=0): extend wrist → angles scoop down into regolith
+            # Step 1 (t=0): extend both sides of 4-bar simultaneously to lower scoop
             if not self._linaks_called:
                 self._linaks_called = True
-                self._call_linaks(self._wrist_extend, 'wrist/extend')
-                self.get_logger().info('Excavation: lowering wrist/scoop')
+                self._call_linaks(self._shoulder_extend, 'shoulder/extend')
+                self._call_linaks(self._wrist_extend,    'wrist/extend')
+                self.get_logger().info('Excavation: lowering 4-bar scoop')
 
             # Step 2 (t=lower_delay): drive forward to scoop
             drive_start = self._excavation_lower_delay
@@ -316,8 +318,9 @@ class MissionSupervisorNode(Node):
             elif elapsed >= drive_end and not self._excavation_raised:
                 self._excavation_raised = True
                 self._cmd_vel_pub.publish(Twist())  # stop
-                self._call_linaks(self._wrist_retract, 'wrist/retract')
-                self.get_logger().info('Excavation: raising wrist/scoop')
+                self._call_linaks(self._shoulder_retract, 'shoulder/retract')
+                self._call_linaks(self._wrist_retract,    'wrist/retract')
+                self.get_logger().info('Excavation: raising 4-bar scoop')
 
             if elapsed > self._excavation_dwell:
                 self.get_logger().info('Excavation dwell complete; heading to construction')
@@ -355,12 +358,11 @@ class MissionSupervisorNode(Node):
                 rev.linear.x = -abs(self._dump_backup_speed)
                 self._cmd_vel_pub.publish(rev)
 
-            # Step 3 (t=backup_end): stop reversing and retract lift
+            # Step 3 (t=backup_end): stop reversing; lift stays extended (no retract — one-way mechanism)
             elif elapsed >= backup_end and not self._dump_retracted:
                 self._dump_retracted = True
                 self._cmd_vel_pub.publish(Twist())  # stop
-                self._call_linaks(self._lift_retract, 'lift/retract')
-                self.get_logger().info('Dump: retracting lift')
+                self.get_logger().info('Dump: backup complete, lift remains extended')
 
             if elapsed > self._construction_dwell:
                 self.get_logger().info('Construction dwell complete; returning')
