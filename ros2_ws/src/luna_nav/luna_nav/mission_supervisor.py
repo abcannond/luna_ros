@@ -84,6 +84,7 @@ class MissionSupervisorNode(Node):
 
         self._phase = MissionPhase.IDLE
         self._phase_start_time = self.get_clock().now()
+        self._linaks_called = False  # guards single service call per dwell phase
         self._current_zone = 'unknown'
         self._fiducial_received = False
         self._exploration_status = 'disabled'
@@ -117,6 +118,9 @@ class MissionSupervisorNode(Node):
             Trigger, '~/abort_mission', self._abort_mission_cb, callback_group=cb_group)
 
         self._frontier_enable_client = self.create_client(SetBool, '/frontier_explorer/enable')
+        self._linaks_excavate_client = self.create_client(Trigger, '/luna_linaks_node/excavate')
+        self._linaks_dump_client     = self.create_client(Trigger, '/luna_linaks_node/dump')
+        self._linaks_stop_client     = self.create_client(Trigger, '/luna_linaks_node/stop')
 
         self._timer = self.create_timer(1.0 / rate, self._tick)
         self._marker_timer = self.create_timer(1.0, self._publish_status_marker)
@@ -185,6 +189,7 @@ class MissionSupervisorNode(Node):
     def _abort_mission_cb(self, request, response):
         self._set_frontier_enabled(False)
         self._cancel_nav_goal()
+        self._call_linaks(self._linaks_stop_client, 'stop')
         self._transition(MissionPhase.IDLE)
         self._nav_goal_active = False
         response.success = True
@@ -268,6 +273,9 @@ class MissionSupervisorNode(Node):
                 self._transition(MissionPhase.TRAVERSING_TO_EXCAVATION)
 
         elif self._phase == MissionPhase.IN_EXCAVATION_ZONE:
+            if not self._linaks_called:
+                self._linaks_called = True
+                self._call_linaks(self._linaks_excavate_client, 'excavate')
             if elapsed > self._excavation_dwell:
                 self.get_logger().info('Excavation dwell complete; heading to construction')
                 wp = self._waypoints.get('construction_entry')
@@ -286,6 +294,9 @@ class MissionSupervisorNode(Node):
                 self._transition(MissionPhase.IN_CONSTRUCTION_ZONE)
 
         elif self._phase == MissionPhase.IN_CONSTRUCTION_ZONE:
+            if not self._linaks_called:
+                self._linaks_called = True
+                self._call_linaks(self._linaks_dump_client, 'dump')
             if elapsed > self._construction_dwell:
                 self.get_logger().info('Construction dwell complete; returning')
                 wp = self._waypoints.get('return_to_start')
@@ -315,6 +326,7 @@ class MissionSupervisorNode(Node):
         old = self._phase
         self._phase = new_phase
         self._phase_start_time = self.get_clock().now()
+        self._linaks_called = False
         self.get_logger().info(f'Phase transition: {old.name} -> {new_phase.name}')
 
     # ------------------------------------------------------------------
@@ -411,6 +423,17 @@ class MissionSupervisorNode(Node):
                 pass
             self._nav_goal_handle = None
         self._nav_goal_active = False
+
+    def _call_linaks(self, client, name: str):
+        if not client.service_is_ready():
+            self.get_logger().warn(f'linaks/{name} service not available (node running?)')
+            return
+        future = client.call_async(Trigger.Request())
+        future.add_done_callback(
+            lambda f: self.get_logger().info(
+                f'linaks/{name}: {f.result().message}' if f.result() else f'linaks/{name}: no response'
+            )
+        )
 
     def _set_frontier_enabled(self, enabled: bool):
         if not self._frontier_enable_client.service_is_ready():
