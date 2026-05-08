@@ -2,9 +2,9 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>luna_control</name>
-  <version>0.0.0</version>
-  <description>Controller definition for the WPI Lunabotics 2024-25 drivetrain.</description>
-  <maintainer email="the.sam.rooney@gmail.com">Samuel Rooney</maintainer>
+  <version>0.0.1</version>
+  <description>Controller definition for the WPI Lunabotics 2025-26 drivetrain, adapted from the 2024-25 package.</description>
+  <maintainer email="jlarochelle118@gmail.com">John Larochelle</maintainer>
   <license>Not Applicable</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
@@ -17,6 +17,8 @@
   <depend>nav_msgs</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>rclpy</depend>
   <depend>rclcpp_lifecycle</depend>
   <depend>rcpputils</depend>
   <depend>realtime_tools</depend>

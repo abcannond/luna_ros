@@ -1,0 +1,11 @@
+<library path="luna_control">
+  <class
+    name="luna_control/LunaCan"
+    type="luna_can::LunaCan"
+    base_class_type="hardware_interface::SystemInterface">
+    <description>
+      Luna swerve drive hardware plugin.
+      Controls 4x C620 wheel motors and 4x SPARK MAX pod motors via SocketCAN.
+    </description>
+  </class>
+</library>

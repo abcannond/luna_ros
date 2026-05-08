@@ -68,33 +68,48 @@ namespace luna_controller
 
     // Estimate the robot's velocity
 
-    const double fl_linear_component = left_front_wheel_vel * wheel_radius_ * cos(left_front_pod_pos) / 4;
-    const double bl_linear_component = left_back_wheel_vel * wheel_radius_ * cos(left_back_pod_pos) / 4;
-    const double fr_linear_component = right_front_wheel_vel * wheel_radius_ * cos(right_front_pod_pos) / 4;
-    const double br_linear_component = right_back_wheel_vel * wheel_radius_ * cos(right_back_pod_pos) / 4;
+    // Wheel positions relative to robot center
+    const double x_fl =  wheel_base_ / 2.0;
+    const double y_fl =  wheel_track_ / 2.0;
+    const double x_fr =  wheel_base_ / 2.0;
+    const double y_fr = -wheel_track_ / 2.0;
+    const double x_bl = -wheel_base_ / 2.0;
+    const double y_bl =  wheel_track_ / 2.0;
+    const double x_br = -wheel_base_ / 2.0;
+    const double y_br = -wheel_track_ / 2.0;
 
-    const double fl_strafe_component = left_front_wheel_vel * wheel_radius_ * sin(left_front_pod_pos) / 4;
-    const double bl_strafe_component = left_back_wheel_vel * wheel_radius_ * sin(left_back_pod_pos) / 4;
-    const double fr_strafe_component = right_front_wheel_vel * wheel_radius_ * sin(right_front_pod_pos) / 4;
-    const double br_strafe_component = right_back_wheel_vel * wheel_radius_ * sin(right_back_pod_pos) / 4;
+    // Wheel velocity vectors (robot frame)
+    const double v_fl_x = left_front_wheel_vel  * wheel_radius_ * cos(left_front_pod_pos);
+    const double v_fl_y = left_front_wheel_vel  * wheel_radius_ * sin(left_front_pod_pos);
 
-    const double theta_kin_offset_fr = atan2(wheel_base_ / 2, wheel_track_ / 2);
-    const double theta_kin_offset_fl = theta_kin_offset_fr + M_PI_2;
-    const double theta_kin_offset_bl = theta_kin_offset_fr - M_PI;
-    const double theta_kin_offset_br = theta_kin_offset_fr - M_PI_2;
-    const double wheel_kin_radius = sqrt(pow(wheel_base_ / 2, 2) + pow(wheel_track_ / 2, 2));
+    const double v_fr_x = right_front_wheel_vel * wheel_radius_ * cos(right_front_pod_pos);
+    const double v_fr_y = right_front_wheel_vel * wheel_radius_ * sin(right_front_pod_pos);
 
-    const double fl_angular_component = left_front_wheel_vel * wheel_radius_ * cos(left_front_pod_pos - theta_kin_offset_fl) / (wheel_kin_radius * 4);
-    const double bl_angular_component = left_back_wheel_vel * wheel_radius_ * cos(left_back_pod_pos - theta_kin_offset_bl) / (wheel_kin_radius * 4);
-    const double fr_angular_component = right_front_wheel_vel * wheel_radius_ * cos(right_front_pod_pos - theta_kin_offset_fr) / (wheel_kin_radius * 4);
-    const double br_angular_component = right_back_wheel_vel * wheel_radius_ * cos(right_back_pod_pos - theta_kin_offset_br) / (wheel_kin_radius * 4);
+    const double v_bl_x = left_back_wheel_vel   * wheel_radius_ * cos(left_back_pod_pos);
+    const double v_bl_y = left_back_wheel_vel   * wheel_radius_ * sin(left_back_pod_pos);
 
-    // Compute deltas from velocity
-    const double linear = (fl_linear_component + bl_linear_component + fr_linear_component + br_linear_component) * dt;
-    const double strafe = (fl_strafe_component + bl_strafe_component + fr_strafe_component + br_strafe_component) * dt;
-    const double angular = (fl_angular_component + bl_angular_component + fr_angular_component + br_angular_component) * dt;
+    const double v_br_x = right_back_wheel_vel  * wheel_radius_ * cos(right_back_pod_pos);
+    const double v_br_y = right_back_wheel_vel  * wheel_radius_ * sin(right_back_pod_pos);
 
-    // Integrate odometry:
+    // Average linear velocity
+    const double vx = (v_fl_x + v_fr_x + v_bl_x + v_br_x) / 4.0;
+    const double vy = (v_fl_y + v_fr_y + v_bl_y + v_br_y) / 4.0;
+
+    // Angular velocity from cross product
+    const double r2 = pow(wheel_base_ / 2.0, 2) + pow(wheel_track_ / 2.0, 2);
+
+    const double omega =
+      ((x_fl * v_fl_y - y_fl * v_fl_x) +
+      (x_fr * v_fr_y - y_fr * v_fr_x) +
+      (x_bl * v_bl_y - y_bl * v_bl_x) +
+      (x_br * v_br_y - y_br * v_br_x)) / (4.0 * r2);
+
+    // Convert to deltas
+    const double linear  = vx * dt;
+    const double strafe  = vy * dt;
+    const double angular = omega * dt;
+
+    // Integrate
     integrateExact(linear, angular, strafe);
 
     // Update old position with current:

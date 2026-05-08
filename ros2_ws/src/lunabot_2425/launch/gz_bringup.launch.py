@@ -7,6 +7,7 @@ from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
     IncludeLaunchDescription,
+    OpaqueFunction,
     SetEnvironmentVariable,
     RegisterEventHandler,
     LogInfo,
@@ -15,7 +16,7 @@ from launch.actions import (
 from launch.conditions import LaunchConfigurationEquals, IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.event_handlers import OnProcessExit
-from launch.substitutions import LaunchConfiguration, TextSubstitution
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 
@@ -43,8 +44,6 @@ def generate_launch_description():
         default_value="ucf_arena",
         description="Arena: ucf_arena (default) or artemis_arena",
     )
-    world_name = LaunchConfiguration("world", default="ucf_arena")
-
     # When true (default), start RTAB-Map + Nav2 + RViz after Gazebo is up (single-command sim).
     declare_launch_mapping = DeclareLaunchArgument(
         "launch_mapping",
@@ -52,23 +51,13 @@ def generate_launch_description():
         description="If true, launch RTAB-Map, Nav2, and RViz after ~18 s (single terminal). If false, Gazebo + fid cam RViz only.",
     )
     launch_mapping = LaunchConfiguration("launch_mapping", default="true")
-    declare_rviz_config = DeclareLaunchArgument(
-        "rviz_config",
-        default_value="",
-        description="Optional RViz config path for rtabmap_nav2_sim (empty = use its default).",
+
+    # In Docker, default to gz sim -s (server only, no Gazebo GUI) to avoid Qt/OpenGL/EGL issues.
+    declare_gz_server_only = DeclareLaunchArgument(
+        "gz_server_only",
+        default_value="true" if os.path.exists("/.dockerenv") else "false",
+        description="If true, pass -s to gz sim (no Gazebo GUI). Use false on native Linux with working GPU.",
     )
-    rviz_config = LaunchConfiguration("rviz_config", default="")
-    # gz_args as Substitutions so launch arg is applied when using luna_ros2_worlds
-    if has_worlds_pkg:
-        gz_args_parts = [
-            TextSubstitution(text="-r " + worlds_path + "/"),
-            world_name,
-            TextSubstitution(text=".sdf"),
-        ]
-    else:
-        gz_args_parts = [
-            TextSubstitution(text="-r " + os.path.join(worlds_path, "empty.world")),
-        ]
 
     # --- RSP ---
     rsp_source = PythonLaunchDescriptionSource(os.path.join(
@@ -94,17 +83,28 @@ def generate_launch_description():
         value=f"{models_path}:{worlds_path}:{pkg_path}"
     )
 
-    gz_sim = IncludeLaunchDescription(
-        gz_sim_source,
-        launch_arguments={
-            "gz_args": gz_args_parts,
-            "on_exit_shutdown": "True",
-        }.items(),
-    )
+    def gz_sim_launch(context):
+        gz_server_only = context.launch_configurations.get("gz_server_only", "false")
+        world = context.launch_configurations.get("world", "ucf_arena")
+        prefix = "-s " if gz_server_only == "true" else ""
+        if has_worlds_pkg:
+            world_file = f"{worlds_path}/{world}.sdf"
+        else:
+            world_file = os.path.join(worlds_path, "empty.world")
+        gz_arg = f"{prefix}-r {world_file}"
+        return [
+            IncludeLaunchDescription(
+                gz_sim_source,
+                launch_arguments={
+                    "gz_args": gz_arg,
+                    "on_exit_shutdown": "True",
+                }.items(),
+            )
+        ]
 
-    # UCF arena spawn — MUST match competition_sim.launch.py SPAWN_POSES for
-    # world:=ucf_arena (same x/y/yaw as static world->map). y=3.10 is the safe
-    # corner offset from arena walls; do not move toward +Y without updating map + fiducials.
+    gz_sim = OpaqueFunction(function=gz_sim_launch)
+
+    # UCF arena spawn (fiducial_shit before artemis merge)
     gz_create_robot_ucf = Node(
         package="ros_gz_sim",
         executable="create",
@@ -112,8 +112,8 @@ def generate_launch_description():
         arguments=[
             "-topic", "robot_description",
             "-name", "mooncake",
-            "-x", "-3.80",
-            "-y", "3.10",
+            "-x", "-3.75",
+            "-y", "2.75",
             "-z", "0.1",
             "-R", "0",
             "-P", "0",
@@ -204,14 +204,8 @@ def generate_launch_description():
         OnProcessExit(
             target_action=gz_create_robot_ucf,
             on_exit=[
-                LogInfo(msg="Robot spawned — waiting for gz_ros_control to initialise..."),
-                TimerAction(
-                    period=5.0,
-                    actions=[
-                        LogInfo(msg="Starting joint_state_broadcaster..."),
-                        joint_state_broadcaster_spawner,
-                    ],
-                ),
+                LogInfo(msg="Robot spawned — starting joint_state_broadcaster..."),
+                joint_state_broadcaster_spawner,
             ]
         )
     )
@@ -219,14 +213,8 @@ def generate_launch_description():
         OnProcessExit(
             target_action=gz_create_robot_artemis,
             on_exit=[
-                LogInfo(msg="Robot spawned — waiting for gz_ros_control to initialise..."),
-                TimerAction(
-                    period=5.0,
-                    actions=[
-                        LogInfo(msg="Starting joint_state_broadcaster..."),
-                        joint_state_broadcaster_spawner,
-                    ],
-                ),
+                LogInfo(msg="Robot spawned — starting joint_state_broadcaster..."),
+                joint_state_broadcaster_spawner,
             ]
         )
     )
@@ -242,18 +230,19 @@ def generate_launch_description():
         )
     )
 
-    # depth_to_pointcloud: only when mapping is NOT active (mapping launch has its own
-    # frame-fixed + ground-filtered point cloud pipeline via depth_image_proc).
-    # Running both publishes conflicting data on /camera/camera/depth/color/points.
     depth_to_pointcloud_node = Node(
-        package='depth_to_pointcloud',
-        executable='depth_to_pointcloud_node',
+        package='depth_to_pointcloud',          # your package name
+        executable='depth_to_pointcloud_node',  # node executable
         name='depth_to_pointcloud_node',
         output='screen',
-        parameters=[{'use_sim_time': True}],
-        condition=UnlessCondition(launch_mapping),
+        parameters=[{'use_sim_time': True}],     # optional if you want sim time
+        remappings=[                             # optional, remap your topics
+            # ('/input_depth', '/camera/depth/image_raw'),
+            # ('/output_points', '/camera/depth/points'),
+        ]
     )
 
+    # Start depth_to_pointcloud AFTER the robot is spawned (either arena)
     start_depth_to_pointcloud_ucf = RegisterEventHandler(
         OnProcessExit(
             target_action=gz_create_robot_ucf,
@@ -304,26 +293,23 @@ def generate_launch_description():
             "use_sim_time": "true",
             "launch_rviz": "true",
             "launch_nav2": "true",
-            "rviz_config": rviz_config,
         }.items(),
     )
-    # Fixed delay: wait for sim to build and robot to spawn (25 s), then start RTAB-Map/Nav2
-    sim_ready_msg = LogInfo(msg="Sim is ready! Starting RTAB-Map/Nav2...")
     rtabmap_nav2_delayed = TimerAction(
-        period=25.0,
-        actions=[sim_ready_msg, rtabmap_nav2_include],
+        period=18.0,
+        actions=[rtabmap_nav2_include],
         condition=IfCondition(launch_mapping),
     )
-    nav2_up_msg = TimerAction(
-        period=37.0,
-        actions=[LogInfo(msg="Nav2 is up!")],
-        condition=IfCondition(launch_mapping),
+
+    luna_can = Node(
+        package="luna_control",
+        executable="luna_can",
+        name="luna_can",
     )
 
     return LaunchDescription([
         declare_world,
         declare_launch_mapping,
-        declare_rviz_config,
         rsp,
         gz_sim_resource,
         gz_sim,
@@ -337,7 +323,7 @@ def generate_launch_description():
         start_depth_to_pointcloud_ucf,
         start_depth_to_pointcloud_artemis,
         rtabmap_nav2_delayed,
-        nav2_up_msg,
+        luna_can,
         # RViz (depth + fid cams) only when mapping is disabled
         TimerAction(period=5.0, actions=[rviz_node], condition=UnlessCondition(launch_mapping)),
     ])

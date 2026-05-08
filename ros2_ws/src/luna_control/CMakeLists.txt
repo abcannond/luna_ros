@@ -32,11 +32,61 @@ generate_parameter_library(luna_controller_parameters
   src/luna_controller_parameter.yaml
 )
 
+#important to include SparkMax stuff so that LunaCAN can find it 
 add_library(luna_control SHARED
   src/LunaController.cpp
+  src/LunaCan.cpp
   src/odometry.cpp
   src/speed_limiter.cpp
+  src/SparkMax.cpp
+  src/SparkBase.cpp
 )
+
+#executables
+add_executable(luna_can src/luna_can.cpp)
+add_executable(luna_linaks
+  src/luna_linaks.cpp
+  src/linak_actuator.cpp
+)
+add_executable(luna_debug src/luna_debug.cpp)
+
+add_executable(luna_linkage_joy
+  src/luna_linkage_joy.cpp
+  src/teleop_can.cpp
+)
+target_include_directories(luna_linkage_joy PRIVATE
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+)
+target_compile_features(luna_linkage_joy PUBLIC cxx_std_17)
+ament_target_dependencies(luna_linkage_joy
+  rclcpp
+  sensor_msgs
+)
+
+target_link_libraries(luna_can
+  luna_control
+)
+
+target_link_libraries(luna_debug
+  luna_control
+)
+
+target_link_libraries(luna_linaks
+  luna_control
+)
+
+ament_target_dependencies(luna_can
+  rclcpp
+)
+
+ament_target_dependencies(luna_debug
+  rclcpp
+)
+
+ament_target_dependencies(luna_linaks
+  rclcpp
+)
+
 target_compile_features(luna_control PUBLIC cxx_std_17)
 target_include_directories(luna_control PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -48,45 +98,21 @@ ament_target_dependencies(luna_control PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS})
 # which is appropriate when building the dll but not consuming it.
 target_compile_definitions(luna_control PRIVATE "LUNA_CONTROL_BUILDING_DLL")
 pluginlib_export_plugin_description_file(controller_interface luna_plugin.xml)
-
-# if(BUILD_TESTING)
-#   find_package(ament_cmake_gmock REQUIRED)
-#   find_package(controller_manager REQUIRED)
-#   find_package(ros2_control_test_assets REQUIRED)
-
-#   ament_add_gmock(test_luna_control
-#     test/test_luna_control.cpp)
-#   target_link_libraries(test_luna_control
-#     luna_control
-#   )
-#   ament_target_dependencies(test_luna_control
-#     geometry_msgs
-#     hardware_interface
-#     nav_msgs
-#     rclcpp
-#     rclcpp_lifecycle
-#     realtime_tools
-#     tf2
-#     tf2_msgs
-#   )
-
-#   add_definitions(-DTEST_FILES_DIRECTORY="${CMAKE_CURRENT_SOURCE_DIR}/test")
-#   ament_add_gmock(test_load_luna_control test/test_load_luna_control.cpp)
-#   ament_target_dependencies(test_load_luna_control
-#     controller_manager
-#     ros2_control_test_assets
-#   )
-# endif()
+pluginlib_export_plugin_description_file(hardware_interface luna_can.xml)
 
 install(
   DIRECTORY include/
   DESTINATION include/luna_control
 )
-install(TARGETS luna_control luna_controller_parameters
+install(TARGETS luna_control luna_controller_parameters luna_can luna_debug luna_linaks luna_linkage_joy
   EXPORT export_luna_control
-  RUNTIME DESTINATION bin
+  RUNTIME DESTINATION lib/luna_control
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
+)
+install(
+  FILES luna_can.xml
+  DESTINATION share/${PROJECT_NAME}
 )
 
 ament_export_targets(export_luna_control HAS_LIBRARY_TARGET)

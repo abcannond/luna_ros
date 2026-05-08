@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="robot">
+
+    <ros2_control name="luna_can" type="system">
+    <hardware>
+        <plugin>luna_control/LunaCan</plugin>
+        <param name="can_interface">can1</param>
+    </hardware>
+
+    <!-- ── Wheel joints (C620) ── -->
+    <joint name="front_left_drive_joint">
+        <param name="can_id">2</param>
+        <param name="type">c620</param>
+        <param name="reversed">false</param> 
+        <command_interface name="velocity"/>
+        <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="front_right_drive_joint">
+        <param name="can_id">1</param>
+        <param name="type">c620</param>
+        <param name="reversed">true</param>
+        <command_interface name="velocity"/>
+        <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="back_left_drive_joint">
+        <param name="can_id">3</param>
+        <param name="type">c620</param>
+        <param name="reversed">false</param>
+        <command_interface name="velocity"/>
+        <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="back_right_drive_joint">
+        <param name="can_id">4</param>
+        <param name="type">c620</param>
+        <param name="reversed">true</param>
+        <command_interface name="velocity"/>
+        <state_interface name="velocity"/>
+    </joint>
+
+    <!-- ── Pod joints (SPARK MAX) ── -->
+    <joint name="front_left_steer_joint">
+        <param name="can_id">5</param>
+        <param name="type">sparkmax</param>
+        <command_interface name="position"/>
+        <state_interface name="position"/>
+    </joint>
+
+    <joint name="front_right_steer_joint">
+        <param name="can_id">6</param>
+        <param name="type">sparkmax</param>
+        <command_interface name="position"/>
+        <state_interface name="position"/>
+    </joint>
+
+    <joint name="back_left_steer_joint">
+        <param name="can_id">7</param>
+        <param name="type">sparkmax</param>
+        <command_interface name="position"/>
+        <state_interface name="position"/>
+    </joint>
+
+    <joint name="back_right_steer_joint">
+        <param name="can_id">8</param>
+        <param name="type">sparkmax</param>
+        <command_interface name="position"/>
+        <state_interface name="position"/>
+    </joint>
+
+    </ros2_control>
+</robot> 

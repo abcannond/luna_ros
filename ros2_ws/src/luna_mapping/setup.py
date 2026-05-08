@@ -30,6 +30,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'joy_echo = luna_mapping.joy_echo:main',
             'camera_info_fixer = luna_mapping.camera_info_fixer:main',
             'tf_relay = luna_mapping.tf_relay:main',
             'image_frame_fixer = luna_mapping.image_frame_fixer:main',
