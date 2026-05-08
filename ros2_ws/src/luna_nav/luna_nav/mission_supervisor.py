@@ -65,9 +65,11 @@ class MissionSupervisorNode(Node):
         # Stationary pre-goal delay (s); no in-place rotation (avoids costmap artifacts).
         self.declare_parameter('map_warmup_s', 3.0)
         # Excavation: seconds to wait after lowering bucket before driving, and drive speed/duration
-        self.declare_parameter('excavation_lower_delay_s', 2.0)
+        self.declare_parameter('excavation_shoulder_s', 3.0)   # time for shoulders to lower arm
+        self.declare_parameter('excavation_wrist_s', 2.0)      # time for wrist to level scoop
         self.declare_parameter('excavation_drive_speed_ms', 0.15)
         self.declare_parameter('excavation_drive_s', 5.0)
+        self.declare_parameter('excavation_raise_s', 3.0)      # time to raise arm after scooping
         # Dump: seconds for lift to rise before backing up, then backup speed/duration
         self.declare_parameter('dump_lift_delay_s', 2.0)
         self.declare_parameter('dump_backup_speed_ms', 0.10)
@@ -83,9 +85,11 @@ class MissionSupervisorNode(Node):
         self._construction_dwell = float(self.get_parameter('construction_dwell_s').value or 20.0)
         self._use_frontier = bool(self.get_parameter('use_frontier_exploration').value)
         self._map_warmup = float(self.get_parameter('map_warmup_s').value or 3.0)
-        self._excavation_lower_delay = float(self.get_parameter('excavation_lower_delay_s').value)
+        self._excavation_shoulder_s  = float(self.get_parameter('excavation_shoulder_s').value)
+        self._excavation_wrist_s     = float(self.get_parameter('excavation_wrist_s').value)
         self._excavation_drive_speed = float(self.get_parameter('excavation_drive_speed_ms').value)
-        self._excavation_drive_s = float(self.get_parameter('excavation_drive_s').value)
+        self._excavation_drive_s     = float(self.get_parameter('excavation_drive_s').value)
+        self._excavation_raise_s     = float(self.get_parameter('excavation_raise_s').value)
         self._dump_lift_delay = float(self.get_parameter('dump_lift_delay_s').value)
         self._dump_backup_speed = float(self.get_parameter('dump_backup_speed_ms').value)
         self._dump_backup_s = float(self.get_parameter('dump_backup_s').value)
@@ -98,11 +102,12 @@ class MissionSupervisorNode(Node):
 
         self._phase = MissionPhase.IDLE
         self._phase_start_time = self.get_clock().now()
-        self._linaks_called = False       # guards single service call per dwell phase
-        self._excavation_driving = False  # True while publishing forward cmd_vel during scoop
-        self._excavation_raised = False   # True once bucket raise has been commanded
-        self._dump_backing = False        # True while publishing reverse cmd_vel during dump
-        self._dump_retracted = False      # True once lift retract has been commanded
+        # per-phase one-shot flags, reset in _transition()
+        self._linaks_called   = False  # stage 1: arm lowered / lift extended
+        self._stage2_done     = False  # stage 2: wrist leveled / backup started
+        self._stage3_done     = False  # stage 3: driving started / backup stopped
+        self._stage4_done     = False  # stage 4: wrist tilted up
+        self._stage5_done     = False  # stage 5: arm raised
         self._current_zone = 'unknown'
         self._fiducial_received = False
         self._exploration_status = 'disabled'
@@ -296,31 +301,51 @@ class MissionSupervisorNode(Node):
                 self._transition(MissionPhase.TRAVERSING_TO_EXCAVATION)
 
         elif self._phase == MissionPhase.IN_EXCAVATION_ZONE:
-            # Step 1 (t=0): extend both sides of 4-bar simultaneously to lower scoop
+            # Excavation sequence (all times relative to phase entry):
+            #   t0                            → shoulders extend (arm lowers toward ground)
+            #   t0 + shoulder_s               → wrist extends (levels scoop with ground)
+            #   t0 + shoulder_s + wrist_s     → drive forward to fill scoop
+            #   t0 + shoulder_s + wrist_s + drive_s → stop, wrist retract (tilt up to retain)
+            #   ...+ raise_s                  → shoulder retract (raise arm)
+
+            t_wrist  = self._excavation_shoulder_s
+            t_drive  = t_wrist  + self._excavation_wrist_s
+            t_wrist_up = t_drive + self._excavation_drive_s
+            t_raise  = t_wrist_up + self._excavation_raise_s
+
+            # Stage 1: lower arm
             if not self._linaks_called:
                 self._linaks_called = True
                 self._call_linaks(self._shoulder_extend, 'shoulder/extend')
-                self._call_linaks(self._wrist_extend,    'wrist/extend')
-                self.get_logger().info('Excavation: lowering 4-bar scoop')
+                self.get_logger().info('Excavation: shoulders lowering arm')
 
-            # Step 2 (t=lower_delay): drive forward to scoop
-            drive_start = self._excavation_lower_delay
-            drive_end   = drive_start + self._excavation_drive_s
-            if drive_start <= elapsed < drive_end:
-                if not self._excavation_driving:
-                    self._excavation_driving = True
+            # Stage 2: level scoop with wrist
+            if elapsed >= t_wrist and not self._stage2_done:
+                self._stage2_done = True
+                self._call_linaks(self._wrist_extend, 'wrist/extend')
+                self.get_logger().info('Excavation: wrist leveling scoop')
+
+            # Stage 3: drive forward to fill scoop
+            if t_drive <= elapsed < t_wrist_up:
+                if not self._stage3_done:
+                    self._stage3_done = True
                     self.get_logger().info('Excavation: driving forward to scoop')
                 fwd = Twist()
                 fwd.linear.x = self._excavation_drive_speed
                 self._cmd_vel_pub.publish(fwd)
 
-            # Step 3 (t=drive_end): stop driving and raise bucket
-            elif elapsed >= drive_end and not self._excavation_raised:
-                self._excavation_raised = True
-                self._cmd_vel_pub.publish(Twist())  # stop
+            # Stage 4: stop + tilt scoop up to retain regolith
+            if elapsed >= t_wrist_up and not self._stage4_done:
+                self._stage4_done = True
+                self._cmd_vel_pub.publish(Twist())
+                self._call_linaks(self._wrist_retract, 'wrist/retract')
+                self.get_logger().info('Excavation: wrist tilting scoop up')
+
+            # Stage 5: raise arm
+            if elapsed >= t_raise and not self._stage5_done:
+                self._stage5_done = True
                 self._call_linaks(self._shoulder_retract, 'shoulder/retract')
-                self._call_linaks(self._wrist_retract,    'wrist/retract')
-                self.get_logger().info('Excavation: raising 4-bar scoop')
+                self.get_logger().info('Excavation: shoulders raising arm')
 
             if elapsed > self._excavation_dwell:
                 self.get_logger().info('Excavation dwell complete; heading to construction')
@@ -347,21 +372,21 @@ class MissionSupervisorNode(Node):
                 self._call_linaks(self._lift_extend, 'lift/extend')
                 self.get_logger().info('Dump: extending scissor lift')
 
-            # Step 2 (t=lift_delay): reverse slowly to spread regolith along berm
+            # Stage 2: reverse slowly to spread regolith along berm
             backup_start = self._dump_lift_delay
             backup_end   = backup_start + self._dump_backup_s
             if backup_start <= elapsed < backup_end:
-                if not self._dump_backing:
-                    self._dump_backing = True
+                if not self._stage2_done:
+                    self._stage2_done = True
                     self.get_logger().info('Dump: backing up to spread berm')
                 rev = Twist()
                 rev.linear.x = -abs(self._dump_backup_speed)
                 self._cmd_vel_pub.publish(rev)
 
-            # Step 3 (t=backup_end): stop reversing; lift stays extended (no retract — one-way mechanism)
-            elif elapsed >= backup_end and not self._dump_retracted:
-                self._dump_retracted = True
-                self._cmd_vel_pub.publish(Twist())  # stop
+            # Stage 3: stop; lift stays extended (one-way mechanism, no retract)
+            if elapsed >= backup_end and not self._stage3_done:
+                self._stage3_done = True
+                self._cmd_vel_pub.publish(Twist())
                 self.get_logger().info('Dump: backup complete, lift remains extended')
 
             if elapsed > self._construction_dwell:
@@ -394,7 +419,8 @@ class MissionSupervisorNode(Node):
         old = self._phase
         self._phase = new_phase
         self._phase_start_time = self.get_clock().now()
-        self._linaks_called = False
+        self._linaks_called = self._stage2_done = self._stage3_done = False
+        self._stage4_done   = self._stage5_done = False
         self.get_logger().info(f'Phase transition: {old.name} -> {new_phase.name}')
 
     # ------------------------------------------------------------------
