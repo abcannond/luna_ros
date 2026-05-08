@@ -59,11 +59,19 @@ class MissionSupervisorNode(Node):
         self.declare_parameter('rate_hz', 2.0)
         self.declare_parameter('localize_timeout_s', 30.0)
         self.declare_parameter('phase_timeout_s', 120.0)
-        self.declare_parameter('excavation_dwell_s', 10.0)
-        self.declare_parameter('construction_dwell_s', 10.0)
+        self.declare_parameter('excavation_dwell_s', 15.0)
+        self.declare_parameter('construction_dwell_s', 20.0)
         self.declare_parameter('use_frontier_exploration', True)
         # Stationary pre-goal delay (s); no in-place rotation (avoids costmap artifacts).
         self.declare_parameter('map_warmup_s', 3.0)
+        # Excavation: seconds to wait after lowering bucket before driving, and drive speed/duration
+        self.declare_parameter('excavation_lower_delay_s', 2.0)
+        self.declare_parameter('excavation_drive_speed_ms', 0.15)
+        self.declare_parameter('excavation_drive_s', 5.0)
+        # Dump: seconds for lift to rise before backing up, then backup speed/duration
+        self.declare_parameter('dump_lift_delay_s', 2.0)
+        self.declare_parameter('dump_backup_speed_ms', 0.10)
+        self.declare_parameter('dump_backup_s', 6.0)
 
         config_file = self.get_parameter('config_file').value
         zones_file = self.get_parameter('zones_file').value
@@ -71,10 +79,16 @@ class MissionSupervisorNode(Node):
         rate = float(self.get_parameter('rate_hz').value or 2.0)
         self._localize_timeout = float(self.get_parameter('localize_timeout_s').value or 30.0)
         self._phase_timeout = float(self.get_parameter('phase_timeout_s').value or 120.0)
-        self._excavation_dwell = float(self.get_parameter('excavation_dwell_s').value or 10.0)
-        self._construction_dwell = float(self.get_parameter('construction_dwell_s').value or 10.0)
+        self._excavation_dwell = float(self.get_parameter('excavation_dwell_s').value or 15.0)
+        self._construction_dwell = float(self.get_parameter('construction_dwell_s').value or 20.0)
         self._use_frontier = bool(self.get_parameter('use_frontier_exploration').value)
         self._map_warmup = float(self.get_parameter('map_warmup_s').value or 3.0)
+        self._excavation_lower_delay = float(self.get_parameter('excavation_lower_delay_s').value)
+        self._excavation_drive_speed = float(self.get_parameter('excavation_drive_speed_ms').value)
+        self._excavation_drive_s = float(self.get_parameter('excavation_drive_s').value)
+        self._dump_lift_delay = float(self.get_parameter('dump_lift_delay_s').value)
+        self._dump_backup_speed = float(self.get_parameter('dump_backup_speed_ms').value)
+        self._dump_backup_s = float(self.get_parameter('dump_backup_s').value)
 
         self._waypoints = {}
         if config_file:
@@ -84,7 +98,11 @@ class MissionSupervisorNode(Node):
 
         self._phase = MissionPhase.IDLE
         self._phase_start_time = self.get_clock().now()
-        self._linaks_called = False  # guards single service call per dwell phase
+        self._linaks_called = False       # guards single service call per dwell phase
+        self._excavation_driving = False  # True while publishing forward cmd_vel during scoop
+        self._excavation_raised = False   # True once bucket raise has been commanded
+        self._dump_backing = False        # True while publishing reverse cmd_vel during dump
+        self._dump_retracted = False      # True once lift retract has been commanded
         self._current_zone = 'unknown'
         self._fiducial_received = False
         self._exploration_status = 'disabled'
@@ -118,9 +136,12 @@ class MissionSupervisorNode(Node):
             Trigger, '~/abort_mission', self._abort_mission_cb, callback_group=cb_group)
 
         self._frontier_enable_client = self.create_client(SetBool, '/frontier_explorer/enable')
-        self._linaks_excavate_client = self.create_client(Trigger, '/luna_linaks_node/excavate')
-        self._linaks_dump_client     = self.create_client(Trigger, '/luna_linaks_node/dump')
-        self._linaks_stop_client     = self.create_client(Trigger, '/luna_linaks_node/stop')
+        # Per-actuator services: shoulder lowers/raises bucket; lift extends/retracts for dump
+        self._shoulder_extend  = self.create_client(Trigger, '/luna_linaks_node/shoulder/extend')
+        self._shoulder_retract = self.create_client(Trigger, '/luna_linaks_node/shoulder/retract')
+        self._lift_extend      = self.create_client(Trigger, '/luna_linaks_node/lift/extend')
+        self._lift_retract     = self.create_client(Trigger, '/luna_linaks_node/lift/retract')
+        self._linaks_stop_all  = self.create_client(Trigger, '/luna_linaks_node/stop_all')
 
         self._timer = self.create_timer(1.0 / rate, self._tick)
         self._marker_timer = self.create_timer(1.0, self._publish_status_marker)
@@ -189,7 +210,7 @@ class MissionSupervisorNode(Node):
     def _abort_mission_cb(self, request, response):
         self._set_frontier_enabled(False)
         self._cancel_nav_goal()
-        self._call_linaks(self._linaks_stop_client, 'stop')
+        self._call_linaks(self._linaks_stop_all, 'stop_all')
         self._transition(MissionPhase.IDLE)
         self._nav_goal_active = False
         response.success = True
@@ -273,11 +294,33 @@ class MissionSupervisorNode(Node):
                 self._transition(MissionPhase.TRAVERSING_TO_EXCAVATION)
 
         elif self._phase == MissionPhase.IN_EXCAVATION_ZONE:
+            # Step 1 (t=0): lower bucket
             if not self._linaks_called:
                 self._linaks_called = True
-                self._call_linaks(self._linaks_excavate_client, 'excavate')
+                self._call_linaks(self._shoulder_extend, 'shoulder/extend')
+                self.get_logger().info('Excavation: lowering bucket')
+
+            # Step 2 (t=lower_delay): drive forward to scoop
+            drive_start = self._excavation_lower_delay
+            drive_end   = drive_start + self._excavation_drive_s
+            if drive_start <= elapsed < drive_end:
+                if not self._excavation_driving:
+                    self._excavation_driving = True
+                    self.get_logger().info('Excavation: driving forward to scoop')
+                fwd = Twist()
+                fwd.linear.x = self._excavation_drive_speed
+                self._cmd_vel_pub.publish(fwd)
+
+            # Step 3 (t=drive_end): stop driving and raise bucket
+            elif elapsed >= drive_end and not self._excavation_raised:
+                self._excavation_raised = True
+                self._cmd_vel_pub.publish(Twist())  # stop
+                self._call_linaks(self._shoulder_retract, 'shoulder/retract')
+                self.get_logger().info('Excavation: raising bucket')
+
             if elapsed > self._excavation_dwell:
                 self.get_logger().info('Excavation dwell complete; heading to construction')
+                self._cmd_vel_pub.publish(Twist())
                 wp = self._waypoints.get('construction_entry')
                 if wp:
                     self._send_nav_goal(wp)
@@ -294,11 +337,33 @@ class MissionSupervisorNode(Node):
                 self._transition(MissionPhase.IN_CONSTRUCTION_ZONE)
 
         elif self._phase == MissionPhase.IN_CONSTRUCTION_ZONE:
+            # Step 1 (t=0): extend scissor lift — gravity starts the dump
             if not self._linaks_called:
                 self._linaks_called = True
-                self._call_linaks(self._linaks_dump_client, 'dump')
+                self._call_linaks(self._lift_extend, 'lift/extend')
+                self.get_logger().info('Dump: extending scissor lift')
+
+            # Step 2 (t=lift_delay): reverse slowly to spread regolith along berm
+            backup_start = self._dump_lift_delay
+            backup_end   = backup_start + self._dump_backup_s
+            if backup_start <= elapsed < backup_end:
+                if not self._dump_backing:
+                    self._dump_backing = True
+                    self.get_logger().info('Dump: backing up to spread berm')
+                rev = Twist()
+                rev.linear.x = -abs(self._dump_backup_speed)
+                self._cmd_vel_pub.publish(rev)
+
+            # Step 3 (t=backup_end): stop reversing and retract lift
+            elif elapsed >= backup_end and not self._dump_retracted:
+                self._dump_retracted = True
+                self._cmd_vel_pub.publish(Twist())  # stop
+                self._call_linaks(self._lift_retract, 'lift/retract')
+                self.get_logger().info('Dump: retracting lift')
+
             if elapsed > self._construction_dwell:
                 self.get_logger().info('Construction dwell complete; returning')
+                self._cmd_vel_pub.publish(Twist())
                 wp = self._waypoints.get('return_to_start')
                 if wp:
                     self._send_nav_goal(wp)

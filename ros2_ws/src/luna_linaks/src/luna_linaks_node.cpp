@@ -5,73 +5,73 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/float32.hpp>
-#include <std_msgs/msg/u_int8.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <std_srvs/srv/trigger.hpp>
+
+// Three actuators on the robot:
+//   shoulder (0x80) – main arm that raises/lowers the bucket
+//   wrist    (0xC8) – bucket wrist/tilt
+//   lift     (0xF6) – scissor lift used for berm dump
+//
+// Each gets its own CAN socket and heartbeat (via the ROS timer) so all three
+// can be commanded independently at the same time.
+
+struct ActuatorChannel {
+    std::unique_ptr<LinakActuator> act;
+
+    // what the keep-alive loop should be sending right now
+    enum class Cmd { STOP, EXTEND, RETRACT } cmd = Cmd::STOP;
+};
 
 class LinaksNode : public rclcpp::Node
 {
 public:
     LinaksNode() : Node("luna_linaks_node")
     {
-        declare_parameter("can_iface",          "can0");
-        declare_parameter("actuator_addr",      0xC8);
-        declare_parameter("src_addr",           0x01);
-        declare_parameter("test_mode",          false);
-        declare_parameter("speed_percent",      50);
-        declare_parameter("excavation_hold_s",  5.0);
-        declare_parameter("dump_hold_s",        5.0);
-        declare_parameter("command_rate_hz",    10.0);
+        declare_parameter("can_iface",   "can0");
+        declare_parameter("src_addr",    0x01);
+        declare_parameter("test_mode",   false);
+        declare_parameter("speed_percent", 50);
+        declare_parameter("command_rate_hz", 10.0);
 
         const std::string iface = get_parameter("can_iface").as_string();
-        const uint8_t     act   = static_cast<uint8_t>(get_parameter("actuator_addr").as_int());
         const uint8_t     src   = static_cast<uint8_t>(get_parameter("src_addr").as_int());
         const bool        test  = get_parameter("test_mode").as_bool();
-        speed_         = static_cast<uint8_t>(get_parameter("speed_percent").as_int());
-        excavate_hold_ = get_parameter("excavation_hold_s").as_double();
-        dump_hold_     = get_parameter("dump_hold_s").as_double();
+        const uint8_t     spd   = static_cast<uint8_t>(get_parameter("speed_percent").as_int());
 
-        try {
-            actuator_ = std::make_unique<LinakActuator>(iface, act, src, test);
-            actuator_->set_speed(speed_);
-            RCLCPP_INFO(get_logger(), "LinakActuator opened on %s addr=0x%02X test=%s",
-                        iface.c_str(), act, test ? "true" : "false");
-        } catch (const std::exception & e) {
-            RCLCPP_ERROR(get_logger(), "Failed to open LinakActuator: %s", e.what());
+        // shoulder=0x80, wrist=0xC8, lift=0xF6 (from menu_loop.sh CAN IDs)
+        const uint8_t addrs[3] = {0x80, 0xC8, 0xF6};
+        const char*   names[3] = {"shoulder", "wrist", "lift"};
+
+        for (int i = 0; i < 3; ++i) {
+            try {
+                channels_[i].act = std::make_unique<LinakActuator>(iface, addrs[i], src, test);
+                channels_[i].act->set_speed(spd);
+                RCLCPP_INFO(get_logger(), "%s (0x%02X) opened on %s",
+                            names[i], addrs[i], iface.c_str());
+            } catch (const std::exception & e) {
+                RCLCPP_ERROR(get_logger(), "Failed to open %s: %s", names[i], e.what());
+            }
+
+            // per-actuator: extend / retract / stop
+            make_service(std::string(names[i]) + "/extend",  i, ActuatorChannel::Cmd::EXTEND);
+            make_service(std::string(names[i]) + "/retract", i, ActuatorChannel::Cmd::RETRACT);
+            make_service(std::string(names[i]) + "/stop",    i, ActuatorChannel::Cmd::STOP);
         }
 
-        pos_pub_   = create_publisher<std_msgs::msg::Float32>("~/position_mm",  10);
-        err_pub_   = create_publisher<std_msgs::msg::UInt8>("~/error_code",     10);
-        state_pub_ = create_publisher<std_msgs::msg::String>("~/state",         10);
-
-        excavate_srv_ = create_service<std_srvs::srv::Trigger>(
-            "~/excavate",
+        stop_all_srv_ = create_service<std_srvs::srv::Trigger>(
+            "~/stop_all",
             [this](const std_srvs::srv::Trigger::Request::SharedPtr,
                          std_srvs::srv::Trigger::Response::SharedPtr res) {
-                if (!actuator_) { res->success = false; res->message = "actuator not open"; return; }
-                start_sequence(true);
+                for (auto & ch : channels_) {
+                    ch.cmd = ActuatorChannel::Cmd::STOP;
+                    if (ch.act) { ch.act->stop(); ch.act->send_command(); }
+                }
                 res->success = true;
-                res->message = "excavation sequence started";
+                res->message = "all actuators stopped";
             });
 
-        dump_srv_ = create_service<std_srvs::srv::Trigger>(
-            "~/dump",
-            [this](const std_srvs::srv::Trigger::Request::SharedPtr,
-                         std_srvs::srv::Trigger::Response::SharedPtr res) {
-                if (!actuator_) { res->success = false; res->message = "actuator not open"; return; }
-                start_sequence(false);
-                res->success = true;
-                res->message = "dump sequence started";
-            });
-
-        stop_srv_ = create_service<std_srvs::srv::Trigger>(
-            "~/stop",
-            [this](const std_srvs::srv::Trigger::Request::SharedPtr,
-                         std_srvs::srv::Trigger::Response::SharedPtr res) {
-                go_idle();
-                res->success = true;
-                res->message = "stopped";
-            });
+        state_pub_ = create_publisher<std_msgs::msg::String>("~/state", 10);
 
         const double period_s = 1.0 / get_parameter("command_rate_hz").as_double();
         timer_ = create_wall_timer(
@@ -80,131 +80,61 @@ public:
     }
 
 private:
-    enum class State { IDLE, EXTENDING, HOLDING, RETRACTING };
-
-    void start_sequence(bool is_excavate)
+    void make_service(const std::string & name, int idx, ActuatorChannel::Cmd cmd)
     {
-        is_excavate_ = is_excavate;
-        state_ = State::EXTENDING;
-        actuator_->set_speed(speed_);
-        actuator_->run_out();
-        actuator_->send_command();
-        RCLCPP_INFO(get_logger(), "%s: EXTENDING", is_excavate_ ? "excavate" : "dump");
-    }
-
-    void go_idle()
-    {
-        if (actuator_) {
-            actuator_->stop();
-            actuator_->send_command();
-        }
-        state_ = State::IDLE;
-        RCLCPP_INFO(get_logger(), "IDLE (stopped)");
+        auto srv = create_service<std_srvs::srv::Trigger>(
+            "~/" + name,
+            [this, idx, cmd, name](
+                const std_srvs::srv::Trigger::Request::SharedPtr,
+                      std_srvs::srv::Trigger::Response::SharedPtr res)
+            {
+                auto & ch = channels_[idx];
+                ch.cmd = cmd;
+                if (ch.act) {
+                    switch (cmd) {
+                        case ActuatorChannel::Cmd::EXTEND:  ch.act->run_out(); break;
+                        case ActuatorChannel::Cmd::RETRACT: ch.act->run_in();  break;
+                        case ActuatorChannel::Cmd::STOP:    ch.act->stop();    break;
+                    }
+                    ch.act->send_command();
+                }
+                res->success = true;
+                res->message = name + " started";
+                RCLCPP_INFO(get_logger(), "%s", res->message.c_str());
+            });
+        services_.push_back(srv);
     }
 
     void tick()
     {
-        if (!actuator_) return;
+        static const char* cmd_names[] = {"STOP", "EXTEND", "RETRACT"};
+        std::string state_str;
 
-        actuator_->poll_feedback();
-
-        switch (state_) {
-            case State::IDLE:
-                // keep-alive: re-send stop so actuator doesn't time out
-                actuator_->stop();
-                actuator_->send_command();
-                break;
-
-            case State::EXTENDING:
-                actuator_->run_out();
-                actuator_->send_command();
-                // Transition to HOLDING when actuator reports it has stopped moving.
-                // Use position stabilization: if position hasn't changed for one tick,
-                // assume end-of-travel (or when poll_feedback reports an endstop).
-                // For simplicity, transition on error code 5 (endstop) or after checking
-                // that position is stable. We use error_code as the primary signal;
-                // the dwell timer in the FSM is the outer safety timeout.
-                if (actuator_->get_error_code() == 5 /* endstop */ ||
-                    actuator_->get_error_code() == 12 /* position not changing */) {
-                    RCLCPP_INFO(get_logger(), "%s: reached end, HOLDING for %.1fs",
-                                is_excavate_ ? "excavate" : "dump",
-                                is_excavate_ ? excavate_hold_ : dump_hold_);
-                    actuator_->clear_errors();
-                    hold_start_ = now();
-                    state_ = State::HOLDING;
-                }
-                break;
-
-            case State::HOLDING: {
-                actuator_->run_out();
-                actuator_->send_command();
-                double elapsed = (now() - hold_start_).seconds();
-                double hold = is_excavate_ ? excavate_hold_ : dump_hold_;
-                if (elapsed >= hold) {
-                    actuator_->run_in();
-                    actuator_->send_command();
-                    state_ = State::RETRACTING;
-                    RCLCPP_INFO(get_logger(), "%s: RETRACTING", is_excavate_ ? "excavate" : "dump");
-                }
-                break;
+        for (auto & ch : channels_) {
+            if (!ch.act) continue;
+            // keep-alive: resend current command so actuator doesn't timeout (>200ms = stop)
+            switch (ch.cmd) {
+                case ActuatorChannel::Cmd::EXTEND:  ch.act->run_out(); break;
+                case ActuatorChannel::Cmd::RETRACT: ch.act->run_in();  break;
+                case ActuatorChannel::Cmd::STOP:    ch.act->stop();    break;
             }
+            ch.act->send_command();
+            ch.act->poll_feedback();
 
-            case State::RETRACTING:
-                actuator_->run_in();
-                actuator_->send_command();
-                if (actuator_->get_error_code() == 5 /* endstop */ ||
-                    actuator_->get_error_code() == 12 /* position not changing */) {
-                    RCLCPP_INFO(get_logger(), "%s: sequence complete",
-                                is_excavate_ ? "excavate" : "dump");
-                    actuator_->clear_errors();
-                    go_idle();
-                }
-                break;
+            if (!state_str.empty()) state_str += ' ';
+            state_str += cmd_names[static_cast<int>(ch.cmd)];
         }
 
-        // Publish telemetry
-        std_msgs::msg::Float32 pos;
-        pos.data = actuator_->get_position_mm();
-        pos_pub_->publish(pos);
-
-        std_msgs::msg::UInt8 err;
-        err.data = actuator_->get_error_code();
-        err_pub_->publish(err);
-
-        std_msgs::msg::String st;
-        st.data = state_name();
-        state_pub_->publish(st);
+        std_msgs::msg::String msg;
+        msg.data = state_str;
+        state_pub_->publish(msg);
     }
 
-    const char * state_name() const
-    {
-        switch (state_) {
-            case State::IDLE:       return "IDLE";
-            case State::EXTENDING:  return "EXTENDING";
-            case State::HOLDING:    return "HOLDING";
-            case State::RETRACTING: return "RETRACTING";
-        }
-        return "UNKNOWN";
-    }
+    ActuatorChannel channels_[3];  // [0]=shoulder, [1]=wrist, [2]=lift
 
-    std::unique_ptr<LinakActuator> actuator_;
-
-    State   state_     = State::IDLE;
-    bool    is_excavate_ = false;
-    rclcpp::Time hold_start_;
-
-    uint8_t speed_         = 50;
-    double  excavate_hold_ = 5.0;
-    double  dump_hold_     = 5.0;
-
-    rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr pos_pub_;
-    rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr   err_pub_;
-    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr  state_pub_;
-
-    rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr excavate_srv_;
-    rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr dump_srv_;
-    rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr stop_srv_;
-
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr state_pub_;
+    rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr  stop_all_srv_;
+    std::vector<rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr> services_;
     rclcpp::TimerBase::SharedPtr timer_;
 };
 
