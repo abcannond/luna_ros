@@ -24,6 +24,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/state.hpp"
 #include "luna_control/SparkMax.hpp"
+//#include <mutex>
 
 //CAN stuff 
 #include <linux/can.h>
@@ -91,6 +92,7 @@ namespace luna_can {
         //CAN stuff 
         int can_sock_ = -1;
         std::string can_interface_;
+        //std::mutex can_mutex_; //added this to try preventing corrupted CAN frames, not sure if necessary 
 
         bool open_can();
         void close_can();
@@ -100,6 +102,9 @@ namespace luna_can {
         std::thread feedback_thread_; //receives CAN messages for drive
         std::atomic<bool> feedback_running_{false};
         void feedback_loop();
+        std::thread send_thread_; //sends CAN messages to the drive, providing a heartbeat
+        std::atomic<bool> send_running_{false};
+        void send_loop();
         
         //C620 data (drive motors)
         std::array<int,    NUM_WHEELS> wheel_can_ids_{};

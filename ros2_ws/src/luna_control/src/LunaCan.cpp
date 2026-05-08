@@ -139,7 +139,7 @@ CallbackReturn LunaCan::on_configure(const rclcpp_lifecycle::State &)
   return CallbackReturn::SUCCESS;
 }
 
-//start motor feedback thread on activate
+//start motor feedback and heartbeat threads on activate
 CallbackReturn LunaCan::on_activate(const rclcpp_lifecycle::State &)
 {
   feedback_running_ = true;
@@ -153,6 +153,9 @@ CallbackReturn LunaCan::on_activate(const rclcpp_lifecycle::State &)
   }
   RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "C620s armed");
 
+  send_running_ = true;
+  send_thread_ = std::thread(&LunaCan::send_loop, this);
+
   RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "on_activate OK — feedback thread started");
   return CallbackReturn::SUCCESS;
 }
@@ -163,6 +166,11 @@ CallbackReturn LunaCan::on_deactivate(const rclcpp_lifecycle::State &)
   feedback_running_ = false;
   if (feedback_thread_.joinable()) {
     feedback_thread_.join();
+  }
+
+  send_running_ = false;
+  if (send_thread_.joinable()) {
+      send_thread_.join();
   }
 
   zero_all_outputs();
@@ -282,23 +290,18 @@ hardware_interface::return_type LunaCan::write(
         double vel_error = target_vel - wheel_state_vel_[i];
         if(wheel_cmd_vel_[i] >= 2) {
           //something is wrong, this should be spinning way faster
-          current_ramp_[0] = 8000;
-          current_ramp_[1] = 8000;
-          current_ramp_[2] = 8000;
-          current_ramp_[3] = 8000;
-          RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "current_ramp_[all5]: %d", current_ramp_[1]);
-          //RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "interface: %s", can_interface_.c_str());
-          //RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "can_sock_ = %d", can_sock_);
+          current_ramp_[1] = 1000;
+          RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "current_ramp_[1]: %d", current_ramp_[1]);
         }
         else {
           current_ramp_[0] = 0;
           current_ramp_[1] = 0;
           current_ramp_[2] = 0;
           current_ramp_[3] = 0;
+          //RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "no current!: %d", current_ramp_[1]);
         }
         //TODO: finish controller
     }
-    send_C620_frame();
 
     //SparkMax motors 
     for (std::size_t i = 0; i < NUM_PODS; ++i) {
@@ -343,7 +346,8 @@ void LunaCan::feedback_loop()
         if (wheel_reverse_flags_[i]) { fb.speed = -fb.speed; }
 
         fb.current  = static_cast<int16_t>((fr.data[4] << 8) | fr.data[5]);
-
+        
+        //std::lock_guard<std::mutex> lock(can_mutex_);
         c620_fb_[i] = fb;
         break;
       }
@@ -351,9 +355,22 @@ void LunaCan::feedback_loop()
   }
 }
 
+//periodically send heartbeat signal to C620s
+void LunaCan::send_loop()
+{
+    while (send_running_) {
+        {
+            //std::lock_guard<std::mutex> lock(can_mutex_);
+            send_C620_frame();
+        }
+        std::this_thread::sleep_for(std::chrono::microseconds(2000)); // 50Hz
+    }
+}
+
 //send drive commands to C620s
 void LunaCan::send_C620_frame()
 {
+  //std::lock_guard<std::mutex> lock(can_mutex_);
   can_frame fr{};
   fr.can_id  = C620_WRITE_ID;
   fr.can_dlc = 8;

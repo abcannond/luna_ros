@@ -29,7 +29,7 @@ const int ARB_ID = 0x200;
 const std::vector<int> MOTOR_IDS = {1,2,3,4};
 
 const int STEP = 10;
-const int LOOP_DELAY_US = 2000;
+const int LOOP_DELAY_US = 33333; //2000;
 const int MAX_CURRENT = 16000; //mA
 const float MAX_SPEED = 2.5; //rad/s
 const float MM_PER_RAD = 203; // mm/rad 
@@ -211,6 +211,7 @@ void command_thread() {
         if (cmd == "w") {
             TARGET_CURRENT += 500;
             std::cout << TARGET_CURRENT;
+            std::cout << "help me";
             TARGET_VELOCITY += 5;
             //std::cout << TARGET_VELOCITY;
         }
