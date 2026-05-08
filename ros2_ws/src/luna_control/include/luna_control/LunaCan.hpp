@@ -56,7 +56,7 @@ namespace luna_can {
     public:
         
         //the shared pointers let the controller and interface share data 
-        RCLCPP_SHARED_PTR_DEFINITIONS(luna_can)
+        RCLCPP_SHARED_PTR_DEFINITIONS(LunaCan)
 
         //lifecycle stuff 
         hardware_interface::CallbackReturn on_init(
@@ -106,7 +106,7 @@ namespace luna_can {
         std::array<bool,   NUM_WHEELS> wheel_reverse_flags_{};
         std::array<double, NUM_WHEELS> wheel_cmd_vel_{};   //commands received from LunaController in rad/s
         std::array<double, NUM_WHEELS> wheel_state_vel_{}; //feedback sent to LunaController in rad/s
-        std::array<C620Feedback, NUM_WHEELS> c620_fb_{};   //data collected from drive motors 
+        std::array<C620_Feedback, NUM_WHEELS> c620_fb_{};   //data collected from drive motors 
         
         //SparkMax data (swerve motors) 
         std::array<std::unique_ptr<SparkMax>, NUM_PODS> spark_;

@@ -247,7 +247,7 @@ hardware_interface::return_type LunaCan::read(
 {
   //use C620 feedback obtained by feedback thread
   for (std::size_t i = 0; i < NUM_WHEELS; ++i) {
-    wheel_state_vel_[i] = c620_fb_[i].velocity;
+    wheel_state_vel_[i] = c620_fb_[i].speed;
   }
 
   //TODO: figure out how to properly get pos data from sparkmax motors
