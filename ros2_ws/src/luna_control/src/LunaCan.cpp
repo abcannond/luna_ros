@@ -281,13 +281,20 @@ hardware_interface::return_type LunaCan::write(
 
         double vel_error = target_vel - wheel_state_vel_[i];
         if(wheel_cmd_vel_[i] >= 2) {
-          current_ramp_[1] = 1000;
-          RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "current_ramp_[1]: %d", current_ramp_[1]);
+          //something is wrong, this should be spinning way faster
+          current_ramp_[0] = 8000;
+          current_ramp_[1] = 8000;
+          current_ramp_[2] = 8000;
+          current_ramp_[3] = 8000;
+          RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "current_ramp_[all5]: %d", current_ramp_[1]);
           //RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "interface: %s", can_interface_.c_str());
           //RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "can_sock_ = %d", can_sock_);
         }
         else {
+          current_ramp_[0] = 0;
           current_ramp_[1] = 0;
+          current_ramp_[2] = 0;
+          current_ramp_[3] = 0;
         }
         //TODO: finish controller
     }

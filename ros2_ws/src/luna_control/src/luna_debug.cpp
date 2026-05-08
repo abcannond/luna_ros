@@ -23,7 +23,7 @@
 using namespace std::chrono_literals;
 
 // ---------------- CONFIG ----------------
-const char* CAN_IFACE = "can0";
+const char* CAN_IFACE = "can1";
 const int ARB_ID = 0x200;
 // hopefully we can resolve 3 turning into 5 soon 
 const std::vector<int> MOTOR_IDS = {1,2,3,4};
