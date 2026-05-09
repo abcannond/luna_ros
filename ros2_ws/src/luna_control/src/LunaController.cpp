@@ -21,6 +21,11 @@
  * Author: Sam Rooney
  */
 
+/*
+ * This code has been adapted and/or modified for use in the 2025-26 WPI Lunabotics MQP.
+ * Author: John Larochelle
+ */
+
 #include <memory>
 #include <queue>
 #include <string>
@@ -65,6 +70,7 @@ namespace luna_controller
       // Create the parameter listener and get the parameters
       param_listener_ = std::make_shared<ParamListener>(get_node());
       params_ = param_listener_->get_params();
+      RCLCPP_INFO(rclcpp::get_logger("LunaController"), "max speed: %f", params_.max_wheel_speed);
     }
     catch (const std::exception &e)
     {

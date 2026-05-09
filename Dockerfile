@@ -59,6 +59,12 @@ RUN echo "alias cdr='cd /ros2_ws'" >> /etc/bash.bashrc
 RUN echo "alias bld='colcon build --symlink-install'" >> /etc/bash.bashrc
 RUN echo "alias drive='PYTHONUNBUFFERED=1 ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/teleop_cmd_vel_raw -p use_sim_time:=true'" >> /etc/bash.bashrc
 RUN echo "alias sim='ros2 launch lunabot_2425 gz_bringup.launch.py'" >> /etc/bash.bashrc
+RUN echo "alias show='sudo ip link show'" >> /etc/bash.bashrc
+RUN echo "alias c0='sudo ip link set can0 up type can bitrate 250000'" >> /etc/bash.bashrc
+RUN echo "alias c1='sudo ip link set can1 up type can bitrate 250000'" >> /etc/bash.bashrc
+RUN echo "alias c0dwn='sudo ip link set can0 down'" >> /etc/bash.bashrc
+RUN echo "alias c1dwn='sudo ip link set can1 down'" >> /etc/bash.bashrc
+
 
 COPY requirements.txt . 
 RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt

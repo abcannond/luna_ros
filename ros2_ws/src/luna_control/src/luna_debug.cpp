@@ -1,4 +1,13 @@
-// C620 CAN control
+/*
+ * Debugging code for C620 and SparkMax CAN control 
+ *
+ * Doesn't use the nav stack, just do ros2 run luna_control luna_debug. 
+ * Helps when figuring out whether its a hardware or code issue. 
+ * 
+ * Created for 2025-26 WPI Lunabotics MQP 
+ * 
+ * Author: John Larochelle 
+ */
 
 #include <iostream>
 #include <thread>
@@ -29,7 +38,7 @@ const int ARB_ID = 0x200;
 const std::vector<int> MOTOR_IDS = {1,2,3,4};
 
 const int STEP = 10;
-const int LOOP_DELAY_US = 33333; //2000;
+const int LOOP_DELAY_US = 2000; //do not make this slower, it will not send CAN frames fast enough
 const int MAX_CURRENT = 16000; //mA
 const float MAX_SPEED = 2.5; //rad/s
 const float MM_PER_RAD = 203; // mm/rad 
@@ -170,7 +179,8 @@ void control_thread() {
             }
 
             currents[m].store(current);
-        } */
+        } 
+            */
         
         //set currents to targets 
         for (int m : MOTOR_IDS) {
@@ -247,6 +257,7 @@ void command_thread() {
             for (int m : MOTOR_IDS) {
                 targets[m].store(0);
             }
+            //stop swerves
             steer_cmds[1].store(0);
             steer_cmds[2].store(0);
             steer_cmds[3].store(0);
@@ -329,6 +340,15 @@ void command_thread() {
         else if (cmd == "h") {
             std::cout << "swerve";
             steer_cmds[1].store(-0.1f); 
+        
+        }
+        
+        else if (cmd == "n") {
+           
+            for (int m : MOTOR_IDS) {
+                std::cout << "Pos" << m << ": " << swerve[m]->GetAltEncoderPosition() << " ";
+            }
+            std::cout << std::endl; 
             
         }
     }
@@ -392,11 +412,17 @@ int main() {
     can_sock = open_can(CAN_IFACE);
 
     //set up SparkMax stuff for swerve motors
-
     try {
         for (int i = 1; i <= 4; i++) {
             swerve[i] = std::make_unique<SparkMax>(CAN_IFACE, i);
+            //swerve[i]->SetDataPortConfig(1); //alt encoder mode
+            //swerve[i]->SetAltEncoderCountsPerRev(8192);
+            //swerve[i]->SetAltEncoderPositionFactor(2.0f * (float)M_PI); // now returns radians
         }
+        //swerve[1]->SetAltEncoderInverted(false);
+        //swerve[2]->SetAltEncoderInverted(true);
+        //swerve[3]->SetAltEncoderInverted(true);
+        //swerve[4]->SetAltEncoderInverted(false);
     } 
     catch (const std::exception& e) {
         std::cerr << "SparkMax init failed: " << e.what() << std::endl;
@@ -426,3 +452,71 @@ int main() {
 
     std::cout << "Exited cleanly\n";
 }
+/*
+#include "luna_control/SparkMax.hpp"
+#include <iostream>
+#include <thread>
+#include <chrono>
+#include <cmath>
+
+constexpr const char* CAN_IFACE = "can0";
+constexpr int POD_ID = 1; // test one pod first
+
+int main() {
+    SparkMax pod(CAN_IFACE, POD_ID);
+
+    // configure alt encoder
+    pod.SetDataPortConfig(1);
+    pod.SetAltEncoderCountsPerRev(8192);
+    pod.SetAltEncoderPositionFactor(2.0f * (float)M_PI); // rotations -> radians
+    pod.SetAltEncoderInverted(false);
+
+    // tell PID to use alt encoder (sensor ID 2 = alt encoder)
+    pod.SetFeedbackSensorPID0(2);
+
+    // enable PID wrap so it takes shortest path through 0
+    pod.SetPositionPIDWrapEnable(true);
+    pod.SetPositionPIDMinInput((float)-M_PI);
+    pod.SetPositionPIDMaxInput((float)M_PI);
+
+    // tune these - start very low
+    pod.SetP(0, 1.0f);
+    pod.SetI(0, 0.0f);
+    pod.SetD(0, 0.0f);
+    pod.SetF(0, 0.0f);
+    pod.SetOutputMin(0, -0.3f); // limit output for safety
+    pod.SetOutputMax(0,  0.3f);
+
+    // heartbeat loop
+    std::thread hb([](){
+        while(true) {
+            SparkMax::Heartbeat();
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+    });
+    hb.detach();
+
+    // give it a moment to initialize
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+    // test positions
+    float targets[] = {0.0f, (float)M_PI/4, (float)-M_PI/4, 0.0f};
+    std::cout << "1";
+    for (float target : targets) {
+        std::cout << "Going to: " << target << " rad" << std::endl;
+        pod.SetPosition(target);
+
+        // wait and print feedback
+        for (int i = 0; i < 50; i++) {
+            float pos = pod.GetAltEncoderPosition();
+            std::cout << "  pos: " << pos << " rad" << std::endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+        
+    }
+
+    pod.SetDutyCycle(0.0f);
+    return 0;
+}
+
+*/

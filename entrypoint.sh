@@ -18,7 +18,7 @@ source install/setup.bash
 
 # Turn on CAN interfaces automatically
 # Turn them off first so we don't get kicked out of the container with "network busy"
-
+#: << 'COMMENT'
 bring_up_can() {
     local iface=$1
     local bitrate=$2
@@ -62,6 +62,7 @@ bring_up_can() {
 
 bring_up_can can0 250000
 bring_up_can can1 1000000
+#COMMENT
 
 # If no arguments, launch interactive login shell so aliases work
 if [ $# -eq 0 ]; then

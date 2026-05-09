@@ -275,6 +275,6 @@ luna_controller:
       }
   max_wheel_speed: {
     type: double,
-    default_value: 15.0,
-    description: Maximum allowed wheel speed
+    default_value: 2.5,
+    description: Maximum allowed wheel speed in rads
   }
