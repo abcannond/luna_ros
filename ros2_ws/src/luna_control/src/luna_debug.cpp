@@ -473,11 +473,11 @@ int main() {
         for (int i = 1; i <= 4; i++) {
             swerve[i]->SetFeedbackSensorPID0(2);          // alt encoder
             swerve[i]->SetPositionPIDWrapEnable(false);
-            swerve[i]->SetP(0, 0.5f);                     // start conservative, tune up
+            swerve[i]->SetP(0, 2.0f);
             swerve[i]->SetI(0, 0.0f);
             swerve[i]->SetD(0, 0.0f);
-            swerve[i]->SetOutputMin(0, -0.3f);
-            swerve[i]->SetOutputMax(0,  0.3f);
+            swerve[i]->SetOutputMin(0, -0.5f);
+            swerve[i]->SetOutputMax(0,  0.5f);
             swerve_pos_targets[i].store(0.0f);
         }
     } 
