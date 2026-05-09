@@ -25,6 +25,7 @@ setup(
             'zone_publisher = luna_nav.zone_publisher:main',
             'frontier_explorer = luna_nav.frontier_explorer:main',
             'mission_supervisor = luna_nav.mission_supervisor:main',
+            'linaks_joy = luna_nav.linaks_joy:main',
         ],
     },
 )

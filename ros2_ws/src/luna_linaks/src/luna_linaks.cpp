@@ -76,10 +76,12 @@ void LinakActuator::open_socket(const std::string& iface)
     if (bind(socket_, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0)
         throw std::runtime_error("LinakActuator: bind failed on " + iface);
 
-    // filter to only receive frames from our actuator (match PF=0xEF and source address)
+    // filter to receive Proprietary B feedback frames (PF=0xFF) from this actuator's SA
+    // command uses PF=0xEF (Proprietary A); feedback uses PF=0xFF (Proprietary B)
+    static constexpr uint32_t J1939_FEEDBACK_BASE = (6u << 26) | (0xFFu << 16);
     struct can_filter filt{};
-    filt.can_id   = CAN_EFF_FLAG | J1939_BASE | static_cast<uint32_t>(actuator_addr_);
-    filt.can_mask = CAN_EFF_FLAG | 0x18FF00FFu;
+    filt.can_id   = CAN_EFF_FLAG | J1939_FEEDBACK_BASE | static_cast<uint32_t>(actuator_addr_);
+    filt.can_mask = CAN_EFF_FLAG | 0x1CFF00FFu;  // check EFF, priority, PF, SA; ignore GE
     setsockopt(socket_, SOL_CAN_RAW, CAN_RAW_FILTER, &filt, sizeof(filt));
 
     // non-blocking so poll_feedback() doesn't stall
