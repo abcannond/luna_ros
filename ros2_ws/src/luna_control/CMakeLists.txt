@@ -49,6 +49,7 @@ add_executable(luna_linaks
   src/linak_actuator.cpp
 )
 add_executable(luna_debug src/luna_debug.cpp)
+add_executable(swerve_debug src/swerve_debug.cpp)
 
 add_executable(luna_linkage_joy
   src/luna_linkage_joy.cpp
@@ -69,6 +70,14 @@ target_link_libraries(luna_can
 
 target_link_libraries(luna_debug
   luna_control
+)
+
+target_link_libraries(swerve_debug
+  luna_control
+)
+
+ament_target_dependencies(swerve_debug
+  rclcpp
 )
 
 target_link_libraries(luna_linaks
@@ -104,7 +113,7 @@ install(
   DIRECTORY include/
   DESTINATION include/luna_control
 )
-install(TARGETS luna_control luna_controller_parameters luna_can luna_debug luna_linaks luna_linkage_joy
+install(TARGETS luna_control luna_controller_parameters luna_can luna_debug swerve_debug luna_linaks luna_linkage_joy
   EXPORT export_luna_control
   RUNTIME DESTINATION lib/luna_control
   ARCHIVE DESTINATION lib
