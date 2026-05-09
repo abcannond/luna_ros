@@ -1,0 +1,28 @@
+image_width: 640
+image_height: 480
+camera_name: front_right_camera
+# Approximate intrinsics for Nexigo N980P at 640x480.
+# Replace with values from ros2 run camera_calibration cameracalibrator for accurate pose.
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [600.0, 0.0, 320.0,
+         0.0, 600.0, 240.0,
+         0.0, 0.0, 1.0]
+distortion_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [0.0, 0.0, 0.0, 0.0, 0.0]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1.0, 0.0, 0.0,
+         0.0, 1.0, 0.0,
+         0.0, 0.0, 1.0]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [600.0, 0.0, 320.0, 0.0,
+         0.0, 600.0, 240.0, 0.0,
+         0.0, 0.0, 1.0, 0.0]

@@ -106,6 +106,6 @@ namespace luna_controller
     RollingMeanAccumulator angular_accumulator_;
   };
 
-} // namespace diff_drive_controller
+} // namespace luna_controller
 
 #endif // LUNA_CONTROL__ODOMETRY_HPP_

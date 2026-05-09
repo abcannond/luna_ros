@@ -1,0 +1,21 @@
+# Single fiducial camera on hardware (same topics/frames as full multi_camera_hardware.yaml).
+# Use when only one wheel-pod cam is connected (e.g. front_left on /dev/video0).
+
+multi_camera_marker_localizer:
+  ros__parameters:
+    image_topics:
+      - /fid_cams/front_left_camera/image_raw
+    camera_info_topics:
+      - /fid_cams/front_left_camera/camera_info
+    camera_frames:
+      - front_left_camera_link_optical
+    aruco_dict: "DICT_4X4_50"
+    marker_id: -1
+    marker_size_m: 0.16
+    world_frame: "map"
+    robot_frame: "base_link"
+    world_to_marker_xyz: [0.0, 0.0, 0.0]
+    world_to_marker_yaw: 0.0
+    position_stddev: 0.05
+    yaw_stddev: 0.02
+    range_scale_per_m: 0.02

@@ -123,6 +123,7 @@ Visualization Manager:
         Reliability Policy: Best Effort
         Value: /camera/camera/depth/image_colorized
 
+    # Depth point cloud: translucent so it doesn't dominate the 3D view (camera FOV "cone")
     - Class: rviz_default_plugins/PointCloud2
       Name: Depth Point Cloud
       Enabled: true
@@ -132,11 +133,12 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Best Effort
         Value: /camera/camera/depth/color/points
-      Size (m): 0.01
-      Style: Flat Squares
+      Size (m): 0.006
+      Style: Points
       Color Transformer: RGB8
       Decay Time: 0
       Use Fixed Frame: true
+      Alpha: 0.28
 
     # LaserScan (from depth): disabled by default — often shows a white bar from depth artifacts;
     # re-enable for debugging. Costmap still uses /scan; range_max capping reduces bar in costmap.

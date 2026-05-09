@@ -20,8 +20,8 @@ class FiducialOverlay(Node):
         # params
         self.declare_parameter('image_topic', '/camera/image_raw')
         self.declare_parameter('camera_info_topic', '/camera/camera_info')
-        self.declare_parameter('aruco_dict', 'DICT_4X4_50')
-        self.declare_parameter('marker_id', 0)
+        self.declare_parameter('aruco_dict', 'DICT_APRILTAG_36h11')
+        self.declare_parameter('marker_id', 38)
         self.declare_parameter('marker_size_m', 0.16)
         self.declare_parameter('show_window', True)
         self.declare_parameter('fx', 0.0)

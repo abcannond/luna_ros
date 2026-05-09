@@ -1,0 +1,44 @@
+# Fiducial localizer for hardware (4 Nexigo N980P). Same topics/frames as sim;
+# hardware_bringup sets frame_id and static TFs so all 4 cams work.
+
+multi_camera_marker_localizer:
+  ros__parameters:
+    image_topics:
+      - /fid_cams/front_left_camera/image_raw
+      - /fid_cams/front_right_camera/image_raw
+      - /fid_cams/back_left_camera/image_raw
+      - /fid_cams/back_right_camera/image_raw
+    camera_info_topics:
+      - /fid_cams/front_left_camera/camera_info
+      - /fid_cams/front_right_camera/camera_info
+      - /fid_cams/back_left_camera/camera_info
+      - /fid_cams/back_right_camera/camera_info
+    camera_frames:
+      - front_left_camera_link_optical
+      - front_right_camera_link_optical
+      - back_left_camera_link_optical
+      - back_right_camera_link_optical
+    aruco_dict: "DICT_5X5_1000"
+    world_frame: "map"
+    robot_frame: "base_link"
+    position_stddev: 0.08
+    yaw_stddev: 0.04
+    range_scale_per_m: 0.05
+    max_marker_distance_m: 4.0
+    startup_stability_seconds: 3.0
+    startup_stable_xy_thresh_m: 0.03
+    startup_stable_yaw_thresh_rad: 0.06
+    startup_stable_required_frames: 4
+    active_marker_group: 0
+    outer_marker_ids: [256]
+    inner_marker_ids: [395]
+    outer_marker_size_m: 0.88
+    inner_marker_size_m: 0.125
+    # Tag center measured from bottom-left corner of home sandbox arena.
+    # Left wall (Y-axis wall), tag face pointing inward (+X). See docs/LOCALIZATION_TEST.md.
+    marker_world_x: [-0.04]
+    marker_world_y: [0.4625]
+    marker_world_z: [0.92]
+    marker_world_roll_arr:  [1.5708]
+    marker_world_pitch_arr: [0.0]
+    marker_world_yaw_arr:   [0.0]

@@ -1,73 +1,91 @@
-# Luna ROS — Simulation and Navigation Stack
+# Luna ROS
 
-ROS 2 Jazzy stack for the WPI Lunabotics robot: **Gazebo Harmonic** simulation, **RTAB-Map** SLAM, **Nav2** navigation, and the same camera pipeline for **real hardware** (Intel RealSense D455 + 4× Nexigo N980P fiducial cams). Runs in Docker for a consistent environment (Ubuntu 24.04; Jetson supported via a separate image).
+ROS 2 Jazzy autonomy stack for the **WPI Lunabotics** robot. Provides SLAM, navigation, and fiducial-based localization for the Lunabotics competition arena.
 
-## What it does
+**Sensors:** Intel RealSense D455 (depth + RGB) and 4x Nexigo N980P (ArUco fiducial localization).
 
-- **Simulation:** Gazebo runs the robot with a simulated RealSense D455 and four fiducial cameras. You can use the UCF or Artemis arena (`world:=ucf_arena` or `world:=artemis_arena`).
-- **Mapping:** RTAB-Map builds an occupancy grid from the depth camera and publishes `/map`.
-- **Navigation:** Depth is converted to a 2D scan and point cloud; Nav2 plans and drives the robot to goals set in RViz.
-- **Fiducials:** Four wheel-pod cameras (sim or real) are used for ArUco-based localization when enabled.
+**Stack:** Gazebo Harmonic simulation, RTAB-Map visual SLAM, Nav2 autonomous navigation, quad-swerve drivetrain controller via ros2_control. Runs in Docker on Ubuntu 24.04 (x86) or Jetson (ARM64).
 
-The same functional camera and mapping code is intended for **real hardware**: one RealSense D455 and four USB webcams (e.g. Nexigo N980P) for fiducial localization, typically on an **NVIDIA Jetson** in the same Docker setup.
+---
 
-## Quick start (simulation)
+## Packages
 
-**First time (host):**
+| Package | Description |
+|---------|-------------|
+| `lunabot_2425` | Robot URDF, launch files, sim/hardware bringup |
+| `luna_control` | Quad-swerve ros2_control controller (steer + drive) |
+| `luna_mapping` | RTAB-Map SLAM, depth processing, Nav2 integration |
+| `luna_nav` | Nav2 config, arena zone publisher |
+| `fiducial_localizer` | Multi-camera ArUco pose estimation (map->odom) |
+| `depth_to_pointcloud` | Depth image to PointCloud2 conversion |
+| `luna_ros2_worlds` | Gazebo arena worlds (UCF, Artemis) and models |
 
-```bash
-git clone --recurse-submodules <repo_url>
-cd luna_ros
-docker build -t luna_ros:latest .
-./run_ros_image.sh luna_ros:latest
-```
+---
 
-**Inside the container:**
+## Quick start — simulation
 
-```bash
-cd /ros2_ws
-source install/setup.bash
-colcon build --symlink-install
-source install/setup.bash
-```
+**First time:** See [INSTALL.md](INSTALL.md) for clone, Docker build, and workspace setup.
 
-**Single command (sim):** one launch runs Gazebo, then after ~18 s starts RTAB-Map, Nav2, and RViz. No second terminal needed.
+Inside the container:
 
 ```bash
+cd /ros2_ws && source install/setup.bash
 ros2 launch lunabot_2425 gz_bringup.launch.py
 ```
 
-Use the **Nav2 Goal** tool in RViz to send navigation goals.
+One command launches Gazebo, RTAB-Map, Nav2, and RViz. Use the **Nav2 Goal** tool in RViz to navigate.
 
-- **Gazebo only (no mapping):**  
-  `ros2 launch lunabot_2425 gz_bringup.launch.py launch_mapping:=false`
-- **Other arena:**  
-  `ros2 launch lunabot_2425 gz_bringup.launch.py world:=artemis_arena`
+| Variant | Command |
+|---------|---------|
+| Gazebo only (no mapping) | `gz_bringup.launch.py launch_mapping:=false` |
+| Artemis arena | `gz_bringup.launch.py world:=artemis_arena` |
 
-## Quick start (hardware)
+---
 
-On a Jetson (or host) with a RealSense D455 and four USB fiducial cams:
+## Quick start — hardware
 
-1. **Terminal 1 — cameras + TF**  
-   `ros2 launch lunabot_2425 hardware_bringup.launch.py`  
-   (Override `fid_*_dev` if your `/dev/video*` devices differ; see [docs/HARDWARE.md](docs/HARDWARE.md).)
+**Terminal 1** — cameras and TF:
 
-2. **Terminal 2 — mapping + Nav2**  
-   `ros2 launch luna_mapping rtabmap_nav2_hardware.launch.py`  
+```bash
+ros2 launch lunabot_2425 hardware_bringup.launch.py
+```
 
-Your robot must publish odometry (`/odom` and `odom` → `base_link` on `/tf`). Full hardware details, device setup, and optional fiducial localizer: **[docs/HARDWARE.md](docs/HARDWARE.md)**.
+**Terminal 2** — RTAB-Map + Nav2:
 
-## Docs and layout
+```bash
+ros2 launch luna_mapping rtabmap_nav2_hardware.launch.py
+```
 
-| Doc / file | Purpose |
-|------------|--------|
-| [LAUNCH_COMMANDS.md](LAUNCH_COMMANDS.md) | Full sim guide: manual terminals, options, troubleshooting |
-| [docs/HARDWARE.md](docs/HARDWARE.md) | Hardware: Jetson, RealSense D455, 4× Nexigo N980P, Docker |
-| [Commands to run and what.txt](Commands%20to%20run%20and%20what.txt) | Short command and topic reference |
-| `Dockerfile` | Main image (x86_64, Ubuntu 24.04, ROS 2 Jazzy) |
-| `Dockerfile.jetson` | Jetson (ARM64) image template |
+Your robot driver must publish `/odom` and the `odom` -> `base_link` transform.
+
+---
+
+## Documentation
+
+| Doc | Purpose |
+|-----|---------|
+| [INSTALL.md](INSTALL.md) | Clone, build, Docker setup |
+| [docs/STACK_GUIDE.md](docs/STACK_GUIDE.md) | Pipeline details, features, tuning, troubleshooting |
+| [docs/HARDWARE.md](docs/HARDWARE.md) | Hardware setup (Jetson, RealSense, fiducial cams) |
+| [docs/STACK_REVIEW_LUNABOTICS.md](docs/STACK_REVIEW_LUNABOTICS.md) | Competition fit analysis, risks, compute limits |
+
+---
+
+## Architecture
+
+```
+Camera (D455) ──> RTAB-Map (SLAM) ──> /map (occupancy grid)
+     │                                      │
+     ├──> Depth FOV Filter ──> Point Cloud ──> Nav2 Costmaps ──> Path Planning
+     │                    └──> LaserScan                              │
+     │                                                               v
+4x Nexigo ──> Fiducial Localizer ──> map->odom TF          /cmd_vel -> Robot
+```
+
+---
 
 ## Requirements
 
-- Docker, Linux with X11 (e.g. Ubuntu 24.04)
-- For hardware: RealSense D455, 4× USB webcams (e.g. Nexigo N980P), optional Jetson
+- Docker, Linux with X11 (Ubuntu 24.04 recommended)
+- GPU recommended (for Gazebo rendering)
+- **Hardware:** Intel RealSense D455, 4x USB webcams (Nexigo N980P), optional NVIDIA Jetson

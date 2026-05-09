@@ -1,30 +1,41 @@
 # Luna ROS — Jetson (ARM64) image
-# Use this on NVIDIA Jetson boards. Adjust the base image to your JetPack/ROS2 distro.
-# Example bases: dustynv/ros:jazzy-ros-base-l4t-r35.2.1 or nvcr.io/nvidia/l4t-ml:r35.2.1-py3
+# Tested with JetPack 5.x (L4T r35.x). Adjust L4T_VERSION to match your board.
+#
+# Option A (recommended): Use dustynv's ROS2 Jazzy image which has ROS2 pre-installed.
+# Option B: Use the L4T ML base and install ROS2 manually (uncomment below).
 
 ARG L4T_VERSION=r35.2.1
-# Option A: ROS2 Jazzy on L4T (if available for your JetPack)
+
+# --- Option A: Pre-built ROS2 Jazzy on L4T ---
 # FROM dustynv/ros:jazzy-ros-base-l4t-${L4T_VERSION}
-# Option B: L4T ML image — install ROS2 Jazzy and deps manually
+
+# --- Option B: L4T ML base + manual ROS2 install ---
 FROM nvcr.io/nvidia/l4t-ml:${L4T_VERSION}-py3
 
 SHELL ["/bin/bash", "-c"]
 
-# Install ROS2 Jazzy (Ubuntu 24.04 / Noble) and project deps.
-# Adapt to your Jetson base if it already has ROS2.
+# System dependencies
 RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y \
+    apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
     git \
+    curl \
+    gnupg2 \
+    lsb-release \
+    python3-pip \
     python3-colcon-common-extensions \
     libgl1 \
     libopencv-dev \
+    libeigen3-dev \
     dos2unix \
     && rm -rf /var/lib/apt/lists/*
 
-# If your base does not include ROS2 Jazzy, add the ROS2 repo and:
-# RUN apt-get update && apt-get install -y \
+# ROS2 Jazzy repository setup (uncomment when deploying to Jetson with ROS2 support)
+# RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg && \
+#     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" \
+#     > /etc/apt/sources.list.d/ros2.list && \
+#     apt-get update && apt-get install -y --no-install-recommends \
 #     ros-jazzy-ros-base \
 #     ros-jazzy-perception \
 #     ros-jazzy-realsense2-camera \
@@ -32,8 +43,11 @@ RUN apt-get update && apt-get upgrade -y && \
 #     ros-jazzy-navigation2 ros-jazzy-nav2-bringup \
 #     ros-jazzy-depthimage-to-laserscan \
 #     ros-jazzy-depth-image-proc \
-#     ros-jazzy-v4l2-camera \
+#     ros-jazzy-usb-cam \
 #     ros-jazzy-cv-bridge \
+#     ros-jazzy-ros2-control ros-jazzy-ros2-controllers \
+#     ros-jazzy-generate-parameter-library \
+#     ros-jazzy-backward-ros \
 #     && rm -rf /var/lib/apt/lists/*
 
 RUN echo "alias src='source install/setup.bash'" >> /etc/bash.bashrc && \
