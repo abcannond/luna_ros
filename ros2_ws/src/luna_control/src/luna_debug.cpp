@@ -25,6 +25,7 @@
 #include <array>
 #include <csignal>
 #include <algorithm>
+#include <sstream>
 #include "luna_control/SparkMax.hpp" 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/float64_multi_array.hpp"
@@ -53,6 +54,8 @@ std::map<int,bool> reverse_flags;
 std::array<std::atomic<int>, 5> targets; //motor targets, index 0 not used to match with motor ids 
 std::array<std::atomic<int>, 5> vel_targets; //motor target rpm, index 0 not used to match with motor ids 
 std::array<std::atomic<float>, 5> steer_cmds; //swerve targets, currently in duty cycle
+std::array<std::atomic<float>, 5> swerve_pos_targets; //swerve position targets in radians
+std::atomic<bool> position_mode(false);
 std::array<std::atomic<int>, 5> drive_vels; //drive motor velocities
 std::array<std::atomic<int>, 5> drive_pos; //drive motor positions
 std::atomic<bool> running(true);
@@ -143,12 +146,13 @@ void control_thread() {
         for (int i = 1; i <= 4; i++) {
             swerve[i]->Heartbeat();
 
-            float duty = steer_cmds[i].load();
-
-            // clamp 
-            duty = std::clamp(duty, -1.0f, 1.0f);
-
-            swerve[i]->SetDutyCycle(duty);
+            if (position_mode.load()) {
+                swerve[i]->SetPosition(swerve_pos_targets[i].load());
+            } else {
+                float duty = steer_cmds[i].load();
+                duty = std::clamp(duty, -1.0f, 1.0f);
+                swerve[i]->SetDutyCycle(duty);
+            }
         }
         /*
         //velocity control
@@ -344,19 +348,60 @@ void command_thread() {
         }
         
         else if (cmd == "n") {
-           
+
             for (int m : MOTOR_IDS) {
                 std::cout << "Pos" << m << ": " << swerve[m]->GetAltEncoderPosition() << " ";
             }
-            std::cout << std::endl; 
-            
+            std::cout << std::endl;
+
+        }
+        else if (cmd.rfind("goto ", 0) == 0) {
+            try {
+                std::istringstream ss(cmd.substr(5));
+                std::string first;
+                ss >> first;
+
+                float target;
+                if (first == "all") {
+                    ss >> target;
+                    target = std::clamp(target, -(float)M_PI, (float)M_PI);
+                    for (int m : MOTOR_IDS) swerve_pos_targets[m].store(target);
+                    position_mode.store(true);
+                    std::cout << "Steering all to " << target << " rad\n";
+                } else {
+                    int motor_id = std::stoi(first);
+                    ss >> target;
+                    target = std::clamp(target, -(float)M_PI, (float)M_PI);
+                    if (motor_id >= 1 && motor_id <= 4) {
+                        swerve_pos_targets[motor_id].store(target);
+                        position_mode.store(true);
+                        std::cout << "Steering motor " << motor_id << " to " << target << " rad\n";
+                    } else {
+                        std::cout << "Motor ID must be 1-4\n";
+                    }
+                }
+            } catch (...) {
+                std::cout << "Usage: goto <motor_id> <radians>  OR  goto all <radians>\n";
+            }
+        }
+        else if (cmd == "dutycycle") {
+            position_mode.store(false);
+            std::cout << "Switched to duty cycle mode\n";
         }
     }
 }
 
 // ---------------- SHUTDOWN ----------------
 void safe_shutdown() {
-    std::cout << "Shutting down...\n";
+    std::cout << "Shutting down — returning wheels to 0...\n";
+
+    for (int i = 1; i <= 4; i++) {
+        swerve_pos_targets[i].store(0.0f);
+    }
+    position_mode.store(true);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+
+    std::cout << "Ramping down drive motors...\n";
 
     bool ramp = true;
     while (ramp) {
@@ -383,6 +428,7 @@ void safe_shutdown() {
 int main() {
     //set all target values to 0 to start
     for (auto &t : targets) t.store(0);
+    for (auto &t : swerve_pos_targets) t.store(0.0f);
     
     //initialize currents
     for (int m : MOTOR_IDS) {
@@ -423,6 +469,17 @@ int main() {
         swerve[2]->SetAltEncoderInverted(true);
         swerve[3]->SetAltEncoderInverted(true);
         swerve[4]->SetAltEncoderInverted(false);
+
+        for (int i = 1; i <= 4; i++) {
+            swerve[i]->SetFeedbackSensorPID0(2);          // alt encoder
+            swerve[i]->SetPositionPIDWrapEnable(false);
+            swerve[i]->SetP(0, 0.5f);                     // start conservative, tune up
+            swerve[i]->SetI(0, 0.0f);
+            swerve[i]->SetD(0, 0.0f);
+            swerve[i]->SetOutputMin(0, -0.3f);
+            swerve[i]->SetOutputMax(0,  0.3f);
+            swerve_pos_targets[i].store(0.0f);
+        }
     } 
     catch (const std::exception& e) {
         std::cerr << "SparkMax init failed: " << e.what() << std::endl;
