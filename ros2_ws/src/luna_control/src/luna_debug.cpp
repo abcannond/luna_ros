@@ -303,42 +303,42 @@ void command_thread() {
         }
         //swerve motor controls
         else if (cmd == "p") {
-            std::cout << "swerve";
+            std::cout << "swerve4";
             steer_cmds[4].store(0.1f); 
             
         }
         else if (cmd == "l") {
-            std::cout << "swerve";
+            std::cout << "swerve4";
             steer_cmds[4].store(-0.1f); 
             
         }
         else if (cmd == "o") {
-            std::cout << "swerve";
+            std::cout << "swerve3";
             steer_cmds[3].store(0.1f); 
             
         }
         else if (cmd == "k") {
-            std::cout << "swerve";
+            std::cout << "swerve3";
             steer_cmds[3].store(-0.1f); 
             
         }
         else if (cmd == "i") {
-            std::cout << "swerve";
+            std::cout << "swerve2";
             steer_cmds[2].store(0.1f); 
             
         }
         else if (cmd == "j") {
-            std::cout << "swerve";
+            std::cout << "swerve2";
             steer_cmds[2].store(-0.1f); 
             
         }
         else if (cmd == "u") {
-            std::cout << "swerve";
+            std::cout << "swerve1";
             steer_cmds[1].store(0.1f); 
             
         }
         else if (cmd == "h") {
-            std::cout << "swerve";
+            std::cout << "swerve1";
             steer_cmds[1].store(-0.1f); 
         
         }
@@ -415,14 +415,14 @@ int main() {
     try {
         for (int i = 1; i <= 4; i++) {
             swerve[i] = std::make_unique<SparkMax>(CAN_IFACE, i);
-            //swerve[i]->SetDataPortConfig(1); //alt encoder mode
-            //swerve[i]->SetAltEncoderCountsPerRev(8192);
-            //swerve[i]->SetAltEncoderPositionFactor(2.0f * (float)M_PI); // now returns radians
+            swerve[i]->SetDataPortConfig(1); //alt encoder mode
+            swerve[i]->SetAltEncoderCountsPerRev(8192);
+            swerve[i]->SetAltEncoderPositionFactor(2.0f * (float)M_PI); // now returns radians
         }
-        //swerve[1]->SetAltEncoderInverted(false);
-        //swerve[2]->SetAltEncoderInverted(true);
-        //swerve[3]->SetAltEncoderInverted(true);
-        //swerve[4]->SetAltEncoderInverted(false);
+        swerve[1]->SetAltEncoderInverted(false);
+        swerve[2]->SetAltEncoderInverted(true);
+        swerve[3]->SetAltEncoderInverted(true);
+        swerve[4]->SetAltEncoderInverted(false);
     } 
     catch (const std::exception& e) {
         std::cerr << "SparkMax init failed: " << e.what() << std::endl;
