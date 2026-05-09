@@ -69,12 +69,17 @@
   gz_type_name: "gz.msgs.CameraInfo"
   direction: GZ_TO_ROS
 
-# Point cloud aligned to color (from depth camera)
-- ros_topic_name: "/camera/camera/depth/color/points"
-  gz_topic_name: "/sim/camera/depth/points"
-  ros_type_name: "sensor_msgs/msg/PointCloud2"
-  gz_type_name: "gz.msgs.PointCloudPacked"
-  direction: GZ_TO_ROS
+# Point cloud: NOT bridged here. The mapping launch (rtabmap_nav2_sim) generates a
+# frame-fixed, ground-filtered point cloud via depth_image_proc. Bridging the raw
+# Gazebo cloud here would create a second publisher on /camera/camera/depth/color/points
+# with wrong frame_ids, corrupting the costmap voxel layer.
+# If you need the raw Gazebo point cloud (e.g. for debugging), uncomment below and
+# change the ros_topic_name to avoid conflict:
+#- ros_topic_name: "/camera/camera/depth/color/points_raw_gz"
+#  gz_topic_name: "/sim/camera/depth/points"
+#  ros_type_name: "sensor_msgs/msg/PointCloud2"
+#  gz_type_name: "gz.msgs.PointCloudPacked"
+#  direction: GZ_TO_ROS
 
 # back_left_camera
 - ros_topic_name: "/fid_cams/back_left_camera/image_raw"

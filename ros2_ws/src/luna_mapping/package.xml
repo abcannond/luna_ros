@@ -2,28 +2,27 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>luna_mapping</name>
-  <version>0.0.0</version>
+  <version>0.1.0</version>
   <description>Visual SLAM mapping stack with RTAB-Map and Nav2 integration</description>
-  <maintainer email="root@todo.todo">root</maintainer>
+  <maintainer email="the.sam.rooney@gmail.com">lunabot</maintainer>
   <license>MIT</license>
 
-  <!-- Core dependencies -->
   <depend>rclpy</depend>
   <depend>sensor_msgs</depend>
   <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
   <depend>cv_bridge</depend>
-  
-  <!-- RTAB-Map packages -->
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+
   <depend>rtabmap_launch</depend>
   <depend>rtabmap_slam</depend>
   <depend>rtabmap_odom</depend>
   <depend>rtabmap_util</depend>
-  
-  <!-- Depth processing -->
+
   <depend>depth_image_proc</depend>
   <exec_depend>depthimage_to_laserscan</exec_depend>
-  
-  <!-- Nav2 packages -->
+
   <exec_depend>nav2_bringup</exec_depend>
   <exec_depend>nav2_bt_navigator</exec_depend>
   <exec_depend>nav2_controller</exec_depend>
@@ -33,12 +32,11 @@
   <exec_depend>nav2_waypoint_follower</exec_depend>
   <exec_depend>nav2_velocity_smoother</exec_depend>
   <exec_depend>nav2_lifecycle_manager</exec_depend>
-  
-  <!-- Camera (optional for real hardware) -->
+
   <exec_depend>realsense2_camera</exec_depend>
-  
-  <!-- Fiducial localization -->
+
   <exec_depend>fiducial_localizer</exec_depend>
+  <exec_depend>robot_localization</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

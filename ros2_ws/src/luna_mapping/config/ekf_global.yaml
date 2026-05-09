@@ -1,0 +1,58 @@
+ekf_filter_node_map:
+  ros__parameters:
+    frequency: 30.0
+    sensor_timeout: 0.2
+    two_d_mode: true
+    publish_tf: true
+    publish_acceleration: false
+    print_diagnostics: true
+    smooth_lagged_data: true
+    history_length: 1.0
+
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_link
+    world_frame: map
+
+    # /odom (wheel velocities only). Pose dimensions stay false so the EKF
+    # never integrates wheel-frame absolute pose into the map frame.
+    odom0: /odom
+    odom0_config: [false, false, false,
+                   false, false, false,
+                   true,  true,  false,
+                   false, false, true,
+                   false, false, false]
+    odom0_differential: false
+    odom0_relative: false
+    odom0_queue_size: 10
+
+    # /fiducial_pose absolute (PoseWithCovarianceStamped, x/y/yaw).
+    pose0: /fiducial_pose
+    pose0_config: [true,  true,  false,
+                   false, false, true,
+                   false, false, false,
+                   false, false, false,
+                   false, false, false]
+    pose0_differential: false
+    pose0_relative: false
+    pose0_queue_size: 10
+    pose0_rejection_threshold: 5.99
+
+    # Tuned process noise: smaller pose terms keep map->odom from snapping per
+    # fiducial fix; modest velocity terms let the filter trust wheel odom for
+    # smooth integration between sightings.
+    process_noise_covariance: [0.005, 0.0,   0.0,  0.0, 0.0, 0.0,   0.0,  0.0,  0.0,  0.0,    0.0,    0.0,    0.0,  0.0,  0.0,
+                               0.0,   0.005, 0.0,  0.0, 0.0, 0.0,   0.0,  0.0,  0.0,  0.0,    0.0,    0.0,    0.0,  0.0,  0.0,
+                               0.0,   0.0,   0.06, 0.0, 0.0, 0.0,   0.0,  0.0,  0.0,  0.0,    0.0,    0.0,    0.0,  0.0,  0.0,
+                               0.0,   0.0,   0.0,  0.03,0.0, 0.0,   0.0,  0.0,  0.0,  0.0,    0.0,    0.0,    0.0,  0.0,  0.0,
+                               0.0,   0.0,   0.0,  0.0, 0.03,0.0,   0.0,  0.0,  0.0,  0.0,    0.0,    0.0,    0.0,  0.0,  0.0,
+                               0.0,   0.0,   0.0,  0.0, 0.0, 0.003, 0.0,  0.0,  0.0,  0.0,    0.0,    0.0,    0.0,  0.0,  0.0,
+                               0.0,   0.0,   0.0,  0.0, 0.0, 0.0,   0.01, 0.0,  0.0,  0.0,    0.0,    0.0,    0.0,  0.0,  0.0,
+                               0.0,   0.0,   0.0,  0.0, 0.0, 0.0,   0.0,  0.01, 0.0,  0.0,    0.0,    0.0,    0.0,  0.0,  0.0,
+                               0.0,   0.0,   0.0,  0.0, 0.0, 0.0,   0.0,  0.0,  0.04, 0.0,    0.0,    0.0,    0.0,  0.0,  0.0,
+                               0.0,   0.0,   0.0,  0.0, 0.0, 0.0,   0.0,  0.0,  0.0,  0.01,   0.0,    0.0,    0.0,  0.0,  0.0,
+                               0.0,   0.0,   0.0,  0.0, 0.0, 0.0,   0.0,  0.0,  0.0,  0.0,    0.01,   0.0,    0.0,  0.0,  0.0,
+                               0.0,   0.0,   0.0,  0.0, 0.0, 0.0,   0.0,  0.0,  0.0,  0.0,    0.0,    0.005,  0.0,  0.0,  0.0,
+                               0.0,   0.0,   0.0,  0.0, 0.0, 0.0,   0.0,  0.0,  0.0,  0.0,    0.0,    0.0,    0.01, 0.0,  0.0,
+                               0.0,   0.0,   0.0,  0.0, 0.0, 0.0,   0.0,  0.0,  0.0,  0.0,    0.0,    0.0,    0.0,  0.01, 0.0,
+                               0.0,   0.0,   0.0,  0.0, 0.0, 0.0,   0.0,  0.0,  0.0,  0.0,    0.0,    0.0,    0.0,  0.0,  0.015]

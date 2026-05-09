@@ -1,0 +1,6 @@
+# Build context: exclude large or unreadable paths (e.g. root-owned core dumps).
+ros2_ws/build
+ros2_ws/install
+ros2_ws/log
+ros2_ws/core
+.git

@@ -20,6 +20,25 @@ def rotz(yaw):
                      [0,  0, 1]], dtype=float)
 
 
+def rotx(roll):
+    c, s = math.cos(roll), math.sin(roll)
+    return np.array([[1, 0,  0],
+                     [0, c, -s],
+                     [0, s,  c]], dtype=float)
+
+
+def roty(pitch):
+    c, s = math.cos(pitch), math.sin(pitch)
+    return np.array([[ c, 0, s],
+                     [ 0, 1, 0],
+                     [-s, 0, c]], dtype=float)
+
+
+def rot_rpy(roll, pitch, yaw):
+    """SDF / Gazebo convention: extrinsic XYZ = Rz(yaw) @ Ry(pitch) @ Rx(roll)."""
+    return rotz(yaw) @ roty(pitch) @ rotx(roll)
+
+
 def quat_from_euler(roll, pitch, yaw):
     cr = math.cos(roll/2); sr = math.sin(roll/2)
     cp = math.cos(pitch/2); sp = math.sin(pitch/2)

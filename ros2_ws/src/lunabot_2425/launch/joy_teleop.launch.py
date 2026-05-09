@@ -62,6 +62,13 @@ def generate_launch_description():
     )
     linkage_joy_arg = LaunchConfiguration("linkage_joy", default="false")
 
+    declare_linaks_joy = DeclareLaunchArgument(
+        "linaks_joy",
+        default_value="false",
+        description="If true, run linaks_joy (LINAK actuator teleop; needs luna_linaks_node + CAN).",
+    )
+    linaks_joy_arg = LaunchConfiguration("linaks_joy", default="false")
+
     joy_node = Node(
         package="joy",
         executable="joy_node",
@@ -110,13 +117,24 @@ def generate_launch_description():
         condition=IfCondition(linkage_joy_arg),
     )
 
+    linaks_joy_node = Node(
+        package="luna_nav",
+        executable="linaks_joy",
+        name="linaks_joy",
+        parameters=[{"use_sim_time": False}],
+        output="screen",
+        condition=IfCondition(linaks_joy_arg),
+    )
+
     return LaunchDescription([
         declare_use_sim_time,
         declare_joy_echo,
         declare_linkage_joy,
+        declare_linaks_joy,
         joy_node,
         teleop_node,
         teleop_nav_gate,
         joy_echo_node,
         linkage_joy_node,
+        linaks_joy_node,
     ])

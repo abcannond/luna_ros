@@ -9,7 +9,7 @@
       rpy:='0 0 0'
       radius:=0.05
       length:=0.04
-      fov:=1.869       
+      fov:=2.094
       width:=1280
       height:=720
       clip_near:=0.3      

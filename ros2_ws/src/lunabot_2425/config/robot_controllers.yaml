@@ -23,6 +23,7 @@ luna_cont:
 
     publish_rate: 30.0
     base_frame_id: base_link
+    enable_odom_tf: false
 
     left_back_wheel_names: ['back_left_drive_joint']
     left_front_wheel_names: ['front_left_drive_joint']
