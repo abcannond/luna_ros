@@ -1,12 +1,13 @@
 /*
  * Swerve motor tuning/debug tool
- * Uses SparkMax position PID with alt encoder feedback
  *
  * Commands:
- *   goto <motor_id> <radians>   steer one motor (1-4)
+ *   duty <id> <val>             open-loop duty cycle (-1.0 to 1.0)
+ *   pid                         configure PID on all motors and switch to position mode
+ *   goto <motor_id> <radians>   steer one motor (1-4) — requires pid mode
  *   goto all <radians>          steer all motors
  *   n                           print current encoder positions
- *   dutycycle                   switch to open-loop duty cycle mode
+ *   reset <id>                  factory reset a motor (power cycle after)
  *   q                           quit (returns wheels to 0 first)
  *
  * Created for 2025-26 WPI Lunabotics MQP
@@ -28,8 +29,8 @@ using namespace std::chrono_literals;
 // ---------------- CONFIG ----------------
 const char* CAN_IFACE = "can1";
 
-const float KP           = 2.0f;   // tune this
-const float OUTPUT_LIMIT = 0.5f;   // max duty cycle output from PID
+const float KP           = 2.0f;
+const float OUTPUT_LIMIT = 0.5f;
 
 // ---------------- STATE ----------------
 std::unique_ptr<SparkMax> swerve[5];
@@ -58,7 +59,7 @@ void control_thread() {
 // ---------------- INPUT ----------------
 void command_thread() {
     std::string cmd;
-    std::cout << "Commands: goto <id> <rad> | goto all <rad> | n | dutycycle | q\n";
+    std::cout << "Commands: duty <id> <val> | pid | goto <id> <rad> | goto all <rad> | n | reset <id> | q\n";
 
     while (running) {
         std::getline(std::cin, cmd);
@@ -72,9 +73,18 @@ void command_thread() {
             }
             std::cout << "\n";
 
-        } else if (cmd == "dutycycle") {
-            position_mode.store(false);
-            std::cout << "Duty cycle mode\n";
+        } else if (cmd == "pid") {
+            for (int i = 1; i <= 4; i++) {
+                swerve[i]->SetFeedbackSensorPID0(2);
+                swerve[i]->SetPositionPIDWrapEnable(false);
+                swerve[i]->SetP(0, KP);
+                swerve[i]->SetI(0, 0.0f);
+                swerve[i]->SetD(0, 0.0f);
+                swerve[i]->SetOutputMin(0, -OUTPUT_LIMIT);
+                swerve[i]->SetOutputMax(0,  OUTPUT_LIMIT);
+            }
+            position_mode.store(true);
+            std::cout << "PID configured. KP=" << KP << " OUTPUT_LIMIT=" << OUTPUT_LIMIT << "\n";
 
         } else if (cmd.rfind("reset ", 0) == 0) {
             try {
@@ -154,23 +164,12 @@ int main() {
         swerve[2]->SetAltEncoderInverted(true);
         swerve[3]->SetAltEncoderInverted(true);
         swerve[4]->SetAltEncoderInverted(false);
-
-        // PID config (disabled until duty cycle is confirmed working)
-        // for (int i = 1; i <= 4; i++) {
-        //     swerve[i]->SetFeedbackSensorPID0(2);
-        //     swerve[i]->SetPositionPIDWrapEnable(false);
-        //     swerve[i]->SetP(0, KP);
-        //     swerve[i]->SetI(0, 0.0f);
-        //     swerve[i]->SetD(0, 0.0f);
-        //     swerve[i]->SetOutputMin(0, -OUTPUT_LIMIT);
-        //     swerve[i]->SetOutputMax(0,  OUTPUT_LIMIT);
-        // }
     } catch (const std::exception& e) {
         std::cerr << "SparkMax init failed: " << e.what() << "\n";
         return 1;
     }
 
-    std::cout << "Initialized. KP=" << KP << " OUTPUT_LIMIT=" << OUTPUT_LIMIT << "\n";
+    std::cout << "Initialized in duty cycle mode. Type 'pid' to enable position control.\n";
 
     std::thread t1(control_thread);
     std::thread t2(command_thread);
@@ -178,7 +177,6 @@ int main() {
     t2.join();
     running = false;
 
-    // return wheels to 0 before exit
     std::cout << "Returning wheels to 0...\n";
     for (int i = 1; i <= 4; i++) swerve_pos_targets[i].store(0.0f);
     position_mode.store(true);
