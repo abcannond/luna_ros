@@ -29,8 +29,8 @@ using namespace std::chrono_literals;
 // ---------------- CONFIG ----------------
 const char* CAN_IFACE = "can1"; // bitrate: 1000000
 
-const float KP           = 2.0f;
-const float OUTPUT_LIMIT = 0.5f;
+const float KP           = 1.0f;
+const float OUTPUT_LIMIT = 1.0f;
 
 // ---------------- STATE ----------------
 std::unique_ptr<SparkMax> swerve[5];
