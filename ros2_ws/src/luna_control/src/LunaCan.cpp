@@ -292,8 +292,8 @@ hardware_interface::return_type LunaCan::write(
         double max_cmd = 5.0; //temp parameter since LunaController is being weird
         double max_cur = 8.0; //see above
       
-        current_ramp_[i] = (target_vel/max_cmd) * max_cur;
-        RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "current_ramp_[" i "]: %d", current_ramp_[i]);
+        current_ramp_[i] = static_cast<int>((target_vel/max_cmd) * max_cur);
+        RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "current_ramp_[%d]: %d", i, current_ramp_[i]);
         //TODO: finish controller
     }
 
