@@ -93,6 +93,12 @@ def generate_launch_description():
         output='screen',
     )
 
+    luna_linaks_spawner = Node(
+        package='luna_linaks',
+        executable='luna_linaks_node',
+        output='screen',
+    )
+
     # spawn joint state broadcaster
     spawn_jsb = TimerAction(
         period=3.0,
@@ -113,6 +119,17 @@ def generate_launch_description():
         )
     )
 
+    # spawn luna_linaks last
+    spawn_luna_linaks_after_jsb = RegisterEventHandler(
+        OnProcessExit(
+            target_action=joint_state_broadcaster_spawner,
+            on_exit=[
+                LogInfo(msg='joint_state_broadcaster active — starting luna_linaks...'),
+                luna_linaks_spawner,
+            ]
+        )
+    )
+
     return LaunchDescription([
         declare_use_sim,
         rsp,
@@ -120,4 +137,5 @@ def generate_launch_description():
         twist_stamper,
         spawn_jsb,
         spawn_luna_cont_after_jsb,
+        spawn_luna_linaks_after_jsb,
     ])
