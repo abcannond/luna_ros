@@ -98,6 +98,20 @@ void command_thread() {
                 std::cout << "Faults cleared on motor " << i << "\n";
             }
 
+        } else if (cmd == "checktype") {
+            for (int i = 1; i <= 4; i++) {
+                uint8_t t = swerve[i]->GetMotorType();
+                std::cout << "Motor " << i << " type: " << (int)t << " (" << (t == 1 ? "Brushless" : "Brushed") << ")\n";
+            }
+
+        } else if (cmd == "resetall") {
+            for (int i = 1; i <= 4; i++) {
+                swerve[i]->FactoryDefaults();
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                std::cout << "Factory defaults sent to motor " << i << "\n";
+            }
+            std::cout << "Power cycle the rover now — do NOT run swerve_debug again before power cycling\n";
+
         } else if (cmd.rfind("reset ", 0) == 0) {
             try {
                 int id = std::stoi(cmd.substr(6));
@@ -169,15 +183,9 @@ int main() {
     try {
         for (int i = 1; i <= 4; i++) {
             swerve[i] = std::make_unique<SparkMax>(CAN_IFACE, i);
-            swerve[i]->SetMotorType(MotorType::kBrushless);
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             swerve[i]->SetDataPortConfig(1);
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             swerve[i]->SetAltEncoderCountsPerRev(8192);
             swerve[i]->SetAltEncoderPositionFactor(2.0f * (float)M_PI);
-            swerve[i]->BurnFlash();
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            std::cout << "Motor " << i << " configured\n";
         }
         swerve[1]->SetAltEncoderInverted(false);
         swerve[2]->SetAltEncoderInverted(true);
