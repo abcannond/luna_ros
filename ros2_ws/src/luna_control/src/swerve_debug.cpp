@@ -76,6 +76,23 @@ void command_thread() {
             position_mode.store(false);
             std::cout << "Duty cycle mode\n";
 
+        } else if (cmd.rfind("duty ", 0) == 0) {
+            try {
+                std::istringstream ss(cmd.substr(5));
+                int id; float val;
+                ss >> id >> val;
+                val = std::clamp(val, -1.0f, 1.0f);
+                if (id >= 1 && id <= 4) {
+                    position_mode.store(false);
+                    steer_cmds[id].store(val);
+                    std::cout << "Motor " << id << " duty = " << val << "\n";
+                } else {
+                    std::cout << "Motor ID must be 1-4\n";
+                }
+            } catch (...) {
+                std::cout << "Usage: duty <motor_id> <-1.0 to 1.0>\n";
+            }
+
         } else if (cmd.rfind("goto ", 0) == 0) {
             try {
                 std::istringstream ss(cmd.substr(5));
@@ -126,14 +143,19 @@ int main() {
         swerve[4]->SetAltEncoderInverted(false);
 
         for (int i = 1; i <= 4; i++) {
-            swerve[i]->SetFeedbackSensorPID0(2);
-            swerve[i]->SetPositionPIDWrapEnable(false);
-            swerve[i]->SetP(0, KP);
-            swerve[i]->SetI(0, 0.0f);
-            swerve[i]->SetD(0, 0.0f);
-            swerve[i]->SetOutputMin(0, -OUTPUT_LIMIT);
-            swerve[i]->SetOutputMax(0,  OUTPUT_LIMIT);
+            swerve[i]->SetCtrlType(CtrlType::kDutyCycle);
         }
+
+        // PID disabled for duty cycle testing
+        // for (int i = 1; i <= 4; i++) {
+        //     swerve[i]->SetFeedbackSensorPID0(2);
+        //     swerve[i]->SetPositionPIDWrapEnable(false);
+        //     swerve[i]->SetP(0, KP);
+        //     swerve[i]->SetI(0, 0.0f);
+        //     swerve[i]->SetD(0, 0.0f);
+        //     swerve[i]->SetOutputMin(0, -OUTPUT_LIMIT);
+        //     swerve[i]->SetOutputMax(0,  OUTPUT_LIMIT);
+        // }
     } catch (const std::exception& e) {
         std::cerr << "SparkMax init failed: " << e.what() << "\n";
         return 1;
