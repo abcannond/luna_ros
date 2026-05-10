@@ -38,7 +38,7 @@ std::unique_ptr<SparkMax> swerve[5];
 std::array<std::atomic<float>, 5> swerve_pos_targets;
 std::array<std::atomic<float>, 5> steer_cmds;
 std::array<std::atomic<float>, 5> encoder_offsets;
-std::atomic<bool> position_mode(false);
+std::array<std::atomic<bool>, 5>  motor_in_pid; // per-motor: true = PID, false = duty cycle
 std::atomic<bool> running(true);
 
 // PID gains (tunable at runtime via kp/kd commands).
@@ -66,7 +66,7 @@ void control_thread() {
         for (int i = 1; i <= 4; i++) {
             swerve[i]->Heartbeat();
 
-            if (position_mode.load()) {
+            if (motor_in_pid[i].load()) {
                 float current = swerve[i]->GetAltEncoderPosition() - encoder_offsets[i].load();
                 float error = swerve_pos_targets[i].load() - current;
                 float derror = (error - last_error[i]) / dt;
@@ -156,7 +156,7 @@ void command_thread() {
                 ss >> id >> val;
                 val = std::clamp(val, -1.0f, 1.0f);
                 if (id >= 1 && id <= 4) {
-                    position_mode.store(false);
+                    motor_in_pid[id].store(false);
                     steer_cmds[id].store(val);
                     std::cout << "Motor " << id << " duty = " << val << "\n";
                 } else {
@@ -176,8 +176,10 @@ void command_thread() {
                 if (first == "all") {
                     ss >> target;
                     target = std::clamp(target, -(float)M_PI, (float)M_PI);
-                    for (int i = 1; i <= 4; i++) swerve_pos_targets[i].store(target);
-                    position_mode.store(true);
+                    for (int i = 1; i <= 4; i++) {
+                        swerve_pos_targets[i].store(target);
+                        motor_in_pid[i].store(true);
+                    }
                     std::cout << "All -> " << target << " rad\n";
                 } else {
                     int id = std::stoi(first);
@@ -185,7 +187,7 @@ void command_thread() {
                     target = std::clamp(target, -(float)M_PI, (float)M_PI);
                     if (id >= 1 && id <= 4) {
                         swerve_pos_targets[id].store(target);
-                        position_mode.store(true);
+                        motor_in_pid[id].store(true);
                         std::cout << "Motor " << id << " -> " << target << " rad\n";
                     } else {
                         std::cout << "Motor ID must be 1-4\n";
@@ -203,6 +205,7 @@ int main() {
     for (auto& t : swerve_pos_targets) t.store(0.0f);
     for (auto& t : steer_cmds) t.store(0.0f);
     for (auto& t : encoder_offsets) t.store(0.0f);
+    for (auto& m : motor_in_pid) m.store(false);
 
     // Init mirrors luna_debug (no SetMotorType, no onboard PID setup needed).
     try {
@@ -231,8 +234,10 @@ int main() {
     running = false;
 
     std::cout << "Returning wheels to 0...\n";
-    for (int i = 1; i <= 4; i++) swerve_pos_targets[i].store(0.0f);
-    position_mode.store(true);
+    for (int i = 1; i <= 4; i++) {
+        swerve_pos_targets[i].store(0.0f);
+        motor_in_pid[i].store(true);
+    }
     std::this_thread::sleep_for(std::chrono::milliseconds(1500));
 
     t1.join();
