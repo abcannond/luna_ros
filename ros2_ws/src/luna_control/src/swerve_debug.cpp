@@ -36,6 +36,7 @@ const float OUTPUT_LIMIT = 0.5f;
 std::unique_ptr<SparkMax> swerve[5];
 std::array<std::atomic<float>, 5> swerve_pos_targets;
 std::array<std::atomic<float>, 5> steer_cmds;
+std::array<std::atomic<float>, 5> encoder_offsets;
 std::atomic<bool> position_mode(false);
 std::atomic<bool> running(true);
 
@@ -46,7 +47,7 @@ void control_thread() {
             swerve[i]->Heartbeat();
 
             if (position_mode.load()) {
-                float current = swerve[i]->GetAltEncoderPosition();
+                float current = swerve[i]->GetAltEncoderPosition() - encoder_offsets[i].load();
                 float error = swerve_pos_targets[i].load() - current;
                 float output = std::clamp(KP * error, -OUTPUT_LIMIT, OUTPUT_LIMIT);
                 swerve[i]->SetDutyCycle(output);
@@ -72,9 +73,17 @@ void command_thread() {
 
         } else if (cmd == "n") {
             for (int i = 1; i <= 4; i++) {
-                std::cout << "Pos" << i << ": " << swerve[i]->GetAltEncoderPosition() << "  ";
+                float pos = swerve[i]->GetAltEncoderPosition() - encoder_offsets[i].load();
+                std::cout << "Pos" << i << ": " << pos << "  ";
             }
             std::cout << "\n";
+
+        } else if (cmd == "zero") {
+            for (int i = 1; i <= 4; i++) {
+                encoder_offsets[i].store(swerve[i]->GetAltEncoderPosition());
+            }
+            for (int i = 1; i <= 4; i++) swerve_pos_targets[i].store(0.0f);
+            std::cout << "Zeroed. Current position is now 0 for all motors.\n";
 
         } else if (cmd == "pid") {
             position_mode.store(true);
@@ -152,6 +161,7 @@ void command_thread() {
 int main() {
     for (auto& t : swerve_pos_targets) t.store(0.0f);
     for (auto& t : steer_cmds) t.store(0.0f);
+    for (auto& t : encoder_offsets) t.store(0.0f);
 
     try {
         for (int i = 1; i <= 4; i++) {
