@@ -27,7 +27,7 @@
 using namespace std::chrono_literals;
 
 // ---------------- CONFIG ----------------
-const char* CAN_IFACE = "can1";
+const char* CAN_IFACE = "can1"; // bitrate: 1000000
 
 const float KP           = 2.0f;
 const float OUTPUT_LIMIT = 0.5f;
@@ -75,6 +75,7 @@ void command_thread() {
 
         } else if (cmd == "pid") {
             for (int i = 1; i <= 4; i++) {
+                swerve[i]->ResetFaults();
                 swerve[i]->SetFeedbackSensorPID0(2);
                 swerve[i]->SetPositionPIDWrapEnable(false);
                 swerve[i]->SetP(0, KP);
@@ -82,9 +83,16 @@ void command_thread() {
                 swerve[i]->SetD(0, 0.0f);
                 swerve[i]->SetOutputMin(0, -OUTPUT_LIMIT);
                 swerve[i]->SetOutputMax(0,  OUTPUT_LIMIT);
+                swerve[i]->BurnFlash();
             }
             position_mode.store(true);
             std::cout << "PID configured. KP=" << KP << " OUTPUT_LIMIT=" << OUTPUT_LIMIT << "\n";
+
+        } else if (cmd == "faults") {
+            for (int i = 1; i <= 4; i++) {
+                swerve[i]->ResetFaults();
+                std::cout << "Faults cleared on motor " << i << "\n";
+            }
 
         } else if (cmd.rfind("reset ", 0) == 0) {
             try {
