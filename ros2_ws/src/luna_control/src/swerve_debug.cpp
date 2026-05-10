@@ -169,6 +169,7 @@ int main() {
     try {
         for (int i = 1; i <= 4; i++) {
             swerve[i] = std::make_unique<SparkMax>(CAN_IFACE, i);
+            swerve[i]->SetMotorType(MotorType::kBrushless);
             swerve[i]->SetDataPortConfig(1);
             swerve[i]->SetAltEncoderCountsPerRev(8192);
             swerve[i]->SetAltEncoderPositionFactor(2.0f * (float)M_PI);
