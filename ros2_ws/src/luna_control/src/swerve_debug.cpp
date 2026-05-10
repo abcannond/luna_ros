@@ -142,11 +142,7 @@ int main() {
         swerve[3]->SetAltEncoderInverted(true);
         swerve[4]->SetAltEncoderInverted(false);
 
-        for (int i = 1; i <= 4; i++) {
-            swerve[i]->SetCtrlType(CtrlType::kDutyCycle);
-        }
-
-        // PID disabled for duty cycle testing
+        // PID config (disabled until duty cycle is confirmed working)
         // for (int i = 1; i <= 4; i++) {
         //     swerve[i]->SetFeedbackSensorPID0(2);
         //     swerve[i]->SetPositionPIDWrapEnable(false);
