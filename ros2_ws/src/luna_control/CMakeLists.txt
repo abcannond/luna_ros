@@ -44,8 +44,25 @@ add_library(luna_control SHARED
 
 #executables
 add_executable(luna_can src/luna_can.cpp)
+add_executable(luna_linaks
+  src/luna_linaks.cpp
+  src/linak_actuator.cpp
+)
 add_executable(luna_debug src/luna_debug.cpp)
 add_executable(swerve_debug src/swerve_debug.cpp)
+
+add_executable(luna_linkage_joy
+  src/luna_linkage_joy.cpp
+  src/teleop_can.cpp
+)
+target_include_directories(luna_linkage_joy PRIVATE
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+)
+target_compile_features(luna_linkage_joy PUBLIC cxx_std_17)
+ament_target_dependencies(luna_linkage_joy
+  rclcpp
+  sensor_msgs
+)
 
 target_link_libraries(luna_can
   luna_control
@@ -63,12 +80,23 @@ ament_target_dependencies(swerve_debug
   rclcpp
 )
 
+target_link_libraries(luna_linaks
+  luna_control
+)
+
+target_link_libraries(luna_linkage_joy
+  luna_control
+)
 
 ament_target_dependencies(luna_can
   rclcpp
 )
 
 ament_target_dependencies(luna_debug
+  rclcpp
+)
+
+ament_target_dependencies(luna_linaks
   rclcpp
 )
 
@@ -89,7 +117,7 @@ install(
   DIRECTORY include/
   DESTINATION include/luna_control
 )
-install(TARGETS luna_control luna_controller_parameters luna_can luna_debug swerve_debug
+install(TARGETS luna_control luna_controller_parameters luna_can luna_debug swerve_debug luna_linaks luna_linkage_joy
   EXPORT export_luna_control
   RUNTIME DESTINATION lib/luna_control
   ARCHIVE DESTINATION lib
