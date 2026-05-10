@@ -40,6 +40,9 @@ std::array<std::atomic<float>, 5> encoder_offsets;
 std::atomic<bool> position_mode(false);
 std::atomic<bool> running(true);
 
+// per-motor encoder sign: -1 if positive duty causes decreasing encoder
+const float ENC_SIGN[5] = {0, 1.0f, 1.0f, -1.0f, 1.0f};
+
 // ---------------- CONTROL LOOP ----------------
 void control_thread() {
     while (running) {
@@ -47,7 +50,7 @@ void control_thread() {
             swerve[i]->Heartbeat();
 
             if (position_mode.load()) {
-                float current = swerve[i]->GetAltEncoderPosition() - encoder_offsets[i].load();
+                float current = ENC_SIGN[i] * swerve[i]->GetAltEncoderPosition() - encoder_offsets[i].load();
                 float error = swerve_pos_targets[i].load() - current;
                 float output = std::clamp(KP * error, -OUTPUT_LIMIT, OUTPUT_LIMIT);
                 swerve[i]->SetDutyCycle(output);
@@ -73,14 +76,14 @@ void command_thread() {
 
         } else if (cmd == "n") {
             for (int i = 1; i <= 4; i++) {
-                float pos = swerve[i]->GetAltEncoderPosition() - encoder_offsets[i].load();
+                float pos = ENC_SIGN[i] * swerve[i]->GetAltEncoderPosition() - encoder_offsets[i].load();
                 std::cout << "Pos" << i << ": " << pos << "  ";
             }
             std::cout << "\n";
 
         } else if (cmd == "zero") {
             for (int i = 1; i <= 4; i++) {
-                encoder_offsets[i].store(swerve[i]->GetAltEncoderPosition());
+                encoder_offsets[i].store(ENC_SIGN[i] * swerve[i]->GetAltEncoderPosition());
             }
             for (int i = 1; i <= 4; i++) swerve_pos_targets[i].store(0.0f);
             std::cout << "Zeroed. Current position is now 0 for all motors.\n";
