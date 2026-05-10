@@ -42,9 +42,9 @@ std::array<std::atomic<bool>, 5>  motor_in_pid; // per-motor: true = PID, false 
 std::atomic<bool> running(true);
 
 // PID gains (tunable at runtime via kp/kd commands).
-std::atomic<float> KP{2.0f};
-std::atomic<float> KD{0.05f};
-std::atomic<float> OUTPUT_LIMIT{0.5f};
+std::atomic<float> KP{1.0f};
+std::atomic<float> KD{0.0f};
+std::atomic<float> OUTPUT_LIMIT{1.0f};
 
 // ---------------- CONTROL LOOP ----------------
 // Software PD position control: error = target - (encoder - offset),
