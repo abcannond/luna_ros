@@ -43,14 +43,17 @@ std::atomic<bool> running(true);
 
 // PID gains (tunable at runtime via kp/kd commands).
 std::atomic<float> KP{1.0f};
+std::atomic<float> KI{0.5f};
 std::atomic<float> KD{0.0f};
 std::atomic<float> OUTPUT_LIMIT{1.0f};
+const float INTEGRAL_LIMIT = 0.5f; // anti-windup clamp on the integral term
 
 // ---------------- CONTROL LOOP ----------------
 // Software PD position control: error = target - (encoder - offset),
 // output = kp*error + kd*(error - last_error)/dt, clamped, sent as duty cycle.
 void control_thread() {
     std::array<float, 5> last_error{};
+    std::array<float, 5> integral{};
     auto last_time = std::chrono::steady_clock::now();
 
     while (running) {
@@ -60,6 +63,7 @@ void control_thread() {
         if (dt <= 0.0f) dt = 0.002f; // safety, avoid divide-by-zero on first tick
 
         const float kp = KP.load();
+        const float ki = KI.load();
         const float kd = KD.load();
         const float lim = OUTPUT_LIMIT.load();
 
@@ -69,14 +73,16 @@ void control_thread() {
             if (motor_in_pid[i].load()) {
                 float current = swerve[i]->GetAltEncoderPosition() - encoder_offsets[i].load();
                 float error = swerve_pos_targets[i].load() - current;
+                integral[i] = std::clamp(integral[i] + error * dt, -INTEGRAL_LIMIT, INTEGRAL_LIMIT);
                 float derror = (error - last_error[i]) / dt;
-                float output = std::clamp(kp * error + kd * derror, -lim, lim);
+                float output = std::clamp(kp * error + ki * integral[i] + kd * derror, -lim, lim);
                 swerve[i]->SetDutyCycle(output);
                 last_error[i] = error;
             } else {
                 float duty = std::clamp(steer_cmds[i].load(), -1.0f, 1.0f);
                 swerve[i]->SetDutyCycle(duty);
-                last_error[i] = 0.0f; // reset D term when not in position mode
+                last_error[i] = 0.0f;
+                integral[i]   = 0.0f; // reset integrator when leaving position mode
             }
         }
         std::this_thread::sleep_for(2ms);
@@ -87,7 +93,7 @@ void control_thread() {
 void command_thread() {
     std::string cmd;
     std::cout << "Commands: duty <id> <val> | goto <id> <rad> | goto all <rad> | zero | n | "
-                 "kp <val> | kd <val> | limit <val> | faults | reset <id> | q\n";
+                 "kp <val> | ki <val> | kd <val> | limit <val> | faults | reset <id> | q\n";
 
     while (running) {
         std::getline(std::cin, cmd);
@@ -121,6 +127,13 @@ void command_thread() {
                 KP.store(v);
                 std::cout << "KP = " << v << "\n";
             } catch (...) { std::cout << "Usage: kp <val>\n"; }
+
+        } else if (cmd.rfind("ki ", 0) == 0) {
+            try {
+                float v = std::stof(cmd.substr(3));
+                KI.store(v);
+                std::cout << "KI = " << v << "\n";
+            } catch (...) { std::cout << "Usage: ki <val>\n"; }
 
         } else if (cmd.rfind("kd ", 0) == 0) {
             try {
@@ -225,7 +238,8 @@ int main() {
     }
 
     std::cout << "Initialized in duty cycle mode. KP=" << KP.load()
-              << " KD=" << KD.load() << " LIMIT=" << OUTPUT_LIMIT.load() << "\n";
+              << " KI=" << KI.load() << " KD=" << KD.load()
+              << " LIMIT=" << OUTPUT_LIMIT.load() << "\n";
 
     std::thread t1(control_thread);
     std::thread t2(command_thread);
