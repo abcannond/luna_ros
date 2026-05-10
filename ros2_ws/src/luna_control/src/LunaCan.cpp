@@ -287,22 +287,13 @@ hardware_interface::return_type LunaCan::write(
         //apply reverse flags 
         if (wheel_reverse_flags_[i]) { target_vel = -target_vel; }
 
-        double vel_error = target_vel - wheel_state_vel_[i];
-        if(wheel_cmd_vel_[i] >= 2) {
-          //something is wrong, this should be spinning way faster
-          current_ramp_[1] = 800;
-          current_ramp_[0] = 800;
-          current_ramp_[2] = 800;
-          current_ramp_[3] = 800;
-          RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "current_ramp_[1]: %d", current_ramp_[1]);
-        }
-        else {
-          current_ramp_[0] = 0;
-          current_ramp_[1] = 0;
-          current_ramp_[2] = 0;
-          current_ramp_[3] = 0;
-          //RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "no current!: %d", current_ramp_[1]);
-        }
+        //double vel_error = target_vel - wheel_state_vel_[i];
+
+        double max_cmd = 5.0; //temp parameter since LunaController is being weird
+        double max_cur = 8.0; //see above
+      
+        current_ramp_[i] = (target_vel/max_cmd) * max_cur;
+        RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "current_ramp_[" i "]: %d", current_ramp_[i]);
         //TODO: finish controller
     }
 

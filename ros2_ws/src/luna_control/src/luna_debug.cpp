@@ -64,7 +64,6 @@ std::unique_ptr<SparkMax> swerve[5];
 int can_sock = -1;
 int TARGET_CURRENT = 0;
 int TARGET_VELOCITY = 0;
-auto last_time = std::chrono::steady_clock::now();
 
 // ---------------- CAN ----------------
 
@@ -154,7 +153,7 @@ void control_thread() {
                 swerve[i]->SetDutyCycle(duty);
             }
         }
-        /*
+        
         //velocity control
         for(int m: MOTOR_IDS) {
             int cur_vel = drive_vels[m].load();
@@ -171,11 +170,12 @@ void control_thread() {
             if(error >= GEAR_REDUCTION or error <= -GEAR_REDUCTION) {
                 //get time delta 
                 auto now = std::chrono::steady_clock::now();
+                static auto last_time = std::chrono::steady_clock::now();
                 float dt_s = std::chrono::duration<float>(now - last_time).count();
                 last_time = now;
 
                 //change current 
-                float kP = 1.0f;  //still tuning 
+                float kP = 0.001f;  //still tuning 
                 int delta = static_cast<int>(kP * (float)error * dt_s);
 
                 //clamp current 
@@ -184,8 +184,7 @@ void control_thread() {
 
             currents[m].store(current);
         } 
-            */
-        
+        /*
         //set currents to targets 
         for (int m : MOTOR_IDS) {
             int tgt = targets[m].load();
@@ -200,7 +199,7 @@ void control_thread() {
 
             currents[m].store(cur);
         }
-        
+        */
         auto msg = build_msg();
         
         write(can_sock, &msg, sizeof(msg));
@@ -224,18 +223,12 @@ void command_thread() {
 
         if (cmd == "w") {
             TARGET_CURRENT += 500;
-            std::cout << TARGET_CURRENT;
-            std::cout << "help me";
-            TARGET_VELOCITY += 5;
-            //std::cout << TARGET_VELOCITY;
-        }
-        if (cmd == "q") {
-            TARGET_CURRENT -= 500;
             //std::cout << TARGET_CURRENT;
-            TARGET_VELOCITY -= 5;
+            //std::cout << "help me";
+            TARGET_VELOCITY += 5;
             std::cout << TARGET_VELOCITY;
         }
-        if (cmd == "f") {
+        /*if (cmd == "f") {
             std::cout << TARGET_CURRENT;
             //targets[1].store(TARGET_CURRENT);
             //targets[2].store(-TARGET_CURRENT);
@@ -254,9 +247,10 @@ void command_thread() {
             targets[2].store(-TARGET_CURRENT);
             targets[3].store(-TARGET_CURRENT);
             targets[4].store(TARGET_CURRENT);
-        }
+        } */
         else if (cmd == "s") {
             TARGET_CURRENT = 0;
+            TARGET_VELOCITY = 0;
             //stop all
             for (int m : MOTOR_IDS) {
                 targets[m].store(0);
@@ -271,12 +265,12 @@ void command_thread() {
             for(int m: MOTOR_IDS) {
                 vel_targets[m].store(0);
             }
-        }
-        else if (cmd == "a") {
+        } 
+        /*else if (cmd == "a") {
             std::cout << "m2";
             targets[2].store(-TARGET_CURRENT);
             vel_targets[2].store(TARGET_VELOCITY);
-        }
+        }*/
         else if (cmd == "d") {
             std::cout << "m1";
             targets[1].store(TARGET_CURRENT);
@@ -285,7 +279,7 @@ void command_thread() {
         else if (cmd == "q") {
             running = false;
         }
-        else if (cmd == "z") {
+        /*else if (cmd == "z") {
             std::cout << "m3";
             targets[3].store(-TARGET_CURRENT);
             vel_targets[3].store(TARGET_VELOCITY);
@@ -294,7 +288,7 @@ void command_thread() {
             std::cout << "m4";
             targets[4].store(TARGET_CURRENT);
             vel_targets[4].store(TARGET_VELOCITY);
-        }
+        } */
         else if (cmd == "m") {
             for (int m : MOTOR_IDS) {
                 std::cout << "M" << m << ": " << currents[m].load() << " ";
@@ -304,7 +298,8 @@ void command_thread() {
                 std::cout << "V" << m << ": " << drive_vels[m].load()/GEAR_REDUCTION << " ";
             }
             std::cout << std::endl; 
-        }
+        } 
+        /*
         //swerve motor controls
         else if (cmd == "p") {
             std::cout << "swerve4";
@@ -346,6 +341,8 @@ void command_thread() {
             steer_cmds[1].store(-0.1f); 
         
         }
+
+        */
         
         else if (cmd == "n") {
 
@@ -509,71 +506,3 @@ int main() {
 
     std::cout << "Exited cleanly\n";
 }
-/*
-#include "luna_control/SparkMax.hpp"
-#include <iostream>
-#include <thread>
-#include <chrono>
-#include <cmath>
-
-constexpr const char* CAN_IFACE = "can0";
-constexpr int POD_ID = 1; // test one pod first
-
-int main() {
-    SparkMax pod(CAN_IFACE, POD_ID);
-
-    // configure alt encoder
-    pod.SetDataPortConfig(1);
-    pod.SetAltEncoderCountsPerRev(8192);
-    pod.SetAltEncoderPositionFactor(2.0f * (float)M_PI); // rotations -> radians
-    pod.SetAltEncoderInverted(false);
-
-    // tell PID to use alt encoder (sensor ID 2 = alt encoder)
-    pod.SetFeedbackSensorPID0(2);
-
-    // enable PID wrap so it takes shortest path through 0
-    pod.SetPositionPIDWrapEnable(true);
-    pod.SetPositionPIDMinInput((float)-M_PI);
-    pod.SetPositionPIDMaxInput((float)M_PI);
-
-    // tune these - start very low
-    pod.SetP(0, 1.0f);
-    pod.SetI(0, 0.0f);
-    pod.SetD(0, 0.0f);
-    pod.SetF(0, 0.0f);
-    pod.SetOutputMin(0, -0.3f); // limit output for safety
-    pod.SetOutputMax(0,  0.3f);
-
-    // heartbeat loop
-    std::thread hb([](){
-        while(true) {
-            SparkMax::Heartbeat();
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
-        }
-    });
-    hb.detach();
-
-    // give it a moment to initialize
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
-    // test positions
-    float targets[] = {0.0f, (float)M_PI/4, (float)-M_PI/4, 0.0f};
-    std::cout << "1";
-    for (float target : targets) {
-        std::cout << "Going to: " << target << " rad" << std::endl;
-        pod.SetPosition(target);
-
-        // wait and print feedback
-        for (int i = 0; i < 50; i++) {
-            float pos = pod.GetAltEncoderPosition();
-            std::cout << "  pos: " << pos << " rad" << std::endl;
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-        
-    }
-
-    pod.SetDutyCycle(0.0f);
-    return 0;
-}
-
-*/

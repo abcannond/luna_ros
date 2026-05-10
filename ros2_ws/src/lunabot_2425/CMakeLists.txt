@@ -29,7 +29,7 @@ install(
 )
 
 install(
-  DIRECTORY config description launch stl worlds
+  DIRECTORY config description launch worlds
   DESTINATION share/${PROJECT_NAME}
 )
 
