@@ -53,7 +53,7 @@ void control_thread() {
                 float current = ENC_SIGN[i] * swerve[i]->GetAltEncoderPosition() - encoder_offsets[i].load();
                 float error = swerve_pos_targets[i].load() - current;
                 float output = std::clamp(KP * error, -OUTPUT_LIMIT, OUTPUT_LIMIT);
-                swerve[i]->SetDutyCycle(output);
+                swerve[i]->SetSetpoint(output);
             } else {
                 float duty = std::clamp(steer_cmds[i].load(), -1.0f, 1.0f);
                 swerve[i]->SetDutyCycle(duty);
