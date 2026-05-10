@@ -76,6 +76,19 @@ void command_thread() {
             position_mode.store(false);
             std::cout << "Duty cycle mode\n";
 
+        } else if (cmd.rfind("reset ", 0) == 0) {
+            try {
+                int id = std::stoi(cmd.substr(6));
+                if (id >= 1 && id <= 4) {
+                    swerve[id]->FactoryDefaults();
+                    std::cout << "Factory defaults sent to motor " << id << " — power cycle it now\n";
+                } else {
+                    std::cout << "Motor ID must be 1-4\n";
+                }
+            } catch (...) {
+                std::cout << "Usage: reset <motor_id>\n";
+            }
+
         } else if (cmd.rfind("duty ", 0) == 0) {
             try {
                 std::istringstream ss(cmd.substr(5));
