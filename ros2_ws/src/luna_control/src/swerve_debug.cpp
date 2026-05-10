@@ -169,7 +169,16 @@ int main() {
     try {
         for (int i = 1; i <= 4; i++) {
             swerve[i] = std::make_unique<SparkMax>(CAN_IFACE, i);
+            swerve[i]->SetMotorType(MotorType::kBrushless);
+            swerve[i]->SetDataPortConfig(1);
+            swerve[i]->SetAltEncoderCountsPerRev(8192);
+            swerve[i]->SetAltEncoderPositionFactor(2.0f * (float)M_PI);
+            swerve[i]->BurnFlash();
         }
+        swerve[1]->SetAltEncoderInverted(false);
+        swerve[2]->SetAltEncoderInverted(true);
+        swerve[3]->SetAltEncoderInverted(false);
+        swerve[4]->SetAltEncoderInverted(false);
     } catch (const std::exception& e) {
         std::cerr << "SparkMax init failed: " << e.what() << "\n";
         return 1;
