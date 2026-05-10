@@ -64,6 +64,9 @@ bring_up_can can0 250000
 bring_up_can can1 1000000
 #COMMENT
 
+# Sync clock to fix build cache clock skew
+sudo date -s "$(date -u '+%Y-%m-%d %H:%M:%S')" > /dev/null 2>&1 || true
+
 # If no arguments, launch interactive login shell so aliases work
 if [ $# -eq 0 ]; then
     exec bash -il
