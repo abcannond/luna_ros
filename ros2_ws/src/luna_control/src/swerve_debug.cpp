@@ -170,10 +170,14 @@ int main() {
         for (int i = 1; i <= 4; i++) {
             swerve[i] = std::make_unique<SparkMax>(CAN_IFACE, i);
             swerve[i]->SetMotorType(MotorType::kBrushless);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             swerve[i]->SetDataPortConfig(1);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             swerve[i]->SetAltEncoderCountsPerRev(8192);
             swerve[i]->SetAltEncoderPositionFactor(2.0f * (float)M_PI);
             swerve[i]->BurnFlash();
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            std::cout << "Motor " << i << " configured\n";
         }
         swerve[1]->SetAltEncoderInverted(false);
         swerve[2]->SetAltEncoderInverted(true);
