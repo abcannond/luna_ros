@@ -46,7 +46,10 @@ void control_thread() {
             swerve[i]->Heartbeat();
 
             if (position_mode.load()) {
-                swerve[i]->SetPosition(swerve_pos_targets[i].load());
+                float current = swerve[i]->GetAltEncoderPosition();
+                float error = swerve_pos_targets[i].load() - current;
+                float output = std::clamp(KP * error, -OUTPUT_LIMIT, OUTPUT_LIMIT);
+                swerve[i]->SetDutyCycle(output);
             } else {
                 float duty = std::clamp(steer_cmds[i].load(), -1.0f, 1.0f);
                 swerve[i]->SetDutyCycle(duty);
@@ -74,19 +77,8 @@ void command_thread() {
             std::cout << "\n";
 
         } else if (cmd == "pid") {
-            for (int i = 1; i <= 4; i++) {
-                swerve[i]->ResetFaults();
-                swerve[i]->SetFeedbackSensorPID0(2);
-                swerve[i]->SetPositionPIDWrapEnable(false);
-                swerve[i]->SetP(0, KP);
-                swerve[i]->SetI(0, 0.0f);
-                swerve[i]->SetD(0, 0.0f);
-                swerve[i]->SetOutputMin(0, -OUTPUT_LIMIT);
-                swerve[i]->SetOutputMax(0,  OUTPUT_LIMIT);
-                swerve[i]->BurnFlash();
-            }
             position_mode.store(true);
-            std::cout << "PID configured. KP=" << KP << " OUTPUT_LIMIT=" << OUTPUT_LIMIT << "\n";
+            std::cout << "Software PID enabled. KP=" << KP << " OUTPUT_LIMIT=" << OUTPUT_LIMIT << "\n";
 
         } else if (cmd == "faults") {
             for (int i = 1; i <= 4; i++) {
