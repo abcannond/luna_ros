@@ -196,6 +196,13 @@ int main() {
         return 1;
     }
 
+    // Send heartbeats for 2 seconds before accepting commands
+    std::cout << "Warming up CAN...\n";
+    for (int i = 0; i < 1000; i++) {
+        for (int j = 1; j <= 4; j++) swerve[j]->Heartbeat();
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    }
+
     std::cout << "Initialized in duty cycle mode. Type 'pid' to enable position control.\n";
 
     std::thread t1(control_thread);
