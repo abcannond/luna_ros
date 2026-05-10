@@ -172,7 +172,7 @@ int main() {
         }
         swerve[1]->SetAltEncoderInverted(false);
         swerve[2]->SetAltEncoderInverted(true);
-        swerve[3]->SetAltEncoderInverted(true);
+        swerve[3]->SetAltEncoderInverted(false);
         swerve[4]->SetAltEncoderInverted(false);
     } catch (const std::exception& e) {
         std::cerr << "SparkMax init failed: " << e.what() << "\n";
