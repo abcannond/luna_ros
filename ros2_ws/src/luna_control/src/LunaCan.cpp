@@ -131,11 +131,13 @@ CallbackReturn LunaCan::on_configure(const rclcpp_lifecycle::State &)
       spark_[i]->SetDataPortConfig(1); //alt encoder mode
       spark_[i]->SetAltEncoderCountsPerRev(8192); //REV through bore v2
       spark_[i]->SetAltEncoderPositionFactor(2.0f * (float)M_PI); //convert to rads
+      spark_[i]->SetAltEncoderInverted(false);
     }
-    spark_[1]->SetAltEncoderInverted(false);
-    spark_[2]->SetAltEncoderInverted(true);
-    spark_[3]->SetAltEncoderInverted(true);
-    spark_[4]->SetAltEncoderInverted(false);
+    pod_reverse_flags_[1] = false;
+    pod_reverse_flags_[2] = true;
+    pod_reverse_flags_[3] = false;
+    pod_reverse_flags_[4] = true;
+
   } catch (const std::exception & e) {
     RCLCPP_FATAL(rclcpp::get_logger("LunaCan"),
       "SparkMax init failed: %s", e.what());
@@ -309,12 +311,18 @@ hardware_interface::return_type LunaCan::write(
         spark_[i]->Heartbeat();
 
         double target_pos = pod_cmd_pos_[i];
-        double pos_error = target_pos - pod_state_pos_[i]; 
+        double pos_error = target_pos - pod_state_pos_[i];
+        double duty = 0.0;
+        if((pos_error > 0.05) or (pos_error < -0.05)) {
+          duty = SPARK_kP * pos_error; 
+      
+          duty = std::clamp(duty, -0.1, 0.1);
 
-        double duty = SPARK_kP * pos_error; 
-    
-        duty = std::clamp(duty, -0.1, 0.1);
-
+          //apply reversed 
+          if(pod_reverse_flags_[i] == true) {
+            duty = -duty; 
+          }
+        }
         pod_duty_cycle_[i] = duty;
     }
 
