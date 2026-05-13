@@ -314,14 +314,15 @@ class LinaksJoyNode(Node):
         self.get_logger().info('Excavation: wrist to final raised position')
         self._move_to('wrist', p('wrist_dump_mm'))'''
         
-        self.move_to('lift', p('retract_dump_mm'))
+        self.get_logger().info('Retracting')
+        self._move_to('lift', p('retract_dump_mm'))
 
     # ------------------------------------------------------------------
     # Dump sequence
     # ------------------------------------------------------------------
 
     def _dump_sequence(self):
-        p = self._plift_
+        p = self._p
 
         '''# Extend wrist fully before moving shoulder — prevents scoop hitting chassis/door
         self.get_logger().info('Dump: extending wrist to safe position')
@@ -340,7 +341,7 @@ class LinaksJoyNode(Node):
         self._drive(-abs(p('dump_backup_speed')), p('dump_backup_s'))
 
         self.get_logger().info('Dump: complete — lift remains extended')'''
-
+        self.get_logger().info('Dumping')
         self._move_to('lift', p('lift_dump_mm'))
 
 
