@@ -11,7 +11,7 @@
     <joint name="front_left_drive_joint">
         <param name="can_id">2</param>
         <param name="type">c620</param>
-        <param name="reversed">false</param> 
+        <param name="reversed">true</param> 
         <command_interface name="velocity"/>
         <state_interface name="velocity"/>
     </joint>
@@ -19,7 +19,7 @@
     <joint name="front_right_drive_joint">
         <param name="can_id">1</param>
         <param name="type">c620</param>
-        <param name="reversed">true</param>
+        <param name="reversed">false</param>
         <command_interface name="velocity"/>
         <state_interface name="velocity"/>
     </joint>
@@ -27,7 +27,7 @@
     <joint name="back_left_drive_joint">
         <param name="can_id">3</param>
         <param name="type">c620</param>
-        <param name="reversed">false</param>
+        <param name="reversed">true</param>
         <command_interface name="velocity"/>
         <state_interface name="velocity"/>
     </joint>
@@ -35,7 +35,7 @@
     <joint name="back_right_drive_joint">
         <param name="can_id">4</param>
         <param name="type">c620</param>
-        <param name="reversed">true</param>
+        <param name="reversed">false</param>
         <command_interface name="velocity"/>
         <state_interface name="velocity"/>
     </joint>
