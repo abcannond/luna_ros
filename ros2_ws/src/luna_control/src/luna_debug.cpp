@@ -299,7 +299,7 @@ void command_thread() {
             }
             std::cout << std::endl; 
         } 
-        /*
+        
         //swerve motor controls
         else if (cmd == "p") {
             std::cout << "swerve4";
@@ -337,12 +337,10 @@ void command_thread() {
             
         }
         else if (cmd == "h") {
-            std::cout << "swerve1";
+            std::cout << "swerve1";/std::lock_guard<std::mutex> lock(can_mutex_);
             steer_cmds[1].store(-0.1f); 
         
         }
-
-        */
         
         else if (cmd == "n") {
 
@@ -405,7 +403,7 @@ void safe_shutdown() {
         ramp = false;
 
         for (int m : MOTOR_IDS) {
-            if (currents[m] > 0) {
+            if (currents[m] > 0) {/std::lock_guard<std::mutex> lock(can_mutex_);
                 currents[m] -= STEP;
                 ramp = true;
             } else if (currents[m] < 0) {
@@ -458,7 +456,7 @@ int main() {
     try {
         for (int i = 1; i <= 4; i++) {
             swerve[i] = std::make_unique<SparkMax>(CAN_IFACE, i);
-            swerve[i]->SetDataPortConfig(1); //alt encoder mode
+            swerve[i]->SetDataPortConfig(1); //alt encoder mode/std::lock_guard<std::mutex> lock(can_mutex_);
             swerve[i]->SetAltEncoderCountsPerRev(8192);
             swerve[i]->SetAltEncoderPositionFactor(2.0f * (float)M_PI); // now returns radians
         }
@@ -466,7 +464,8 @@ int main() {
         swerve[2]->SetAltEncoderInverted(true);
         swerve[3]->SetAltEncoderInverted(true);
         swerve[4]->SetAltEncoderInverted(false);
-
+        
+        /*
         for (int i = 1; i <= 4; i++) {
             swerve[i]->SetFeedbackSensorPID0(2);          // alt encoder
             swerve[i]->SetPositionPIDWrapEnable(false);
@@ -476,7 +475,7 @@ int main() {
             swerve[i]->SetOutputMin(0, -0.5f);
             swerve[i]->SetOutputMax(0,  0.5f);
             swerve_pos_targets[i].store(0.0f);
-        }
+        } */
     } 
     catch (const std::exception& e) {
         std::cerr << "SparkMax init failed: " << e.what() << std::endl;

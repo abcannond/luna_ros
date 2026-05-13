@@ -45,6 +45,9 @@ namespace luna_can {
     constexpr double C620_kP = 0.01; //TODO: tune this garbage 
     constexpr double C620_kI = 0.0; //TODO: see above 
 
+    //SparkMax parameters
+    constexpr double SPARK_kP = 1.0; 
+
     //data read from C620s 
     struct C620_Feedback {
         double angle = 0.0;
@@ -119,6 +122,7 @@ namespace luna_can {
         std::array<bool,   NUM_PODS> pod_reverse_flags_{};
         std::array<double, NUM_PODS> pod_cmd_pos_{}; //commands received from LunaController in rad
         std::array<double, NUM_PODS> pod_state_pos_{}; //feedback sent to LunaController in rad
+        std::array<double, NUM_PODS> pod_duty_cycle_{}; //current duty cycle of each pod
         
         //ramp down on shutdown for safety 
         std::array<int, NUM_WHEELS> current_ramp_{};

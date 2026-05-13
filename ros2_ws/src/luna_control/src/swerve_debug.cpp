@@ -188,7 +188,7 @@ int main() {
             swerve[i]->SetAltEncoderPositionFactor(2.0f * (float)M_PI);
         }
         swerve[1]->SetAltEncoderInverted(false);
-        swerve[2]->SetAltEncoderInverted(true);
+        swerve[2]->SetAltEncoderInverted(false);
         swerve[3]->SetAltEncoderInverted(false);
         swerve[4]->SetAltEncoderInverted(false);
     } catch (const std::exception& e) {
