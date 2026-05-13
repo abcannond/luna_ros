@@ -337,7 +337,7 @@ void command_thread() {
             
         }
         else if (cmd == "h") {
-            std::cout << "swerve1";/std::lock_guard<std::mutex> lock(can_mutex_);
+            std::cout << "swerve1";
             steer_cmds[1].store(-0.1f); 
         
         }
@@ -403,7 +403,7 @@ void safe_shutdown() {
         ramp = false;
 
         for (int m : MOTOR_IDS) {
-            if (currents[m] > 0) {/std::lock_guard<std::mutex> lock(can_mutex_);
+            if (currents[m] > 0) {
                 currents[m] -= STEP;
                 ramp = true;
             } else if (currents[m] < 0) {
@@ -456,7 +456,7 @@ int main() {
     try {
         for (int i = 1; i <= 4; i++) {
             swerve[i] = std::make_unique<SparkMax>(CAN_IFACE, i);
-            swerve[i]->SetDataPortConfig(1); //alt encoder mode/std::lock_guard<std::mutex> lock(can_mutex_);
+            swerve[i]->SetDataPortConfig(1); //alt encoder mode
             swerve[i]->SetAltEncoderCountsPerRev(8192);
             swerve[i]->SetAltEncoderPositionFactor(2.0f * (float)M_PI); // now returns radians
         }
