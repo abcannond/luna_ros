@@ -462,8 +462,8 @@ int main() {
         }
         swerve[1]->SetAltEncoderInverted(false);
         swerve[2]->SetAltEncoderInverted(true);
-        swerve[3]->SetAltEncoderInverted(true);
-        swerve[4]->SetAltEncoderInverted(false);
+        swerve[3]->SetAltEncoderInverted(false);
+        swerve[4]->SetAltEncoderInverted(true);
         
         /*
         for (int i = 1; i <= 4; i++) {
