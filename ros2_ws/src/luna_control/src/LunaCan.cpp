@@ -298,12 +298,12 @@ hardware_interface::return_type LunaCan::write(
         //double vel_error = target_vel - wheel_state_vel_[i];
 
         double max_cmd = 5.0; //temp parameter since LunaController is being weird
-        double max_cur = 8000.0; //see above
+        double max_cur = 10000.0; //see above
       
         current_ramp_[i] = std::clamp(static_cast<int>((target_vel/max_cmd) * max_cur), -C620_MAX_CURRENT, C620_MAX_CURRENT);
 
         if(current_ramp_[i] >= 2000){
-          RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "current_ramp_[%zu]: %d", i, current_ramp_[i]);
+          //RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "current_ramp_[%zu]: %d", i, current_ramp_[i]);
         }
         //
         //TODO: finish controller
@@ -315,6 +315,7 @@ hardware_interface::return_type LunaCan::write(
         //spark_[i]->Heartbeat();
 
         double target_pos = pod_cmd_pos_[i];
+        RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "pod_cmd_pos_[%zu]: %f", i, pod_cmd_pos_[i]);
         double pos_error = target_pos - pod_state_pos_[i];
         double duty = 0.0;
         if((pos_error > 0.05) or (pos_error < -0.05)) {
