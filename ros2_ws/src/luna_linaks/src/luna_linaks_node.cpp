@@ -127,7 +127,7 @@ private:
                 }
                 res->success = true;
                 res->message = name + " started";
-                RCLCPP_INFO(get_logger(), "%s", res->message.c_str());
+                //RCLCPP_INFO(get_logger(), "%s", res->message.c_str());
             });
         services_.push_back(srv);
     }
@@ -150,7 +150,7 @@ private:
                     ch.act->stop();
                     ch.cmd = ActuatorChannel::Cmd::STOP;
                     ch.target_mm = std::numeric_limits<float>::quiet_NaN();
-                    RCLCPP_INFO(get_logger(), "actuator[%d] reached position %.1f mm", i, cur);
+                    //RCLCPP_INFO(get_logger(), "actuator[%d] reached position %.1f mm", i, cur);
                 } else {
                     ch.act->run_to_position(ch.target_mm);
                 }
