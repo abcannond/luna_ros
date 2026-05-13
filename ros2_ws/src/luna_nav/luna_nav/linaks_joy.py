@@ -41,6 +41,7 @@ class LinaksJoyNode(Node):
         self.declare_parameter('wrist_up_mm',        110.10)  # tilted up to retain sand while raising arm
         self.declare_parameter('wrist_dump_mm',       30.70)  # fully retracted at top — dumps into collection bucket
         self.declare_parameter('lift_dump_mm',       100.0)  # scissor lift extended for dump
+        self.declare_parameter('retract_dump_mm',        0) #scissor lift retracted 
 
         # --- position wait parameters ---
         self.declare_parameter('position_tolerance_mm', 3.0)
@@ -291,7 +292,7 @@ class LinaksJoyNode(Node):
 
     def _excavation_sequence(self):
         p = self._p
-
+        '''
         # Extend wrist fully before moving shoulder — prevents scoop hitting chassis/door
         self.get_logger().info('Excavation: extending wrist to safe position')
         self._move_to('wrist', p('wrist_safe_mm'))
@@ -311,16 +312,18 @@ class LinaksJoyNode(Node):
 
         # Retract wrist to stage-9 position (matches shoulder_up_mm = 27mm)
         self.get_logger().info('Excavation: wrist to final raised position')
-        self._move_to('wrist', p('wrist_dump_mm'))
+        self._move_to('wrist', p('wrist_dump_mm'))'''
+        
+        self.move_to('lift', p('retract_dump_mm'))
 
     # ------------------------------------------------------------------
     # Dump sequence
     # ------------------------------------------------------------------
 
     def _dump_sequence(self):
-        p = self._p
+        p = self._plift_
 
-        # Extend wrist fully before moving shoulder — prevents scoop hitting chassis/door
+        '''# Extend wrist fully before moving shoulder — prevents scoop hitting chassis/door
         self.get_logger().info('Dump: extending wrist to safe position')
         self._move_to('wrist', p('wrist_safe_mm'))
 
@@ -336,7 +339,10 @@ class LinaksJoyNode(Node):
         self.get_logger().info('Dump: reversing to spread berm')
         self._drive(-abs(p('dump_backup_speed')), p('dump_backup_s'))
 
-        self.get_logger().info('Dump: complete — lift remains extended')
+        self.get_logger().info('Dump: complete — lift remains extended')'''
+
+        self._move_to('lift', p('lift_dump_mm'))
+
 
     # ------------------------------------------------------------------
     # Service call helper (fire-and-forget for manual control)

@@ -133,10 +133,10 @@ CallbackReturn LunaCan::on_configure(const rclcpp_lifecycle::State &)
       spark_[i]->SetAltEncoderPositionFactor(2.0f * (float)M_PI); //convert to rads
       spark_[i]->SetAltEncoderInverted(false);
     }
-    pod_reverse_flags_[1] = false;
-    pod_reverse_flags_[2] = true;
-    pod_reverse_flags_[3] = false;
-    pod_reverse_flags_[4] = true;
+    pod_reverse_flags_[0] = false;
+    pod_reverse_flags_[1] = true;
+    pod_reverse_flags_[2] = false;
+    pod_reverse_flags_[3] = true;
 
   } catch (const std::exception & e) {
     RCLCPP_FATAL(rclcpp::get_logger("LunaCan"),
@@ -312,7 +312,7 @@ hardware_interface::return_type LunaCan::write(
     //SparkMax motor control loop
     for (std::size_t i = 0; i < NUM_PODS; ++i) {
         //TODO: make position control work
-        spark_[i]->Heartbeat();
+        //spark_[i]->Heartbeat();
 
         double target_pos = pod_cmd_pos_[i];
         double pos_error = target_pos - pod_state_pos_[i];
