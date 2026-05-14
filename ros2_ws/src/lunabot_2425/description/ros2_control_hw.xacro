@@ -42,28 +42,28 @@
 
     <!-- ── Pod joints (SPARK MAX) ── -->
     <joint name="front_left_steer_joint">
-        <param name="can_id">5</param>
+        <param name="can_id">4</param>
         <param name="type">sparkmax</param>
         <command_interface name="position"/>
         <state_interface name="position"/>
     </joint>
 
     <joint name="front_right_steer_joint">
-        <param name="can_id">6</param>
+        <param name="can_id">1</param>
         <param name="type">sparkmax</param>
         <command_interface name="position"/>
         <state_interface name="position"/>
     </joint>
 
     <joint name="back_left_steer_joint">
-        <param name="can_id">7</param>
+        <param name="can_id">3</param>
         <param name="type">sparkmax</param>
         <command_interface name="position"/>
         <state_interface name="position"/>
     </joint>
 
     <joint name="back_right_steer_joint">
-        <param name="can_id">8</param>
+        <param name="can_id">2</param>
         <param name="type">sparkmax</param>
         <command_interface name="position"/>
         <state_interface name="position"/>
