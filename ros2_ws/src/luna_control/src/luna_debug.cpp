@@ -182,7 +182,7 @@ void control_thread() {
                 current = std::clamp(current + delta, -MAX_CURRENT, MAX_CURRENT);
             }
 
-            currents[m].store(current);
+            //currents[m].store(current);
         } 
         /*
         //set currents to targets 
@@ -264,31 +264,36 @@ void command_thread() {
             //set all motors to go forwards
             for(int m: MOTOR_IDS) {
                 vel_targets[m].store(0);
+                currents[m].store(0);
             }
         } 
-        /*else if (cmd == "a") {
+        else if (cmd == "a") {
             std::cout << "m2";
-            targets[2].store(-TARGET_CURRENT);
-            vel_targets[2].store(TARGET_VELOCITY);
-        }*/
+            //targets[2].store(-TARGET_CURRENT);
+            //vel_targets[2].store(TARGET_VELOCITY);
+            currents[2].store(2000);
+        }
         else if (cmd == "d") {
             std::cout << "m1";
-            targets[1].store(TARGET_CURRENT);
-            vel_targets[1].store(TARGET_VELOCITY);
+            //targets[1].store(TARGET_CURRENT);
+            //vel_targets[1].store(TARGET_VELOCITY);
+            currents[1].store(2000);
         }
         else if (cmd == "q") {
             running = false;
         }
-        /*else if (cmd == "z") {
+        else if (cmd == "z") {
             std::cout << "m3";
-            targets[3].store(-TARGET_CURRENT);
-            vel_targets[3].store(TARGET_VELOCITY);
+            //targets[3].store(-TARGET_CURRENT);
+            //vel_targets[3].store(TARGET_VELOCITY);
+            currents[3].store(2000);
         }
         else if (cmd == "x") {
             std::cout << "m4";
-            targets[4].store(TARGET_CURRENT);
-            vel_targets[4].store(TARGET_VELOCITY);
-        } */
+            //targets[4].store(TARGET_CURRENT);
+            //vel_targets[4].store(TARGET_VELOCITY);
+            currents[4].store(2000);
+        }
         else if (cmd == "m") {
             for (int m : MOTOR_IDS) {
                 std::cout << "M" << m << ": " << currents[m].load() << " ";

@@ -24,7 +24,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/state.hpp"
 #include "luna_control/SparkMax.hpp"
-//#include <mutex>
+#include <mutex>
 
 //CAN stuff 
 #include <linux/can.h>
@@ -96,6 +96,7 @@ namespace luna_can {
         int can_sock_ = -1;
         std::string can_interface_;
         //std::mutex can_mutex_; //added this to try preventing corrupted CAN frames, not sure if necessary 
+        std::mutex spark_mutex;
 
         bool open_can();
         void close_can();

@@ -311,24 +311,26 @@ hardware_interface::return_type LunaCan::write(
 
     //SparkMax motor control loop
     for (std::size_t i = 0; i < NUM_PODS; ++i) {
-        //TODO: make position control work
-        //spark_[i]->Heartbeat();
+      //TODO: make position control work
+      //spark_[i]->Heartbeat();
 
-        double target_pos = pod_cmd_pos_[i];
-        RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "pod_cmd_pos_[%zu]: %f", i, pod_cmd_pos_[i]);
-        double pos_error = target_pos - pod_state_pos_[i];
-        double duty = 0.0;
-        if((pos_error > 0.05) or (pos_error < -0.05)) {
-          duty = SPARK_kP * pos_error; 
-      
-          duty = std::clamp(duty, -0.1, 0.1);
+      double target_pos = pod_cmd_pos_[i];
+      RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "pod_cmd_pos_[%zu]: %f", i, pod_cmd_pos_[i]);
+      double pos_error = target_pos - pod_state_pos_[i];
+      double duty = 0.0;
+      if((pos_error > 0.05) or (pos_error < -0.05)) {
+        duty = SPARK_kP * pos_error; 
+    
+        duty = std::clamp(duty, -0.1, 0.1);
 
-          //apply reversed 
-          if(pod_reverse_flags_[i] == true) {
-            duty = -duty; 
-          }
+        //apply reversed 
+        if(pod_reverse_flags_[i] == true) {
+          duty = -duty; 
         }
-        pod_duty_cycle_[i] = duty;
+      }
+      //protect data with mutex
+      std::lock_guard<std::mutex> lock(spark_mutex);
+      pod_duty_cycle_[i] = duty;
     }
 
     return return_type::OK;
@@ -385,6 +387,7 @@ void LunaCan::send_loop()
     for (std::size_t i = 0; i < NUM_PODS; ++i) {
       if (spark_[i]) {
         spark_[i]->Heartbeat();
+        std::lock_guard<std::mutex> lock(spark_mutex_);
         spark_[i]->SetDutyCycle((float)pod_duty_cycle_[i]);
       }
     }
