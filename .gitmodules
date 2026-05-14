@@ -1,12 +1,15 @@
 [submodule "ros2_ws/src/twist_stamper"]
 	path = ros2_ws/src/twist_stamper
 	url = git@github.com:joshnewans/twist_stamper.git
+	branch = main
 [submodule "ros2_ws/src/teleop_twist_keyboard"]
 	path = ros2_ws/src/teleop_twist_keyboard
 	url = git@github.com:ros2/teleop_twist_keyboard.git
+	branch = master
 [submodule "ros2_ws/src/luna_brain"]
 	path = ros2_ws/src/luna_brain
 	url = git@github.com:thesamrooney/luna_brain.git
 [submodule "ros2_ws/src/luna_ros2_worlds"]
 	path = ros2_ws/src/luna_ros2_worlds
 	url = git@github.com:WPI-Lunabotics-MQP/luna_ros2_worlds.git
+	branch = main

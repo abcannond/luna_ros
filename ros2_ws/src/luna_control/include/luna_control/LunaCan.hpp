@@ -24,7 +24,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/state.hpp"
 #include "luna_control/SparkMax.hpp"
-//#include <mutex>
+#include <mutex>
 
 //CAN stuff 
 #include <linux/can.h>
@@ -40,10 +40,13 @@ namespace luna_can {
     //C620 parameters (drive motor speed controllers)
     constexpr int C620_WRITE_ID = 0x200; //base for all writes to C620s
     constexpr int C620_FB_ID = 0x200; //base for all reads from C620s 
-    constexpr double C620_MAX_CURRENT = 16000.0; //max current in mA 
+    constexpr int C620_MAX_CURRENT = 16000; //max current in mA 
     constexpr double WHEEL_RADIUS_M = 0.1016; // wheel radius in m
     constexpr double C620_kP = 0.01; //TODO: tune this garbage 
     constexpr double C620_kI = 0.0; //TODO: see above 
+
+    //SparkMax parameters
+    constexpr double SPARK_kP = 1.0; 
 
     //data read from C620s 
     struct C620_Feedback {
@@ -93,6 +96,7 @@ namespace luna_can {
         int can_sock_ = -1;
         std::string can_interface_;
         //std::mutex can_mutex_; //added this to try preventing corrupted CAN frames, not sure if necessary 
+        std::mutex spark_mutex;
 
         bool open_can();
         void close_can();
@@ -119,6 +123,7 @@ namespace luna_can {
         std::array<bool,   NUM_PODS> pod_reverse_flags_{};
         std::array<double, NUM_PODS> pod_cmd_pos_{}; //commands received from LunaController in rad
         std::array<double, NUM_PODS> pod_state_pos_{}; //feedback sent to LunaController in rad
+        std::array<double, NUM_PODS> pod_duty_cycle_{}; //current duty cycle of each pod
         
         //ramp down on shutdown for safety 
         std::array<int, NUM_WHEELS> current_ramp_{};

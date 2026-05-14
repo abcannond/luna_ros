@@ -34,7 +34,15 @@ def generate_launch_description():
         output="screen",
     )
 
+    linaks_joy = Node(
+        package="luna_nav",
+        executable="linaks_joy",
+        name="linaks_joy",
+        output="screen",
+    )
+
     return LaunchDescription([
         joy_node,
         teleop_node,
+        linaks_joy,
     ])

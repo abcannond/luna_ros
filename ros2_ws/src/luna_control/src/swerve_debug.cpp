@@ -41,12 +41,15 @@ std::array<std::atomic<float>, 5> encoder_offsets;
 std::array<std::atomic<bool>, 5>  motor_in_pid; // per-motor: true = PID, false = duty cycle
 std::atomic<bool> running(true);
 
-// PID gains (tunable at runtime via kp/kd commands).
+// PID gains (tunable at runtime via kp/ki/kd commands).
 std::atomic<float> KP{1.0f};
 std::atomic<float> KI{0.5f};
 std::atomic<float> KD{0.0f};
 std::atomic<float> OUTPUT_LIMIT{1.0f};
 const float INTEGRAL_LIMIT = 0.5f; // anti-windup clamp on the integral term
+
+// per-motor encoder sign: -1 if positive duty causes decreasing encoder
+const float ENC_SIGN[5] = {0, 1.0f, 1.0f, -1.0f, 1.0f};
 
 // ---------------- CONTROL LOOP ----------------
 // Software PD position control: error = target - (encoder - offset),
@@ -71,7 +74,7 @@ void control_thread() {
             swerve[i]->Heartbeat();
 
             if (motor_in_pid[i].load()) {
-                float current = swerve[i]->GetAltEncoderPosition() - encoder_offsets[i].load();
+                float current = ENC_SIGN[i] * swerve[i]->GetAltEncoderPosition() - encoder_offsets[i].load();
                 float error = swerve_pos_targets[i].load() - current;
                 integral[i] = std::clamp(integral[i] + error * dt, -INTEGRAL_LIMIT, INTEGRAL_LIMIT);
                 float derror = (error - last_error[i]) / dt;
@@ -103,14 +106,14 @@ void command_thread() {
 
         } else if (cmd == "n") {
             for (int i = 1; i <= 4; i++) {
-                float pos = swerve[i]->GetAltEncoderPosition() - encoder_offsets[i].load();
+                float pos = ENC_SIGN[i] * swerve[i]->GetAltEncoderPosition() - encoder_offsets[i].load();
                 std::cout << "Pos" << i << ": " << pos << "  ";
             }
             std::cout << "\n";
 
         } else if (cmd == "zero") {
             for (int i = 1; i <= 4; i++) {
-                encoder_offsets[i].store(swerve[i]->GetAltEncoderPosition());
+                encoder_offsets[i].store(ENC_SIGN[i] * swerve[i]->GetAltEncoderPosition());
                 swerve_pos_targets[i].store(0.0f);
             }
             std::cout << "Zeroed all motors at current position.\n";
@@ -148,6 +151,20 @@ void command_thread() {
                 OUTPUT_LIMIT.store(v);
                 std::cout << "OUTPUT_LIMIT = " << v << "\n";
             } catch (...) { std::cout << "Usage: limit <0.0 to 1.0>\n"; }
+
+        } else if (cmd == "checktype") {
+            for (int i = 1; i <= 4; i++) {
+                uint8_t t = swerve[i]->GetMotorType();
+                std::cout << "Motor " << i << " type: " << (int)t << " (" << (t == 1 ? "Brushless" : "Brushed") << ")\n";
+            }
+
+        } else if (cmd == "resetall") {
+            for (int i = 1; i <= 4; i++) {
+                swerve[i]->FactoryDefaults();
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                std::cout << "Factory defaults sent to motor " << i << "\n";
+            }
+            std::cout << "Power cycle the rover now — do NOT run swerve_debug again before power cycling\n";
 
         } else if (cmd.rfind("reset ", 0) == 0) {
             try {
@@ -229,12 +246,19 @@ int main() {
             swerve[i]->SetAltEncoderPositionFactor(2.0f * (float)M_PI);
         }
         swerve[1]->SetAltEncoderInverted(false);
-        swerve[2]->SetAltEncoderInverted(true);
-        swerve[3]->SetAltEncoderInverted(true);
+        swerve[2]->SetAltEncoderInverted(false);
+        swerve[3]->SetAltEncoderInverted(false);
         swerve[4]->SetAltEncoderInverted(false);
     } catch (const std::exception& e) {
         std::cerr << "SparkMax init failed: " << e.what() << "\n";
         return 1;
+    }
+
+    // Send heartbeats for 2 seconds before accepting commands
+    std::cout << "Warming up CAN...\n";
+    for (int i = 0; i < 1000; i++) {
+        for (int j = 1; j <= 4; j++) swerve[j]->Heartbeat();
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
 
     std::cout << "Initialized in duty cycle mode. KP=" << KP.load()

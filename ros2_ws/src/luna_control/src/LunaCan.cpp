@@ -128,7 +128,16 @@ CallbackReturn LunaCan::on_configure(const rclcpp_lifecycle::State &)
   try {
     for (std::size_t i = 0; i < NUM_PODS; ++i) {
       spark_[i] = std::make_unique<SparkMax>(can_interface_.c_str(), pod_can_ids_[i]);
+      spark_[i]->SetDataPortConfig(1); //alt encoder mode
+      spark_[i]->SetAltEncoderCountsPerRev(8192); //REV through bore v2
+      spark_[i]->SetAltEncoderPositionFactor(2.0f * (float)M_PI); //convert to rads
+      spark_[i]->SetAltEncoderInverted(false);
     }
+    pod_reverse_flags_[0] = false;
+    pod_reverse_flags_[1] = true;
+    pod_reverse_flags_[2] = false;
+    pod_reverse_flags_[3] = true;
+
   } catch (const std::exception & e) {
     RCLCPP_FATAL(rclcpp::get_logger("LunaCan"),
       "SparkMax init failed: %s", e.what());
@@ -266,9 +275,9 @@ hardware_interface::return_type LunaCan::read(
     wheel_state_vel_[i] = c620_fb_[i].speed;
   }
 
-  //TODO: figure out how to properly get pos data from sparkmax motors
+  //get pos data from sparkmax motors
   for (std::size_t i = 0; i < NUM_PODS; ++i) {
-    pod_state_pos_[i] = 0.0;  // TODO: replace with real encoder read
+    pod_state_pos_[i] = spark_[i]->GetAltEncoderPosition();
   }
 
   return return_type::OK;
@@ -281,39 +290,47 @@ hardware_interface::return_type LunaCan::write(
 
     //Drive motor control loop 
     for (std::size_t i = 0; i < NUM_WHEELS; ++i) {
-
         double target_vel = wheel_cmd_vel_[i];
 
         //apply reverse flags 
         if (wheel_reverse_flags_[i]) { target_vel = -target_vel; }
 
-        double vel_error = target_vel - wheel_state_vel_[i];
-        if(wheel_cmd_vel_[i] >= 2) {
-          //something is wrong, this should be spinning way faster
-          current_ramp_[1] = 800;
-          current_ramp_[0] = 800;
-          current_ramp_[2] = 800;
-          current_ramp_[3] = 800;
-          RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "current_ramp_[1]: %d", current_ramp_[1]);
+        //double vel_error = target_vel - wheel_state_vel_[i];
+
+        double max_cmd = 5.0; //temp parameter since LunaController is being weird
+        double max_cur = 10000.0; //see above
+      
+        current_ramp_[i] = std::clamp(static_cast<int>((target_vel/max_cmd) * max_cur), -C620_MAX_CURRENT, C620_MAX_CURRENT);
+
+        if(current_ramp_[i] >= 2000){
+          //RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "current_ramp_[%zu]: %d", i, current_ramp_[i]);
         }
-        else {
-          current_ramp_[0] = 0;
-          current_ramp_[1] = 0;
-          current_ramp_[2] = 0;
-          current_ramp_[3] = 0;
-          //RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "no current!: %d", current_ramp_[1]);
-        }
+        //
         //TODO: finish controller
     }
 
-    //SparkMax motors 
+    //SparkMax motor control loop
     for (std::size_t i = 0; i < NUM_PODS; ++i) {
-        
-        //TODO: make position control work
-        double duty = pod_cmd_pos_[i];
-        duty = std::clamp(duty, -1.0, 1.0);
+      //TODO: make position control work
+      //spark_[i]->Heartbeat();
 
-        spark_[i]->SetDutyCycle(static_cast<float>(duty));
+      double target_pos = pod_cmd_pos_[i];
+      RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "pod_cmd_pos_[%zu]: %f", i, pod_cmd_pos_[i]);
+      double pos_error = target_pos - pod_state_pos_[i];
+      double duty = 0.0;
+      if((pos_error > 0.05) or (pos_error < -0.05)) {
+        duty = SPARK_kP * pos_error; 
+    
+        duty = std::clamp(duty, -0.1, 0.1);
+
+        //apply reversed 
+        if(pod_reverse_flags_[i] == true) {
+          duty = -duty; 
+        }
+      }
+      //protect data with mutex
+      std::lock_guard<std::mutex> lock(spark_mutex);
+      pod_duty_cycle_[i] = duty;
     }
 
     return return_type::OK;
@@ -358,16 +375,24 @@ void LunaCan::feedback_loop()
   }
 }
 
-//periodically send heartbeat signal to C620s
+//periodically send heartbeat signal to motors
 void LunaCan::send_loop()
 {
-    while (send_running_) {
-        {
-            //std::lock_guard<std::mutex> lock(can_mutex_);
-            send_C620_frame();
-        }
-        std::this_thread::sleep_for(std::chrono::microseconds(2000)); // 50Hz
+  while (send_running_) {
+    //send C620 frame
+    //std::lock_guard<std::mutex> lock(can_mutex_);
+    send_C620_frame();
+    
+    //send SparkMax duty cycle 
+    for (std::size_t i = 0; i < NUM_PODS; ++i) {
+      if (spark_[i]) {
+        spark_[i]->Heartbeat();
+        std::lock_guard<std::mutex> lock(spark_mutex);
+        spark_[i]->SetDutyCycle((float)pod_duty_cycle_[i]);
+      }
     }
+    std::this_thread::sleep_for(std::chrono::microseconds(2000)); // 50Hz
+  }
 }
 
 //send drive commands to C620s
