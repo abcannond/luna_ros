@@ -387,7 +387,7 @@ void LunaCan::send_loop()
     for (std::size_t i = 0; i < NUM_PODS; ++i) {
       if (spark_[i]) {
         spark_[i]->Heartbeat();
-        std::lock_guard<std::mutex> lock(spark_mutex_);
+        std::lock_guard<std::mutex> lock(spark_mutex);
         spark_[i]->SetDutyCycle((float)pod_duty_cycle_[i]);
       }
     }
