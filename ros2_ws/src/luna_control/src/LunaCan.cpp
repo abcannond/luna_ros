@@ -318,7 +318,7 @@ hardware_interface::return_type LunaCan::write(
       RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "pod_cmd_pos_[%zu]: %f", i, pod_cmd_pos_[i]);
       double pos_error = target_pos - pod_state_pos_[i];
       double duty = 0.0;
-      if((pos_error > 0.05) or (pos_error < -0.05)) {
+      if((pos_error > 0.1) or (pos_error < -0.1)) {
         duty = SPARK_kP * pos_error; 
     
         duty = std::clamp(duty, -0.1, 0.1);
@@ -331,6 +331,7 @@ hardware_interface::return_type LunaCan::write(
       //protect data with mutex
       std::lock_guard<std::mutex> lock(spark_mutex);
       pod_duty_cycle_[i] = duty;
+      RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "pod_duty_cycle[%zu]: %f", i, pod_duty_cycle_[i]);
     }
 
     return return_type::OK;
@@ -388,7 +389,10 @@ void LunaCan::send_loop()
       if (spark_[i]) {
         spark_[i]->Heartbeat();
         std::lock_guard<std::mutex> lock(spark_mutex);
-        spark_[i]->SetDutyCycle((float)pod_duty_cycle_[i]);
+        //spark_[i]->SetDutyCycle((float)pod_duty_cycle_[i]);
+        if(i == 0) {
+          spark_[i]->SetDutyCycle((float)pod_duty_cycle_[0]);
+        }
       }
     }
     std::this_thread::sleep_for(std::chrono::microseconds(2000)); // 50Hz
