@@ -22,6 +22,16 @@ using hardware_interface::return_type;
 
 namespace luna_can {
 
+static double wrap_to_pi(double a) {
+  a = std::fmod(a + M_PI, 2.0 * M_PI);
+  if (a < 0.0) a += 2.0 * M_PI;
+  return a - M_PI;
+}
+
+static double shortest_angular_diff(double target, double source) {
+  return wrap_to_pi(wrap_to_pi(target) - wrap_to_pi(source));
+}
+
 //get all parameters from URDF on init
 CallbackReturn LunaCan::on_init(const hardware_interface::HardwareInfo & info) {
 
@@ -132,6 +142,7 @@ CallbackReturn LunaCan::on_configure(const rclcpp_lifecycle::State &)
       spark_[i]->SetAltEncoderCountsPerRev(8192); //REV through bore v2
       spark_[i]->SetAltEncoderPositionFactor(2.0f * (float)M_PI); //convert to rads
       spark_[i]->SetAltEncoderInverted(false);
+      spark_[i]->SetRampRate(0); //don't rely on persisted SPARK flash state
     }
     pod_reverse_flags_[0] = true;
     pod_reverse_flags_[1] = false;
@@ -153,14 +164,27 @@ CallbackReturn LunaCan::on_activate(const rclcpp_lifecycle::State &)
 {
   feedback_running_ = true;
   feedback_thread_  = std::thread(&LunaCan::feedback_loop, this);
-  // Arm C620s by sending zero current for 500ms
+  // Arm C620s with zero current AND heartbeat SPARKs so we can snapshot
+  // a valid alt-encoder reading for the pod zero offsets.
   current_ramp_.fill(0);
   auto start = std::chrono::steady_clock::now();
   while (std::chrono::steady_clock::now() - start < std::chrono::milliseconds(500)) {
       send_C620_frame();
+      for (auto & s : spark_) { if (s) s->Heartbeat(); }
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
   RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "C620s armed");
+
+  // Capture pod zero offsets at current physical position. Wheels must be
+  // pointed straight forward before activation.
+  for (std::size_t i = 0; i < NUM_PODS; ++i) {
+    pod_offset_[i] = spark_[i]->GetAltEncoderPosition();
+    pod_integral_[i] = 0.0;
+    pod_last_error_[i] = 0.0;
+    RCLCPP_INFO(rclcpp::get_logger("LunaCan"),
+      "pod[%zu] zero offset = %f rad (can_id=%d, reversed=%s)",
+      i, pod_offset_[i], pod_can_ids_[i], pod_reverse_flags_[i] ? "true" : "false");
+  }
 
   send_running_ = true;
   send_thread_ = std::thread(&LunaCan::send_loop, this);
@@ -275,9 +299,10 @@ hardware_interface::return_type LunaCan::read(
     wheel_state_vel_[i] = c620_fb_[i].speed;
   }
 
-  //get pos data from sparkmax motors
+  //get pos data from sparkmax motors, offset and wrap to [-pi, pi]
   for (std::size_t i = 0; i < NUM_PODS; ++i) {
-    pod_state_pos_[i] = spark_[i]->GetAltEncoderPosition();
+    double raw = spark_[i]->GetAltEncoderPosition();
+    pod_state_pos_[i] = wrap_to_pi(raw - pod_offset_[i]);
   }
 
   return return_type::OK;
@@ -285,53 +310,47 @@ hardware_interface::return_type LunaCan::read(
 
 //write commands to both drive and swerve motors
 hardware_interface::return_type LunaCan::write(
-  const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
+  const rclcpp::Time & /*time*/, const rclcpp::Duration & period)
 {
-
-    //Drive motor control loop 
+    //Drive motor control loop (open-loop scaling, TODO close with C620 feedback)
     for (std::size_t i = 0; i < NUM_WHEELS; ++i) {
         double target_vel = wheel_cmd_vel_[i];
-
-        //apply reverse flags 
         if (wheel_reverse_flags_[i]) { target_vel = -target_vel; }
 
-        //double vel_error = target_vel - wheel_state_vel_[i];
-
-        double max_cmd = 5.0; //temp parameter since LunaController is being weird
-        double max_cur = 10000.0; //see above
-      
+        double max_cmd = 5.0;
+        double max_cur = 10000.0;
         current_ramp_[i] = std::clamp(static_cast<int>((target_vel/max_cmd) * max_cur), -C620_MAX_CURRENT, C620_MAX_CURRENT);
-
-        if(current_ramp_[i] >= 2000){
-          //RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "current_ramp_[%zu]: %d", i, current_ramp_[i]);
-        }
-        //
-        //TODO: finish controller
     }
 
-    //SparkMax motor control loop
+    //SparkMax pod PID (ported from swerve_debug)
+    double dt = period.seconds();
+    if (dt <= 0.0) { dt = 0.02; }
+
     for (std::size_t i = 0; i < NUM_PODS; ++i) {
-      //TODO: make position control work
-      //spark_[i]->Heartbeat();
-
-      double target_pos = pod_cmd_pos_[i];
-      RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "pod_cmd_pos_[%zu]: %f", i, pod_cmd_pos_[i]);
-      double pos_error = target_pos - pod_state_pos_[i];
+      double error = shortest_angular_diff(pod_cmd_pos_[i], pod_state_pos_[i]);
       double duty = 0.0;
-      if((pos_error > 0.1) or (pos_error < -0.1)) {
-        duty = SPARK_kP * pos_error; 
-    
-        duty = std::clamp(duty, -0.1, 0.1);
 
-        //apply reversed 
-        if(pod_reverse_flags_[i] == true) {
-          duty = -duty; 
-        }
+      if (std::abs(error) > SPARK_DEADBAND) {
+        pod_integral_[i] = std::clamp(
+          pod_integral_[i] + error * dt,
+          -SPARK_INTEGRAL_LIMIT, SPARK_INTEGRAL_LIMIT);
+        double derror = (error - pod_last_error_[i]) / dt;
+        duty = SPARK_kP * error + SPARK_kI * pod_integral_[i] + SPARK_kD * derror;
+        duty = std::clamp(duty, -SPARK_OUTPUT_LIMIT, SPARK_OUTPUT_LIMIT);
+        pod_last_error_[i] = error;
+      } else {
+        pod_integral_[i] = 0.0;
+        pod_last_error_[i] = 0.0;
       }
-      //protect data with mutex
+
+      if (pod_reverse_flags_[i]) { duty = -duty; }
+
+      RCLCPP_DEBUG(rclcpp::get_logger("LunaCan"),
+        "pod[%zu] target=%.3f current=%.3f err=%.3f duty=%.3f",
+        i, pod_cmd_pos_[i], pod_state_pos_[i], error, duty);
+
       std::lock_guard<std::mutex> lock(spark_mutex);
       pod_duty_cycle_[i] = duty;
-      RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "pod_duty_cycle[%zu]: %f", i, pod_duty_cycle_[i]);
     }
 
     return return_type::OK;
@@ -384,15 +403,12 @@ void LunaCan::send_loop()
     //std::lock_guard<std::mutex> lock(can_mutex_);
     send_C620_frame();
     
-    //send SparkMax duty cycle 
+    //send SparkMax duty cycle
     for (std::size_t i = 0; i < NUM_PODS; ++i) {
       if (spark_[i]) {
         spark_[i]->Heartbeat();
         std::lock_guard<std::mutex> lock(spark_mutex);
-        //spark_[i]->SetDutyCycle((float)pod_duty_cycle_[i]);
-        if(i == 0) {
-          spark_[i]->SetDutyCycle((float)pod_duty_cycle_[0]);
-        }
+        spark_[i]->SetDutyCycle((float)pod_duty_cycle_[i]);
       }
     }
     std::this_thread::sleep_for(std::chrono::microseconds(2000)); // 50Hz

@@ -45,8 +45,13 @@ namespace luna_can {
     constexpr double C620_kP = 0.01; //TODO: tune this garbage 
     constexpr double C620_kI = 0.0; //TODO: see above 
 
-    //SparkMax parameters
-    constexpr double SPARK_kP = 1.0; 
+    //SparkMax parameters (ported from swerve_debug after on-hardware tuning)
+    constexpr double SPARK_kP = 1.0;
+    constexpr double SPARK_kI = 0.2;
+    constexpr double SPARK_kD = 0.0;
+    constexpr double SPARK_OUTPUT_LIMIT = 0.3;   // duty cycle hitches above ~0.3 on real HW
+    constexpr double SPARK_DEADBAND = 0.05;      // rad
+    constexpr double SPARK_INTEGRAL_LIMIT = 0.04;
 
     //data read from C620s 
     struct C620_Feedback {
@@ -122,8 +127,11 @@ namespace luna_can {
         std::array<int,    NUM_PODS> pod_can_ids_{}; 
         std::array<bool,   NUM_PODS> pod_reverse_flags_{};
         std::array<double, NUM_PODS> pod_cmd_pos_{}; //commands received from LunaController in rad
-        std::array<double, NUM_PODS> pod_state_pos_{}; //feedback sent to LunaController in rad
+        std::array<double, NUM_PODS> pod_state_pos_{}; //feedback sent to LunaController in rad (offset + wrapped to [-pi, pi])
         std::array<double, NUM_PODS> pod_duty_cycle_{}; //current duty cycle of each pod
+        std::array<double, NUM_PODS> pod_offset_{};      //captured at on_activate; subtracted from raw encoder
+        std::array<double, NUM_PODS> pod_integral_{};    //PID integrator state per pod
+        std::array<double, NUM_PODS> pod_last_error_{};  //PID derivative state per pod
         
         //ramp down on shutdown for safety 
         std::array<int, NUM_WHEELS> current_ramp_{};
