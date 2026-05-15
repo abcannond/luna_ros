@@ -49,6 +49,9 @@ std::atomic<float> KD{0.0f};
 std::atomic<float> OUTPUT_LIMIT{1.0f};
 const float INTEGRAL_LIMIT = 0.04f; // anti-windup clamp on the integral term
 
+// per-motor duty sign: -1 to reverse spin direction (motors 2 and 4 wired backwards)
+const float DUTY_SIGN[5] = {0, 1.0f, -1.0f, 1.0f, -1.0f};
+
 // ---------------- CONTROL LOOP ----------------
 // Software PD position control: error = target - (encoder - offset),
 // output = kp*error + kd*(error - last_error)/dt, clamped, sent as duty cycle.
@@ -79,7 +82,7 @@ void control_thread() {
                 integral[i] = std::clamp(integral[i] + error * dt, -INTEGRAL_LIMIT, INTEGRAL_LIMIT);
                 float derror = (error - last_error[i]) / dt;
                 float output = std::clamp(kp * error + ki * integral[i] + kd * derror, -lim, lim);
-                swerve[i]->SetDutyCycle(output);
+                swerve[i]->SetDutyCycle(DUTY_SIGN[i] * output);
                 last_error[i] = error;
                 if((error <= 0.05) and (error >= -0.05)) {
                     swerve[i]->SetDutyCycle(0);
@@ -89,7 +92,7 @@ void control_thread() {
                 }
             } else {
                 float duty = std::clamp(steer_cmds[i].load(), -1.0f, 1.0f);
-                swerve[i]->SetDutyCycle(duty);
+                swerve[i]->SetDutyCycle(DUTY_SIGN[i] * duty);
                 last_error[i] = 0.0f;
                 integral[i]   = 0.0f; // reset integrator when leaving position mode
             }
