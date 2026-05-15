@@ -79,11 +79,17 @@ void control_thread() {
             if (motor_in_pid[i].load()) {
                 float current = ENC_SIGN[i] * swerve[i]->GetAltEncoderPosition() - encoder_offsets[i].load();
                 float error = swerve_pos_targets[i].load() - current;
+                std::cout << "Error" << i << ": " << error << " ";
                 integral[i] = std::clamp(integral[i] + error * dt, -INTEGRAL_LIMIT, INTEGRAL_LIMIT);
                 float derror = (error - last_error[i]) / dt;
                 float output = std::clamp(kp * error + ki * integral[i] + kd * derror, -lim, lim);
                 swerve[i]->SetDutyCycle(DUTY_SIGN[i] * output);
                 last_error[i] = error;
+                if((error <= 0.05) and (error >= -0.05)) {
+                    swerve[i]->SetDutyCycle(0);
+                    last_error[i] = 0;
+                    integral[i] = 0;
+                }
             } else {
                 float duty = std::clamp(steer_cmds[i].load(), -1.0f, 1.0f);
                 swerve[i]->SetDutyCycle(DUTY_SIGN[i] * duty);
