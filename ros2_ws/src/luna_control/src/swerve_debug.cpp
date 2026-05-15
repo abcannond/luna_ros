@@ -272,7 +272,7 @@ int main() {
             swerve[i]->SetDataPortConfig(1);
             swerve[i]->SetAltEncoderCountsPerRev(8192);
             swerve[i]->SetAltEncoderPositionFactor(2.0f * (float)M_PI);
-            swerve[i]->SetRampRate(0.25);
+            swerve[i]->SetRampRate(0.5);
         }
         swerve[1]->SetAltEncoderInverted(false);
         swerve[2]->SetAltEncoderInverted(false);
