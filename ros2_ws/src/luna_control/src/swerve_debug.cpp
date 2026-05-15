@@ -104,7 +104,7 @@ void control_thread() {
 // ---------------- INPUT ----------------
 void command_thread() {
     std::string cmd;
-    std::cout << "Commands: duty <id> <val> | goto <id> <rad> | goto all <rad> | zero | n | "
+    std::cout << "Commands: duty <id> <val> | goto <id> <rad> | goto all <rad> | zero | n | s | "
                  "kp <val> | ki <val> | kd <val> | limit <val> | faults | reset <id> | q\n";
 
     while (running && !shutdown_requested) {
@@ -113,6 +113,14 @@ void command_thread() {
 
         if (cmd == "q") {
             shutdown_requested = true;
+
+        } else if (cmd == "s") {
+            for (int i = 1; i <= 4; i++) {
+                motor_in_pid[i].store(false);
+                steer_cmds[i].store(0.0f);
+                swerve[i]->SetDutyCycle(0.0f);
+            }
+            std::cout << "All motors stopped.\n";
 
         } else if (cmd == "n") {
             for (int i = 1; i <= 4; i++) {
