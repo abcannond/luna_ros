@@ -43,10 +43,10 @@ std::atomic<bool> running(true);
 std::atomic<bool> shutdown_requested(false); // set by 'q' or SIGINT; main runs cleanup, then clears running
 
 // PID gains (tunable at runtime via kp/ki/kd commands).
-std::atomic<float> KP{1.0f};
-std::atomic<float> KI{0.0f};
-std::atomic<float> KD{0.02f};
-std::atomic<float> OUTPUT_LIMIT{1.0f};
+std::atomic<float> KP{0.5f};
+std::atomic<float> KI{0.1f};
+std::atomic<float> KD{0.0f};
+std::atomic<float> OUTPUT_LIMIT{0.3f};
 const float INTEGRAL_LIMIT = 0.04f; // anti-windup clamp on the integral term
 
 // per-motor duty sign: -1 to reverse spin direction (motors 2 and 4 wired backwards)
