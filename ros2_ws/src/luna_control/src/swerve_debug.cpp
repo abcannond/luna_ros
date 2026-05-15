@@ -44,10 +44,10 @@ std::atomic<bool> shutdown_requested(false); // set by 'q' or SIGINT; main runs 
 
 // PID gains (tunable at runtime via kp/ki/kd commands).
 std::atomic<float> KP{1.0f};
-std::atomic<float> KI{0.5f};
+std::atomic<float> KI{0.0f};
 std::atomic<float> KD{0.0f};
 std::atomic<float> OUTPUT_LIMIT{1.0f};
-const float INTEGRAL_LIMIT = 0.5f; // anti-windup clamp on the integral term
+const float INTEGRAL_LIMIT = 0.04f; // anti-windup clamp on the integral term
 
 // ---------------- CONTROL LOOP ----------------
 // Software PD position control: error = target - (encoder - offset),
