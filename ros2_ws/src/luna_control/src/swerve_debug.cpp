@@ -80,6 +80,7 @@ void control_thread() {
                 float current = ENC_SIGN[i] * swerve[i]->GetAltEncoderPosition() - encoder_offsets[i].load();
                 float error = swerve_pos_targets[i].load() - current;
                 std::cout << "Error" << i << ": " << error << " ";
+                std::cout << std::endl; 
                 integral[i] = std::clamp(integral[i] + error * dt, -INTEGRAL_LIMIT, INTEGRAL_LIMIT);
                 float derror = (error - last_error[i]) / dt;
                 float output = std::clamp(kp * error + ki * integral[i] + kd * derror, -lim, lim);
@@ -255,7 +256,7 @@ int main() {
             swerve[i]->SetAltEncoderPositionFactor(2.0f * (float)M_PI);
         }
         swerve[1]->SetAltEncoderInverted(false);
-        swerve[2]->SetAltEncoderInverted(true);
+        swerve[2]->SetAltEncoderInverted(false);
         swerve[3]->SetAltEncoderInverted(false);
         swerve[4]->SetAltEncoderInverted(false);
     } catch (const std::exception& e) {
