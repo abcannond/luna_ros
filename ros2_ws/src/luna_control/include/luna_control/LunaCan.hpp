@@ -46,7 +46,7 @@ namespace luna_can {
     constexpr double C620_kI = 0.0; //TODO: see above 
 
     //SparkMax parameters
-    constexpr double SPARK_kP = 1.0; 
+    constexpr double SPARK_kP = 0.5; 
 
     //data read from C620s 
     struct C620_Feedback {
@@ -62,6 +62,10 @@ namespace luna_can {
         //the shared pointers let the controller and interface share data 
         RCLCPP_SHARED_PTR_DEFINITIONS(LunaCan)
 
+    pod_reverse_flags_[0] = false;
+    pod_reverse_flags_[1] = true;
+    pod_reverse_flags_[2] = false;
+    pod_reverse_flags_[3] = true;
         //lifecycle stuff 
         hardware_interface::CallbackReturn on_init(
             const hardware_interface::HardwareInfo & info) override;
