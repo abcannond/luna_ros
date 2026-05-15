@@ -51,6 +51,9 @@ const float INTEGRAL_LIMIT = 0.5f; // anti-windup clamp on the integral term
 // per-motor encoder sign: -1 if positive duty causes decreasing encoder
 const float ENC_SIGN[5] = {0, 1.0f, 1.0f, -1.0f, 1.0f};
 
+// per-motor duty sign: -1 to reverse spin direction (motors 2 and 4 wired backwards)
+const float DUTY_SIGN[5] = {0, 1.0f, -1.0f, 1.0f, -1.0f};
+
 // ---------------- CONTROL LOOP ----------------
 // Software PD position control: error = target - (encoder - offset),
 // output = kp*error + kd*(error - last_error)/dt, clamped, sent as duty cycle.
@@ -79,11 +82,11 @@ void control_thread() {
                 integral[i] = std::clamp(integral[i] + error * dt, -INTEGRAL_LIMIT, INTEGRAL_LIMIT);
                 float derror = (error - last_error[i]) / dt;
                 float output = std::clamp(kp * error + ki * integral[i] + kd * derror, -lim, lim);
-                swerve[i]->SetDutyCycle(output);
+                swerve[i]->SetDutyCycle(DUTY_SIGN[i] * output);
                 last_error[i] = error;
             } else {
                 float duty = std::clamp(steer_cmds[i].load(), -1.0f, 1.0f);
-                swerve[i]->SetDutyCycle(duty);
+                swerve[i]->SetDutyCycle(DUTY_SIGN[i] * duty);
                 last_error[i] = 0.0f;
                 integral[i]   = 0.0f; // reset integrator when leaving position mode
             }
@@ -246,7 +249,7 @@ int main() {
             swerve[i]->SetAltEncoderPositionFactor(2.0f * (float)M_PI);
         }
         swerve[1]->SetAltEncoderInverted(false);
-        swerve[2]->SetAltEncoderInverted(false);
+        swerve[2]->SetAltEncoderInverted(true);
         swerve[3]->SetAltEncoderInverted(false);
         swerve[4]->SetAltEncoderInverted(false);
     } catch (const std::exception& e) {
