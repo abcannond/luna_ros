@@ -77,11 +77,13 @@ void control_thread() {
             if (motor_in_pid[i].load()) {
                 float current = swerve[i]->GetAltEncoderPosition() - encoder_offsets[i].load();
                 float error = swerve_pos_targets[i].load() - current;
-                std::cout << "Error" << i << ": " << error << " ";
-                std::cout << std::endl; 
+                //std::cout << "Error" << i << ": " << error << " ";
+                //std::cout << std::endl; 
                 integral[i] = std::clamp(integral[i] + error * dt, -INTEGRAL_LIMIT, INTEGRAL_LIMIT);
                 float derror = (error - last_error[i]) / dt;
                 float output = std::clamp(kp * error + ki * integral[i] + kd * derror, -lim, lim);
+                std::cout << "Duty" << i << ": " << output << " ";
+                std::cout << std::endl; 
                 swerve[i]->SetDutyCycle(DUTY_SIGN[i] * output);
                 last_error[i] = error;
                 if((error <= 0.05) and (error >= -0.05)) {
