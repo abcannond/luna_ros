@@ -85,6 +85,7 @@ void control_thread() {
                     swerve[i]->SetDutyCycle(0);
                     last_error[i] = 0;
                     integral[i] = 0;
+                    motor_in_pid[i].store(false);
                 }
             } else {
                 float duty = std::clamp(steer_cmds[i].load(), -1.0f, 1.0f);
@@ -93,7 +94,7 @@ void control_thread() {
                 integral[i]   = 0.0f; // reset integrator when leaving position mode
             }
         }
-        std::this_thread::sleep_for(2ms);
+        std::this_thread::sleep_for(20ms);
     }
 }
 
