@@ -40,6 +40,7 @@ std::array<std::atomic<float>, 5> steer_cmds;
 std::array<std::atomic<float>, 5> encoder_offsets;
 std::array<std::atomic<bool>, 5>  motor_in_pid; // per-motor: true = PID, false = duty cycle
 std::atomic<bool> running(true);
+std::atomic<bool> shutdown_requested(false); // set by 'q' or SIGINT; main runs cleanup, then clears running
 
 // PID gains (tunable at runtime via kp/ki/kd commands).
 std::atomic<float> KP{1.0f};
@@ -47,12 +48,6 @@ std::atomic<float> KI{0.5f};
 std::atomic<float> KD{0.0f};
 std::atomic<float> OUTPUT_LIMIT{1.0f};
 const float INTEGRAL_LIMIT = 0.5f; // anti-windup clamp on the integral term
-
-// per-motor encoder sign: -1 if positive duty causes decreasing encoder
-const float ENC_SIGN[5] = {0, 1.0f, 1.0f, -1.0f, 1.0f};
-
-// per-motor duty sign: -1 to reverse spin direction (motors 2 and 4 wired backwards)
-const float DUTY_SIGN[5] = {0, 1.0f, -1.0f, 1.0f, -1.0f};
 
 // ---------------- CONTROL LOOP ----------------
 // Software PD position control: error = target - (encoder - offset),
@@ -77,13 +72,13 @@ void control_thread() {
             swerve[i]->Heartbeat();
 
             if (motor_in_pid[i].load()) {
-                float current = ENC_SIGN[i] * swerve[i]->GetAltEncoderPosition() - encoder_offsets[i].load();
+                float current = swerve[i]->GetAltEncoderPosition() - encoder_offsets[i].load();
                 float error = swerve_pos_targets[i].load() - current;
                 std::cout << "Error" << i << ": " << error << " ";
                 integral[i] = std::clamp(integral[i] + error * dt, -INTEGRAL_LIMIT, INTEGRAL_LIMIT);
                 float derror = (error - last_error[i]) / dt;
                 float output = std::clamp(kp * error + ki * integral[i] + kd * derror, -lim, lim);
-                swerve[i]->SetDutyCycle(DUTY_SIGN[i] * output);
+                swerve[i]->SetDutyCycle(output);
                 last_error[i] = error;
                 if((error <= 0.05) and (error >= -0.05)) {
                     swerve[i]->SetDutyCycle(0);
@@ -92,7 +87,7 @@ void control_thread() {
                 }
             } else {
                 float duty = std::clamp(steer_cmds[i].load(), -1.0f, 1.0f);
-                swerve[i]->SetDutyCycle(DUTY_SIGN[i] * duty);
+                swerve[i]->SetDutyCycle(duty);
                 last_error[i] = 0.0f;
                 integral[i]   = 0.0f; // reset integrator when leaving position mode
             }
@@ -107,22 +102,23 @@ void command_thread() {
     std::cout << "Commands: duty <id> <val> | goto <id> <rad> | goto all <rad> | zero | n | "
                  "kp <val> | ki <val> | kd <val> | limit <val> | faults | reset <id> | q\n";
 
-    while (running) {
+    while (running && !shutdown_requested) {
         std::getline(std::cin, cmd);
+        if (shutdown_requested) break;
 
         if (cmd == "q") {
-            running = false;
+            shutdown_requested = true;
 
         } else if (cmd == "n") {
             for (int i = 1; i <= 4; i++) {
-                float pos = ENC_SIGN[i] * swerve[i]->GetAltEncoderPosition() - encoder_offsets[i].load();
+                float pos = swerve[i]->GetAltEncoderPosition() - encoder_offsets[i].load();
                 std::cout << "Pos" << i << ": " << pos << "  ";
             }
             std::cout << "\n";
 
         } else if (cmd == "zero") {
             for (int i = 1; i <= 4; i++) {
-                encoder_offsets[i].store(ENC_SIGN[i] * swerve[i]->GetAltEncoderPosition());
+                encoder_offsets[i].store(swerve[i]->GetAltEncoderPosition());
                 swerve_pos_targets[i].store(0.0f);
             }
             std::cout << "Zeroed all motors at current position.\n";
@@ -240,7 +236,15 @@ void command_thread() {
 }
 
 // ---------------- MAIN ----------------
+// Ctrl-C: stop accepting commands and let main() run the "return to 0" cleanup.
+// Without this the process dies with the last duty still latched on the SparkMax.
+void handle_sigint(int) {
+    shutdown_requested = true;
+}
+
 int main() {
+    std::signal(SIGINT, handle_sigint);
+
     for (auto& t : swerve_pos_targets) t.store(0.0f);
     for (auto& t : steer_cmds) t.store(0.0f);
     for (auto& t : encoder_offsets) t.store(0.0f);
@@ -256,7 +260,7 @@ int main() {
         }
         swerve[1]->SetAltEncoderInverted(false);
         swerve[2]->SetAltEncoderInverted(true);
-        swerve[3]->SetAltEncoderInverted(false);
+        swerve[3]->SetAltEncoderInverted(true);
         swerve[4]->SetAltEncoderInverted(false);
     } catch (const std::exception& e) {
         std::cerr << "SparkMax init failed: " << e.what() << "\n";
@@ -275,17 +279,18 @@ int main() {
               << " LIMIT=" << OUTPUT_LIMIT.load() << "\n";
 
     std::thread t1(control_thread);
-    std::thread t2(command_thread);
+    // Detached so a SIGINT during getline doesn't leave us stuck on join().
+    std::thread(command_thread).detach();
 
-    t2.join();
-    running = false;
+    while (!shutdown_requested) std::this_thread::sleep_for(50ms);
 
-    std::cout << "Returning wheels to 0...\n";
+    std::cout << "\nReturning wheels to 0...\n";
     for (int i = 1; i <= 4; i++) {
         swerve_pos_targets[i].store(0.0f);
         motor_in_pid[i].store(true);
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+    running = false;
 
     t1.join();
     std::cout << "Exited cleanly\n";
