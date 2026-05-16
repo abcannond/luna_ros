@@ -26,6 +26,7 @@ setup(
             'frontier_explorer = luna_nav.frontier_explorer:main',
             'mission_supervisor = luna_nav.mission_supervisor:main',
             'linaks_joy = luna_nav.linaks_joy:main',
+            'autonomy_manager = luna_nav.autonomy_manager:main',
         ],
     },
 )

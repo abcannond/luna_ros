@@ -303,7 +303,7 @@ hardware_interface::return_type LunaCan::read(
   for (std::size_t i = 0; i < NUM_PODS; ++i) {
     double raw = spark_[i]->GetAltEncoderPosition();
     pod_state_pos_[i] = wrap_to_pi(raw - pod_offset_[i]);
-    RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "pod4=%.3f", pod_state_pos_[0]);
+    //RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "pod4=%.3f", pod_state_pos_[0]);
   }
 
   return return_type::OK;
