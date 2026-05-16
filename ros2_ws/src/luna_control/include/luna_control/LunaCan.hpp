@@ -49,8 +49,8 @@ namespace luna_can {
     constexpr double SPARK_kP = 1.0;
     constexpr double SPARK_kI = 0.2;
     constexpr double SPARK_kD = 0.0;
-    constexpr double SPARK_OUTPUT_LIMIT = 0.3;   // duty cycle hitches above ~0.3 on real HW
-    constexpr double SPARK_DEADBAND = 0.05;      // rad
+    constexpr double SPARK_OUTPUT_LIMIT = 0.3;   //duty cycle hitches above ~0.3 on real HW (TODO: figure out why it does this)
+    constexpr double SPARK_DEADBAND = 0.01;      //rad
     constexpr double SPARK_INTEGRAL_LIMIT = 0.04;
 
     //data read from C620s 
@@ -67,7 +67,7 @@ namespace luna_can {
         //the shared pointers let the controller and interface share data 
         RCLCPP_SHARED_PTR_DEFINITIONS(LunaCan)
 
-        //lifecycle stuff 
+        //lifecycle stuff SPARK_
         hardware_interface::CallbackReturn on_init(
             const hardware_interface::HardwareInfo & info) override;
 
