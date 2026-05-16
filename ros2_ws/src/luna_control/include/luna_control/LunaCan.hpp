@@ -46,7 +46,7 @@ namespace luna_can {
     constexpr double C620_kI = 0.0; //TODO: see above 
 
     //SparkMax parameters (ported from swerve_debug after on-hardware tuning)
-    constexpr double SPARK_kP = 1.0;
+    constexpr double SPARK_kP = 1.2;
     constexpr double SPARK_kI = 0.2;
     constexpr double SPARK_kD = 0.0;
     constexpr double SPARK_OUTPUT_LIMIT = 0.2;   //duty cycle hitches above ~0.3 on real HW (TODO: figure out why it does this)
