@@ -411,7 +411,7 @@ void LunaCan::send_loop()
         spark_[i]->SetDutyCycle((float)pod_duty_cycle_[i]);
       }
     }
-    std::this_thread::sleep_for(std::chrono::microseconds(20000)); //50Hz
+    std::this_thread::sleep_for(std::chrono::microseconds(2000)); //50Hz
   }
 }
 
