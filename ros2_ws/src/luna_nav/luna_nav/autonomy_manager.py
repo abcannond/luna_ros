@@ -352,7 +352,7 @@ class LinaksJoyNode(Node):
         while time.time() < deadline:
             self._cmd_vel_pub.publish(twist)
             time.sleep(0.1)
-        return; 
+        #return; 
 
 
 def main(args=None):
@@ -365,7 +365,8 @@ def main(args=None):
     def startup():
         time.sleep(1.0)
 
-        node._drec_drive(node, 0.25, 1.5)
+        node._drec_drive(0.5, 0.75)
+        node._drec_drive(0.0, 0.5)
         node._start_sequence(node._dump_sequence, 'dump')
         node._seq_thread.join()
         '''
@@ -381,8 +382,8 @@ def main(args=None):
         node._cmd_vel_pub.publish(Twist())
         time.sleep(1.0)
         '''
-        node.drec_drive(node, -0.25, 1.5)
-        node.drec_drive(node, 0, 1)
+        node._drec_drive(-0.5, 0.75)
+        node._drec_drive(0.0, 0.5)
 
         node._start_sequence(node._excavation_sequence, 'excavation')
 
