@@ -49,7 +49,7 @@ namespace luna_can {
     constexpr double SPARK_kP = 1.0;
     constexpr double SPARK_kI = 0.2;
     constexpr double SPARK_kD = 0.0;
-    constexpr double SPARK_OUTPUT_LIMIT = 0.3;   //duty cycle hitches above ~0.3 on real HW (TODO: figure out why it does this)
+    constexpr double SPARK_OUTPUT_LIMIT = 0.2;   //duty cycle hitches above ~0.3 on real HW (TODO: figure out why it does this)
     constexpr double SPARK_DEADBAND = 0.01;      //rad
     constexpr double SPARK_INTEGRAL_LIMIT = 0.04;
 
