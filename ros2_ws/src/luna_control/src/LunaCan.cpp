@@ -178,7 +178,7 @@ CallbackReturn LunaCan::on_activate(const rclcpp_lifecycle::State &)
   // Capture pod zero offsets at current physical position. Wheels must be
   // pointed straight forward before activation.
   for (std::size_t i = 0; i < NUM_PODS; ++i) {
-    pod_offset_[i] = 0;//spark_[i]->GetAltEncoderPosition();
+    pod_offset_[i] = spark_[i]->GetAltEncoderPosition();
     pod_integral_[i] = 0.0;
     pod_last_error_[i] = 0.0;
     RCLCPP_INFO(rclcpp::get_logger("LunaCan"),
@@ -303,6 +303,7 @@ hardware_interface::return_type LunaCan::read(
   for (std::size_t i = 0; i < NUM_PODS; ++i) {
     double raw = spark_[i]->GetAltEncoderPosition();
     pod_state_pos_[i] = wrap_to_pi(raw - pod_offset_[i]);
+    RCLCPP_INFO(rclcpp::get_logger("LunaCan"), "pod4", pod_state_pos[0]);
   }
 
   return return_type::OK;
