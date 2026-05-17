@@ -301,6 +301,12 @@ def generate_launch_description():
         condition=IfCondition(launch_mapping),
     )
 
+    luna_can = Node(
+        package="luna_control",
+        executable="luna_can",
+        name="luna_can",
+    )
+
     return LaunchDescription([
         declare_world,
         declare_launch_mapping,
@@ -317,6 +323,7 @@ def generate_launch_description():
         start_depth_to_pointcloud_ucf,
         start_depth_to_pointcloud_artemis,
         rtabmap_nav2_delayed,
+        luna_can,
         # RViz (depth + fid cams) only when mapping is disabled
         TimerAction(period=5.0, actions=[rviz_node], condition=UnlessCondition(launch_mapping)),
     ])
