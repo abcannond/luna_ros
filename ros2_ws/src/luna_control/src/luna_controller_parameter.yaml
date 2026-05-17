@@ -95,6 +95,14 @@ luna_controller:
       gt<>: [0.0]
     }
   }
+  steer_align_timeout_s: {
+    type: double,
+    default_value: 1.5,
+    description: "Maximum time in seconds the controller will block wheel velocity waiting for pods to reach their target angle. If the pods do not converge within this window (e.g., stuck pod or persistent steady-state error), driving is allowed regardless to prevent the robot from being paralyzed.",
+    validation: {
+      gt<>: [0.0]
+    }
+  }
   tf_frame_prefix_enable: {
     type: bool,
     default_value: true,
