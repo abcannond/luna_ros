@@ -355,8 +355,8 @@ class LinaksJoyNode(Node):
         #return; 
 
 
-def main(args=None):
-    rclpy.init(args=args)
+def main(autoMode: int):
+    rclpy.init()
     node = LinaksJoyNode()
     from rclpy.executors import MultiThreadedExecutor
     executor = MultiThreadedExecutor()
@@ -364,28 +364,32 @@ def main(args=None):
 
     def startup():
         time.sleep(1.0)
+        if(autoMode == 1):
+            node._drec_drive(0.5, 0.75)
+            node._drec_drive(0.0, 0.5)
+            node._start_sequence(node._dump_sequence, 'dump')
+            node._seq_thread.join()
+            '''
+            # drive forward for 2 seconds
+            twist = Twist()
+            twist.linear.x = 0.25
+            deadline = time.time() + 2.0
+            while time.time() < deadline:
+                node._cmd_vel_pub.publish(twist)
+                time.sleep(0.1)
 
-        node._drec_drive(0.5, 0.75)
-        node._drec_drive(0.0, 0.5)
-        node._start_sequence(node._dump_sequence, 'dump')
-        node._seq_thread.join()
-        '''
-        # drive forward for 2 seconds
-        twist = Twist()
-        twist.linear.x = 0.25
-        deadline = time.time() + 2.0
-        while time.time() < deadline:
-            node._cmd_vel_pub.publish(twist)
-            time.sleep(0.1)
+            # stop for 1 second
+            node._cmd_vel_pub.publish(Twist())
+            time.sleep(1.0)
+            '''
+            node._drec_drive(-0.5, 0.75)
+            node._drec_drive(0.0, 0.5)
 
-        # stop for 1 second
-        node._cmd_vel_pub.publish(Twist())
-        time.sleep(1.0)
-        '''
-        node._drec_drive(-0.5, 0.75)
-        node._drec_drive(0.0, 0.5)
-
-        node._start_sequence(node._excavation_sequence, 'excavation')
+            node._start_sequence(node._excavation_sequence, 'excavation')
+        elif(autoMode == 2):
+            node._drec_drive(0.5, 0.75)
+        else:
+            node._drec_drive(0,0)
 
     threading.Thread(target=startup, daemon=True).start()
 
@@ -399,4 +403,6 @@ def main(args=None):
 
 
 if __name__ == '__main__':
-    main()
+    import sys
+    mode = int(sys.argv[1]) if len(sys.argv) > 1 else 1
+    main(mode)
