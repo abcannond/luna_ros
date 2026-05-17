@@ -10,6 +10,7 @@
 
 #include <array>
 #include <atomic>
+#include <chrono>
 #include <memory>
 #include <string>
 #include <thread>
@@ -52,6 +53,12 @@ namespace luna_can {
     constexpr double SPARK_OUTPUT_LIMIT = 0.2;   //duty cycle hitches above ~0.3 on real HW (TODO: figure out why it does this)
     constexpr double SPARK_DEADBAND = 0.01;      //rad
     constexpr double SPARK_INTEGRAL_LIMIT = 0.04;
+
+    //Pod-align gate: block drive current until all 4 pods are within
+    //POD_ALIGN_TOLERANCE_RAD of their target. POD_ALIGN_TIMEOUT_S is a
+    //fallback so a stuck pod cannot paralyze the robot indefinitely.
+    constexpr double POD_ALIGN_TOLERANCE_RAD = 0.26;   //~15 deg
+    constexpr double POD_ALIGN_TIMEOUT_S     = 1.5;    //seconds
 
     //data read from C620s 
     struct C620_Feedback {
@@ -133,8 +140,11 @@ namespace luna_can {
         std::array<double, NUM_PODS> pod_integral_{};    //PID integrator state per pod
         std::array<double, NUM_PODS> pod_last_error_{};  //PID derivative state per pod
         
-        //ramp down on shutdown for safety 
+        //ramp down on shutdown for safety
         std::array<int, NUM_WHEELS> current_ramp_{};
+
+        //pod-align gate state: time when drive was first blocked waiting on pods
+        std::chrono::steady_clock::time_point pod_align_blocked_since_{};
     };
 
 }   // namespace luna_can
