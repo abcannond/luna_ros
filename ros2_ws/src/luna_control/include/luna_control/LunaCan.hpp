@@ -10,7 +10,6 @@
 
 #include <array>
 #include <atomic>
-#include <chrono>
 #include <memory>
 #include <string>
 #include <thread>
@@ -54,7 +53,7 @@ namespace luna_can {
     constexpr double SPARK_DEADBAND = 0.01;      //rad
     constexpr double SPARK_INTEGRAL_LIMIT = 0.04;
 
-    //data read from C620s
+    //data read from C620s 
     struct C620_Feedback {
         double angle = 0.0;
         double speed = 0.0;
@@ -134,7 +133,7 @@ namespace luna_can {
         std::array<double, NUM_PODS> pod_integral_{};    //PID integrator state per pod
         std::array<double, NUM_PODS> pod_last_error_{};  //PID derivative state per pod
         
-        //ramp down on shutdown for safety
+        //ramp down on shutdown for safety 
         std::array<int, NUM_WHEELS> current_ramp_{};
     };
 

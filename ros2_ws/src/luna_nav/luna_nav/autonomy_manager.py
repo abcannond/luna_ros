@@ -387,8 +387,7 @@ def main(autoMode: int):
 
             node._start_sequence(node._excavation_sequence, 'excavation')
         elif(autoMode == 2):
-            node._start_sequence(node._excavation_sequence, 'excavation')
-            node._seq_thread.join()
+            node._drec_drive(0.5, 0.75)
         else:
             node._drec_drive(0,0)
 
@@ -405,10 +404,5 @@ def main(autoMode: int):
 
 if __name__ == '__main__':
     import sys
-    mode = 0
-    if len(sys.argv) > 1:
-        try:
-            mode = int(sys.argv[1])
-        except ValueError:
-            mode = 0
+    mode = int(sys.argv[1]) if len(sys.argv) > 1 else 1
     main(mode)
