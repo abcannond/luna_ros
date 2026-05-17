@@ -15,8 +15,8 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
             'auto_mode',
-            default_value='1',
-            description='Auto mode selector (1=full auto, 2=drive only, etc.)'
+            default_value='0',
+            description='Auto mode selector (0=manual/no startup sequence, 1=full auto cycle, 2=excavation only)'
         ),
         autonomous,
     ])

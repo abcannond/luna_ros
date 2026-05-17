@@ -38,7 +38,7 @@ luna_cont:
     wheel_base: 0.508
     wheel_radius: 0.1
 
-    allowed_steer_pod_driving_angle: 0.78539816339
+    allowed_steer_pod_driving_angle: 0.26
 
     linear.x.has_velocity_limits: true
     linear.x.has_acceleration_limits: true
