@@ -47,7 +47,6 @@ RUN apt-get update && apt-get upgrade -y && \
     ros-jazzy-depthimage-to-laserscan \
     ros-jazzy-pointcloud-to-laserscan \
     ros-jazzy-v4l2-camera \
-    ros-jazzy-usb-cam \
     iproute2 \
     can-utils \
     ros-jazzy-joy \

@@ -451,28 +451,12 @@ namespace luna_controller
     double right_back_pod_delta = fabs(shortest_angular_diff(right_back_pod_position, right_back_pod_feedback));
     double right_front_pod_delta= fabs(shortest_angular_diff(right_front_pod_position, right_front_pod_feedback));
 
-    bool pods_aligned =
+    bool allow_wheel_movement = params_.open_loop || (
       left_back_pod_delta  < params_.allowed_steer_pod_driving_angle &&
       left_front_pod_delta < params_.allowed_steer_pod_driving_angle &&
       right_back_pod_delta < params_.allowed_steer_pod_driving_angle &&
-      right_front_pod_delta< params_.allowed_steer_pod_driving_angle;
-
-    // Timeout fallback: if a pod is stuck or has steady-state error, never let
-    // the gate block driving forever. Track when the block started; once it's
-    // been longer than steer_align_timeout_s, allow driving regardless.
-    static rclcpp::Time blocked_since(0, 0, RCL_ROS_TIME);
-    bool timed_out = false;
-    if (pods_aligned) {
-      blocked_since = rclcpp::Time(0, 0, RCL_ROS_TIME);
-    } else {
-      if (blocked_since.nanoseconds() == 0) {
-        blocked_since = time;
-      } else if ((time - blocked_since).seconds() > params_.steer_align_timeout_s) {
-        timed_out = true;
-      }
-    }
-
-    bool allow_wheel_movement = params_.open_loop || pods_aligned || timed_out;
+      right_front_pod_delta< params_.allowed_steer_pod_driving_angle
+    );
 
     // Set wheel / steering pod targets
     if (allow_wheel_movement)
