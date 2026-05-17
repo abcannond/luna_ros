@@ -54,13 +54,7 @@ namespace luna_can {
     constexpr double SPARK_DEADBAND = 0.01;      //rad
     constexpr double SPARK_INTEGRAL_LIMIT = 0.04;
 
-    //Pod-align gate: block drive current until all 4 pods are within
-    //POD_ALIGN_TOLERANCE_RAD of their target. POD_ALIGN_TIMEOUT_S is a
-    //fallback so a stuck pod cannot paralyze the robot indefinitely.
-    constexpr double POD_ALIGN_TOLERANCE_RAD = 0.26;   //~15 deg
-    constexpr double POD_ALIGN_TIMEOUT_S     = 2.0;    //seconds
-
-    //data read from C620s 
+    //data read from C620s
     struct C620_Feedback {
         double angle = 0.0;
         double speed = 0.0;
@@ -142,9 +136,6 @@ namespace luna_can {
         
         //ramp down on shutdown for safety
         std::array<int, NUM_WHEELS> current_ramp_{};
-
-        //pod-align gate state: time when drive was first blocked waiting on pods
-        std::chrono::steady_clock::time_point pod_align_blocked_since_{};
     };
 
 }   // namespace luna_can

@@ -314,31 +314,9 @@ hardware_interface::return_type LunaCan::read(
 hardware_interface::return_type LunaCan::write(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & period)
 {
-    //Pod-align gate: only drive when all pods are near their target angle.
-    //Timeout fallback prevents a stuck pod from blocking drive forever.
-    bool pods_aligned = true;
-    for (std::size_t i = 0; i < NUM_PODS; ++i) {
-      double delta = std::abs(shortest_angular_diff(pod_cmd_pos_[i], pod_state_pos_[i]));
-      if (delta > POD_ALIGN_TOLERANCE_RAD) {
-        pods_aligned = false;
-        break;
-      }
-    }
-
-    auto now = std::chrono::steady_clock::now();
-    if (pods_aligned) {
-      pod_align_blocked_since_ = std::chrono::steady_clock::time_point{};   //reset
-    } else if (pod_align_blocked_since_.time_since_epoch().count() == 0) {
-      pod_align_blocked_since_ = now;
-    }
-    bool timed_out = !pods_aligned &&
-      pod_align_blocked_since_.time_since_epoch().count() != 0 &&
-      std::chrono::duration<double>(now - pod_align_blocked_since_).count() > POD_ALIGN_TIMEOUT_S;
-    bool allow_drive = pods_aligned || timed_out;
-
     //Drive motor control loop (open-loop scaling, TODO close with C620 feedback)
     for (std::size_t i = 0; i < NUM_WHEELS; ++i) {
-        double target_vel = allow_drive ? wheel_cmd_vel_[i] : 0.0;
+        double target_vel = wheel_cmd_vel_[i];
         if (wheel_reverse_flags_[i]) { target_vel = -target_vel; }
 
         double max_cmd = 5.0;
