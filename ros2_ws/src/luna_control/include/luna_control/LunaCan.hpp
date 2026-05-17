@@ -58,7 +58,7 @@ namespace luna_can {
     //POD_ALIGN_TOLERANCE_RAD of their target. POD_ALIGN_TIMEOUT_S is a
     //fallback so a stuck pod cannot paralyze the robot indefinitely.
     constexpr double POD_ALIGN_TOLERANCE_RAD = 0.26;   //~15 deg
-    constexpr double POD_ALIGN_TIMEOUT_S     = 1.5;    //seconds
+    constexpr double POD_ALIGN_TIMEOUT_S     = 2.0;    //seconds
 
     //data read from C620s 
     struct C620_Feedback {
