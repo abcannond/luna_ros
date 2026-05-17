@@ -143,6 +143,7 @@ CallbackReturn LunaCan::on_configure(const rclcpp_lifecycle::State &)
       spark_[i]->SetAltEncoderPositionFactor(2.0f * (float)M_PI); //convert to rads
       spark_[i]->SetAltEncoderInverted(false);
       spark_[i]->SetRampRate(0); //don't rely on persisted SPARK flash state
+      spark_[i]->SetIdleMode(IdleMode::kBrake);
     }
     pod_reverse_flags_[0] = true;
     pod_reverse_flags_[1] = false;

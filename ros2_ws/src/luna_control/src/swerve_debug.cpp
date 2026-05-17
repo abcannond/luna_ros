@@ -273,6 +273,7 @@ int main() {
             swerve[i]->SetAltEncoderCountsPerRev(8192);
             swerve[i]->SetAltEncoderPositionFactor(2.0f * (float)M_PI);
             swerve[i]->SetRampRate(0);
+            swerve[i]->SetIdleMode(IdleMode::kBrake);
         }
         swerve[1]->SetAltEncoderInverted(false);
         swerve[2]->SetAltEncoderInverted(false);
